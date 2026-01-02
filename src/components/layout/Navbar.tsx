@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Menu, X, Search, User, LogOut } from 'lucide-react';
+import { ShoppingBag, Heart, Menu, X, Search, User, LogOut, Package } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { supabase } from '@/integrations/supabase/client';
@@ -171,6 +171,10 @@ export const Navbar = () => {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem className="text-sm text-muted-foreground">
                     {user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    <Package className="w-4 h-4 mr-2" />
+                    My Orders
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />

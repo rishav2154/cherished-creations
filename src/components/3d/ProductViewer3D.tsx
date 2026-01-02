@@ -76,13 +76,28 @@ function TShirtModel({
   imageTransform?: ImageTransform;
 }) {
   const meshRef = useRef<THREE.Group>(null);
+  const [textureLoaded, setTextureLoaded] = useState(false);
+  
+  // Load FBX model
   const fbx = useLoader(FBXLoader, '/models/tshirt.fbx');
   
+  // Create texture from uploaded image with proper loading
   const texture = useMemo(() => {
-    if (!customImage) return null;
-    const tex = new THREE.TextureLoader().load(customImage);
+    if (!customImage) {
+      setTextureLoaded(false);
+      return null;
+    }
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load(
+      customImage,
+      () => setTextureLoaded(true),
+      undefined,
+      (err) => console.error('Error loading texture:', err)
+    );
     tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    tex.flipY = true;
     return tex;
   }, [customImage]);
 
@@ -98,6 +113,7 @@ function TShirtModel({
           roughness: 0.85,
           metalness: 0,
           envMapIntensity: 0.3,
+          side: THREE.DoubleSide,
         });
       }
     });
@@ -110,28 +126,33 @@ function TShirtModel({
     }
   });
 
-  const imageScale = 1.2 * imageTransform.scale;
-  const imageX = imageTransform.x * 0.5;
-  const imageY = 0.3 + imageTransform.y * 0.5;
+  // Calculate image position and scale - adjusted for FBX model
+  const baseScale = 80;
+  const imageScale = baseScale * imageTransform.scale;
+  const imageX = imageTransform.x * 40;
+  const imageY = 80 + imageTransform.y * 40;
+  const imageZ = 12; // Front of shirt
 
   return (
     <Float speed={1} rotationIntensity={0.1} floatIntensity={0.3}>
-      <group ref={meshRef} scale={0.02} position={[0, -1.5, 0]}>
+      <group ref={meshRef} scale={0.018} position={[0, -1.8, 0]}>
         <primitive object={clonedFbx} />
         
-        {/* Custom Image on shirt with transform controls */}
+        {/* Custom Image on shirt front - properly positioned */}
         {texture && (
           <mesh 
-            position={[imageX * 50, (imageY + 1.5) * 50, 8]} 
-            rotation={[0, 0, imageTransform.rotation * Math.PI / 180]}
+            position={[imageX, imageY, imageZ]} 
+            rotation={[0, 0, (imageTransform.rotation * Math.PI) / 180]}
           >
-            <planeGeometry args={[imageScale * 50, imageScale * 50]} />
+            <planeGeometry args={[imageScale, imageScale]} />
             <meshStandardMaterial 
               map={texture} 
               transparent 
-              opacity={0.95}
-              roughness={0.9}
+              opacity={0.98}
+              roughness={0.85}
               metalness={0}
+              side={THREE.DoubleSide}
+              depthWrite={true}
             />
           </mesh>
         )}
@@ -139,12 +160,12 @@ function TShirtModel({
         {/* Custom Text */}
         {customText && (
           <Text
-            position={[0, customImage ? 20 : 60, 8]}
-            fontSize={10}
+            position={[0, texture ? imageY - imageScale / 2 - 15 : 80, imageZ]}
+            fontSize={12}
             color={textColor || '#ffffff'}
             anchorX="center"
             anchorY="middle"
-            maxWidth={100}
+            maxWidth={120}
             textAlign="center"
           >
             {customText}
