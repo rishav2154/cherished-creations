@@ -1,0 +1,185 @@
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Instagram, Twitter, Facebook, Mail, MapPin, Phone } from 'lucide-react';
+
+const footerLinks = {
+  shop: [
+    { name: 'Custom T-Shirts', path: '/shop?category=tshirts' },
+    { name: 'Photo Mugs', path: '/shop?category=mugs' },
+    { name: 'Photo Frames', path: '/shop?category=frames' },
+    { name: 'Phone Covers', path: '/shop?category=phone-covers' },
+    { name: 'Gift Combos', path: '/shop?category=combos' },
+  ],
+  company: [
+    { name: 'About Us', path: '/about' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Careers', path: '/careers' },
+    { name: 'Press', path: '/press' },
+  ],
+  support: [
+    { name: 'FAQ', path: '/faq' },
+    { name: 'Shipping', path: '/shipping' },
+    { name: 'Returns', path: '/returns' },
+    { name: 'Size Guide', path: '/size-guide' },
+  ],
+  legal: [
+    { name: 'Privacy Policy', path: '/privacy' },
+    { name: 'Terms of Service', path: '/terms' },
+    { name: 'Cookie Policy', path: '/cookies' },
+  ],
+};
+
+const socialLinks = [
+  { icon: Instagram, href: '#', label: 'Instagram' },
+  { icon: Twitter, href: '#', label: 'Twitter' },
+  { icon: Facebook, href: '#', label: 'Facebook' },
+];
+
+export const Footer = () => {
+  return (
+    <footer className="relative overflow-hidden">
+      {/* Gradient Top Border */}
+      <div className="h-1 bg-accent-gradient" />
+
+      <div className="bg-card">
+        <div className="container mx-auto px-4 lg:px-8 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
+            {/* Brand Column */}
+            <div className="lg:col-span-2">
+              <Link to="/" className="inline-block">
+                <span className="text-3xl font-bold text-gradient-accent">Giftoria</span>
+              </Link>
+              <p className="mt-4 text-muted-foreground max-w-sm">
+                Transform your precious memories into beautiful, personalized gifts. 
+                Crafted with love, delivered with care.
+              </p>
+
+              {/* Newsletter */}
+              <div className="mt-8">
+                <h4 className="text-sm font-semibold mb-3">Subscribe to our newsletter</h4>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="flex-1 px-4 py-3 rounded-xl bg-muted/50 border border-border focus:border-accent focus:outline-none transition-colors text-sm"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-6 py-3 rounded-xl bg-accent-gradient text-accent-foreground font-medium text-sm"
+                  >
+                    Join
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="flex gap-4 mt-8">
+                {socialLinks.map((social) => (
+                  <motion.a
+                    key={social.label}
+                    href={social.href}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors"
+                    aria-label={social.label}
+                  >
+                    <social.icon className="w-5 h-5" />
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+
+            {/* Shop Links */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Shop</h4>
+              <ul className="space-y-3">
+                {footerLinks.shop.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      to={link.path}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Company Links */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Company</h4>
+              <ul className="space-y-3">
+                {footerLinks.company.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      to={link.path}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support Links */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Support</h4>
+              <ul className="space-y-3">
+                {footerLinks.support.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      to={link.path}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Contact</h4>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="w-4 h-4" />
+                  hello@giftoria.com
+                </li>
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="w-4 h-4" />
+                  +1 (555) 123-4567
+                </li>
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <MapPin className="w-4 h-4 mt-0.5" />
+                  <span>123 Gift Street, Creative City, CC 12345</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Giftoria. All rights reserved.
+            </p>
+            <div className="flex gap-6">
+              {footerLinks.legal.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
