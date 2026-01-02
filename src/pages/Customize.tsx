@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, Type, Palette, RotateCcw, ShoppingBag, 
   Shirt, Coffee, Frame, Smartphone, Image, Gift,
-  Sparkles, Check, X
+  Sparkles, Check, X, Move, ZoomIn, RotateCw,
+  Minus, Plus, ChevronLeft, ChevronRight, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { useCartStore } from '@/store/cartStore';
 import ProductViewer3D from '@/components/3d/ProductViewer3D';
+import { Slider } from '@/components/ui/slider';
 
 const productTypes = [
   { id: 'tshirt', name: 'T-Shirt', icon: Shirt, price: 29.99 },
@@ -45,6 +47,13 @@ const textColors = [
 
 type ProductType = typeof productTypes[number]['id'];
 
+interface ImageTransform {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+}
+
 const Customize = () => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType>('tshirt');
   const [selectedColor, setSelectedColor] = useState('#ffffff');
@@ -53,7 +62,16 @@ const Customize = () => {
   const [selectedFont, setSelectedFont] = useState(fonts[0].value);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [activeControl, setActiveControl] = useState<'position' | 'scale' | 'rotation'>('position');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Image transform state
+  const [imageTransform, setImageTransform] = useState<ImageTransform>({
+    x: 0,
+    y: 0,
+    scale: 1,
+    rotation: 0
+  });
   
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -66,6 +84,7 @@ const Customize = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedImage(e.target?.result as string);
+        setImageTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
       };
       reader.readAsDataURL(file);
     }
@@ -97,13 +116,35 @@ const Customize = () => {
     setSelectedFont(fonts[0].value);
     setUploadedImage(null);
     setSelectedColor('#ffffff');
+    setImageTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
   };
 
   const removeImage = () => {
     setUploadedImage(null);
+    setImageTransform({ x: 0, y: 0, scale: 1, rotation: 0 });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const updateTransform = (key: keyof ImageTransform, delta: number) => {
+    setImageTransform(prev => ({
+      ...prev,
+      [key]: Math.max(
+        key === 'scale' ? 0.3 : key === 'rotation' ? -180 : -1,
+        Math.min(
+          key === 'scale' ? 2 : key === 'rotation' ? 180 : 1,
+          prev[key] + delta
+        )
+      )
+    }));
+  };
+
+  const setTransformValue = (key: keyof ImageTransform, value: number) => {
+    setImageTransform(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   return (
@@ -132,7 +173,7 @@ const Customize = () => {
               Create Your <span className="text-gradient-accent">Masterpiece</span>
             </h1>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-              Upload your photos, add text, and watch your design come to life in 3D
+              Upload your photos, add text, and watch your design come to life in realistic 3D
             </p>
           </motion.div>
 
@@ -196,6 +237,7 @@ const Customize = () => {
                     customText={customText}
                     textColor={textColor}
                     fontFamily={selectedFont}
+                    imageTransform={imageTransform}
                   />
                 </div>
                 
@@ -252,29 +294,220 @@ const Customize = () => {
                 />
                 
                 {uploadedImage ? (
-                  <div className="relative">
-                    <img
-                      src={uploadedImage}
-                      alt="Preview"
-                      className="w-full aspect-video object-contain rounded-xl bg-muted/50"
-                    />
-                    <div className="absolute top-2 right-2 flex gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-2 rounded-lg bg-accent text-accent-foreground"
-                      >
-                        <Upload className="w-4 h-4" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={removeImage}
-                        className="p-2 rounded-lg bg-destructive text-destructive-foreground"
-                      >
-                        <X className="w-4 h-4" />
-                      </motion.button>
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <img
+                        src={uploadedImage}
+                        alt="Preview"
+                        className="w-full aspect-video object-contain rounded-xl bg-muted/50"
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => fileInputRef.current?.click()}
+                          className="p-2 rounded-lg bg-accent text-accent-foreground"
+                        >
+                          <Upload className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={removeImage}
+                          className="p-2 rounded-lg bg-destructive text-destructive-foreground"
+                        >
+                          <X className="w-4 h-4" />
+                        </motion.button>
+                      </div>
+                    </div>
+                    
+                    {/* Image Position Controls */}
+                    <div className="space-y-4 p-4 bg-muted/30 rounded-xl">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium flex items-center gap-2">
+                          <Move className="w-4 h-4 text-accent" />
+                          Image Controls
+                        </span>
+                        <div className="flex gap-1">
+                          {(['position', 'scale', 'rotation'] as const).map((control) => (
+                            <button
+                              key={control}
+                              onClick={() => setActiveControl(control)}
+                              className={`px-3 py-1.5 text-xs rounded-lg transition-all ${
+                                activeControl === control 
+                                  ? 'bg-accent text-accent-foreground' 
+                                  : 'bg-muted hover:bg-muted/80'
+                              }`}
+                            >
+                              {control === 'position' && <Move className="w-3 h-3" />}
+                              {control === 'scale' && <ZoomIn className="w-3 h-3" />}
+                              {control === 'rotation' && <RotateCw className="w-3 h-3" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <AnimatePresence mode="wait">
+                        {activeControl === 'position' && (
+                          <motion.div
+                            key="position"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-3"
+                          >
+                            <div className="flex items-center justify-center">
+                              <div className="grid grid-cols-3 gap-1">
+                                <div />
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => updateTransform('y', 0.1)}
+                                  className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                                >
+                                  <ChevronUp className="w-4 h-4" />
+                                </motion.button>
+                                <div />
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => updateTransform('x', -0.1)}
+                                  className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </motion.button>
+                                <button
+                                  onClick={() => setImageTransform(prev => ({ ...prev, x: 0, y: 0 }))}
+                                  className="p-2 rounded-lg bg-accent/20 text-accent text-xs font-medium"
+                                >
+                                  ⊙
+                                </button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => updateTransform('x', 0.1)}
+                                  className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </motion.button>
+                                <div />
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => updateTransform('y', -0.1)}
+                                  className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </motion.button>
+                                <div />
+                              </div>
+                            </div>
+                            <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+                              <span>X: {imageTransform.x.toFixed(1)}</span>
+                              <span>Y: {imageTransform.y.toFixed(1)}</span>
+                            </div>
+                          </motion.div>
+                        )}
+                        
+                        {activeControl === 'scale' && (
+                          <motion.div
+                            key="scale"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => updateTransform('scale', -0.1)}
+                                className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </motion.button>
+                              <div className="flex-1">
+                                <Slider
+                                  value={[imageTransform.scale]}
+                                  min={0.3}
+                                  max={2}
+                                  step={0.05}
+                                  onValueChange={([value]) => setTransformValue('scale', value)}
+                                  className="w-full"
+                                />
+                              </div>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => updateTransform('scale', 0.1)}
+                                className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </motion.button>
+                            </div>
+                            <div className="text-center text-xs text-muted-foreground">
+                              Scale: {(imageTransform.scale * 100).toFixed(0)}%
+                            </div>
+                          </motion.div>
+                        )}
+                        
+                        {activeControl === 'rotation' && (
+                          <motion.div
+                            key="rotation"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => updateTransform('rotation', -15)}
+                                className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </motion.button>
+                              <div className="flex-1">
+                                <Slider
+                                  value={[imageTransform.rotation]}
+                                  min={-180}
+                                  max={180}
+                                  step={5}
+                                  onValueChange={([value]) => setTransformValue('rotation', value)}
+                                  className="w-full"
+                                />
+                              </div>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => updateTransform('rotation', 15)}
+                                className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
+                                <RotateCw className="w-4 h-4" />
+                              </motion.button>
+                            </div>
+                            <div className="flex justify-center gap-2">
+                              {[-90, -45, 0, 45, 90].map((angle) => (
+                                <button
+                                  key={angle}
+                                  onClick={() => setTransformValue('rotation', angle)}
+                                  className={`px-2 py-1 text-xs rounded-md transition-all ${
+                                    imageTransform.rotation === angle 
+                                      ? 'bg-accent text-accent-foreground' 
+                                      : 'bg-muted hover:bg-muted/80'
+                                  }`}
+                                >
+                                  {angle}°
+                                </button>
+                              ))}
+                            </div>
+                            <div className="text-center text-xs text-muted-foreground">
+                              Rotation: {imageTransform.rotation}°
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 ) : (
