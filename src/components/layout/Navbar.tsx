@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Menu, X, Search, User } from 'lucide-react';
+import { ShoppingBag, Heart, Menu, X, Search, User, LogOut } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const navLinks = [
   { name: 'Home', path: '/' },
@@ -15,7 +23,9 @@ const navLinks = [
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const wishlistItems = useWishlistStore((state) => state.items);
   const openCart = useCartStore((state) => state.openCart);
@@ -31,6 +41,23 @@ export const Navbar = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   return (
     <motion.header
@@ -121,13 +148,47 @@ export const Navbar = () => {
               )}
             </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 hover:bg-muted transition-colors"
-            >
-              <User className="w-5 h-5 text-foreground/70" />
-            </motion.button>
+            {/* User Auth */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/30 transition-colors"
+                  >
+                    {user.user_metadata?.avatar_url ? (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="Profile"
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-accent" />
+                    )}
+                  </motion.button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem className="text-sm text-muted-foreground">
+                    {user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <User className="w-5 h-5 text-foreground/70" />
+                </motion.button>
+              </Link>
+            )}
 
             {/* Mobile Menu Toggle */}
             <motion.button
@@ -175,6 +236,27 @@ export const Navbar = () => {
                   </Link>
                 </motion.div>
               ))}
+              {user ? (
+                <motion.button
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  onClick={handleLogout}
+                  className="text-lg font-medium text-destructive text-left"
+                >
+                  Sign Out
+                </motion.button>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Link to="/auth" className="text-lg font-medium text-accent">
+                    Sign In
+                  </Link>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         )}
