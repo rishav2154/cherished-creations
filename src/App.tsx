@@ -11,6 +11,7 @@ import Cart from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
+import OrdersHistory from "./pages/OrdersHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+          <Route path="/orders" element={<OrdersHistory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
