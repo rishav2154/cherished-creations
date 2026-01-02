@@ -1,3 +1,10 @@
+import productTshirt from '@/assets/product-tshirt.jpg';
+import productMug from '@/assets/product-mug.jpg';
+import productFrame from '@/assets/product-frame.jpg';
+import productPhone from '@/assets/product-phone.jpg';
+import productPoster from '@/assets/product-poster.jpg';
+import productCombo from '@/assets/product-combo.jpg';
+
 export interface Product {
   id: string;
   name: string;
@@ -10,8 +17,10 @@ export interface Product {
   reviewCount: number;
   isCustomizable: boolean;
   colors?: string[];
+  sizes?: string[];
   tags: string[];
   inStock: boolean;
+  productType: 'tshirt' | 'mug' | 'frame' | 'phone' | 'poster' | 'combo';
 }
 
 export const categories = [
@@ -24,7 +33,6 @@ export const categories = [
 ];
 
 export const products: Product[] = [
-  // T-Shirts
   {
     id: 'tshirt-1',
     name: 'Premium Cotton Custom Tee',
@@ -32,13 +40,15 @@ export const products: Product[] = [
     price: 29.99,
     originalPrice: 39.99,
     category: 'tshirts',
-    images: ['/placeholder.svg'],
+    images: [productTshirt],
     rating: 4.8,
     reviewCount: 256,
     isCustomizable: true,
     colors: ['#ffffff', '#000000', '#1e3a5f', '#8b0000', '#2d5016'],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
     tags: ['bestseller', 'eco-friendly'],
     inStock: true,
+    productType: 'tshirt',
   },
   {
     id: 'tshirt-2',
@@ -46,15 +56,16 @@ export const products: Product[] = [
     description: 'Classic fit t-shirt perfect for printing your favorite photos with a vintage filter effect.',
     price: 34.99,
     category: 'tshirts',
-    images: ['/placeholder.svg'],
+    images: [productTshirt],
     rating: 4.6,
     reviewCount: 128,
     isCustomizable: true,
     colors: ['#ffffff', '#f5f5dc', '#d3d3d3'],
+    sizes: ['S', 'M', 'L', 'XL'],
     tags: ['vintage', 'photo-print'],
     inStock: true,
+    productType: 'tshirt',
   },
-  // Mugs
   {
     id: 'mug-1',
     name: 'Magic Color-Changing Mug',
@@ -62,13 +73,14 @@ export const products: Product[] = [
     price: 24.99,
     originalPrice: 32.99,
     category: 'mugs',
-    images: ['/placeholder.svg'],
+    images: [productMug],
     rating: 4.9,
     reviewCount: 412,
     isCustomizable: true,
     colors: ['#000000'],
     tags: ['bestseller', 'magic'],
     inStock: true,
+    productType: 'mug',
   },
   {
     id: 'mug-2',
@@ -76,15 +88,15 @@ export const products: Product[] = [
     description: 'High-quality ceramic mug with vibrant, dishwasher-safe custom prints.',
     price: 19.99,
     category: 'mugs',
-    images: ['/placeholder.svg'],
+    images: [productMug],
     rating: 4.7,
     reviewCount: 289,
     isCustomizable: true,
     colors: ['#ffffff', '#000000'],
     tags: ['classic', 'photo-print'],
     inStock: true,
+    productType: 'mug',
   },
-  // Photo Frames
   {
     id: 'frame-1',
     name: 'Elegant Wooden Photo Frame',
@@ -92,13 +104,14 @@ export const products: Product[] = [
     price: 44.99,
     originalPrice: 54.99,
     category: 'frames',
-    images: ['/placeholder.svg'],
+    images: [productFrame],
     rating: 4.8,
     reviewCount: 178,
     isCustomizable: true,
     colors: ['#8b4513', '#2f1810', '#d4a574'],
     tags: ['premium', 'handcrafted'],
     inStock: true,
+    productType: 'frame',
   },
   {
     id: 'frame-2',
@@ -106,26 +119,27 @@ export const products: Product[] = [
     description: 'Modern acrylic frame with ambient LED lighting. Perfect for night displays.',
     price: 59.99,
     category: 'frames',
-    images: ['/placeholder.svg'],
+    images: [productFrame],
     rating: 4.9,
     reviewCount: 156,
     isCustomizable: true,
     tags: ['modern', 'led'],
     inStock: true,
+    productType: 'frame',
   },
-  // Phone Covers
   {
     id: 'phone-1',
     name: 'Slim Photo Case',
     description: 'Ultra-thin protective case with your custom photo. Available for all major phone models.',
     price: 22.99,
     category: 'phone-covers',
-    images: ['/placeholder.svg'],
+    images: [productPhone],
     rating: 4.5,
     reviewCount: 534,
     isCustomizable: true,
     tags: ['slim', 'protective'],
     inStock: true,
+    productType: 'phone',
   },
   {
     id: 'phone-2',
@@ -134,26 +148,27 @@ export const products: Product[] = [
     price: 34.99,
     originalPrice: 44.99,
     category: 'phone-covers',
-    images: ['/placeholder.svg'],
+    images: [productPhone],
     rating: 4.7,
     reviewCount: 267,
     isCustomizable: true,
-    tags: ['rugged', 'protective'],
+    tags: ['rugged', 'protective', 'bestseller'],
     inStock: true,
+    productType: 'phone',
   },
-  // Posters
   {
     id: 'poster-1',
     name: 'Gallery Canvas Print',
     description: 'Museum-quality canvas print stretched on wooden frame. Transform any space.',
     price: 49.99,
     category: 'posters',
-    images: ['/placeholder.svg'],
+    images: [productPoster],
     rating: 4.9,
     reviewCount: 198,
     isCustomizable: true,
     tags: ['premium', 'canvas'],
     inStock: true,
+    productType: 'poster',
   },
   {
     id: 'poster-2',
@@ -162,14 +177,14 @@ export const products: Product[] = [
     price: 64.99,
     originalPrice: 79.99,
     category: 'posters',
-    images: ['/placeholder.svg'],
+    images: [productPoster],
     rating: 4.8,
     reviewCount: 145,
     isCustomizable: true,
     tags: ['metallic', 'vibrant'],
     inStock: true,
+    productType: 'poster',
   },
-  // Gift Combos
   {
     id: 'combo-1',
     name: 'Love Bundle',
@@ -177,12 +192,13 @@ export const products: Product[] = [
     price: 89.99,
     originalPrice: 119.99,
     category: 'combos',
-    images: ['/placeholder.svg'],
+    images: [productCombo],
     rating: 4.9,
     reviewCount: 312,
     isCustomizable: true,
     tags: ['bestseller', 'couples', 'value'],
     inStock: true,
+    productType: 'combo',
   },
   {
     id: 'combo-2',
@@ -191,12 +207,13 @@ export const products: Product[] = [
     price: 129.99,
     originalPrice: 169.99,
     category: 'combos',
-    images: ['/placeholder.svg'],
+    images: [productCombo],
     rating: 4.8,
     reviewCount: 178,
     isCustomizable: true,
     tags: ['family', 'value', 'premium'],
     inStock: true,
+    productType: 'combo',
   },
 ];
 
