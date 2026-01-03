@@ -1,19 +1,21 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Grid3X3, Grid2X2, SlidersHorizontal, X } from 'lucide-react';
+import { Filter, Grid3X3, Grid2X2, SlidersHorizontal, X, Search } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { products, categories } from '@/data/products';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gridCols, setGridCols] = useState<3 | 4>(4);
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 200]);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
   const selectedCategory = searchParams.get('category') || '';
 
@@ -21,9 +23,13 @@ const Shop = () => {
     return products.filter((product) => {
       const matchesCategory = !selectedCategory || product.category === selectedCategory;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      return matchesCategory && matchesPrice;
+      const matchesSearch = !searchQuery.trim() || 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesCategory && matchesPrice && matchesSearch;
     });
-  }, [selectedCategory, priceRange]);
+  }, [selectedCategory, priceRange, searchQuery]);
 
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId === selectedCategory) {
@@ -96,6 +102,23 @@ const Shop = () => {
                   </div>
                 </div>
 
+                {/* Search */}
+                <div className="mb-8">
+                  <h4 className="text-sm font-medium mb-4 text-muted-foreground">
+                    Search
+                  </h4>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
                 {/* Price Range */}
                 <div className="mb-8">
                   <h4 className="text-sm font-medium mb-4 text-muted-foreground">
@@ -115,12 +138,14 @@ const Shop = () => {
                 </div>
 
                 {/* Clear Filters */}
-                {(selectedCategory || priceRange[0] > 0 || priceRange[1] < 200) && (
+                {(selectedCategory || priceRange[0] > 0 || priceRange[1] < 200 || searchQuery) && (
                   <button
                     onClick={() => {
                       searchParams.delete('category');
+                      searchParams.delete('search');
                       setSearchParams(searchParams);
                       setPriceRange([0, 200]);
+                      setSearchQuery('');
                     }}
                     className="w-full py-2 text-sm text-accent hover:underline"
                   >
