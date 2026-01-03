@@ -76,29 +76,38 @@ function TShirtModel({
   imageTransform?: ImageTransform;
 }) {
   const meshRef = useRef<THREE.Group>(null);
-  const [textureLoaded, setTextureLoaded] = useState(false);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
   
   // Load FBX model
   const fbx = useLoader(FBXLoader, '/models/tshirt.fbx');
   
-  // Create texture from uploaded image with proper loading
-  const texture = useMemo(() => {
+  // Create texture from uploaded image - using useEffect for proper async handling
+  useEffect(() => {
     if (!customImage) {
-      setTextureLoaded(false);
-      return null;
+      setTexture(null);
+      return;
     }
+    
     const loader = new THREE.TextureLoader();
-    const tex = loader.load(
+    loader.load(
       customImage,
-      () => setTextureLoaded(true),
+      (loadedTexture) => {
+        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+        loadedTexture.colorSpace = THREE.SRGBColorSpace;
+        loadedTexture.flipY = true;
+        loadedTexture.needsUpdate = true;
+        setTexture(loadedTexture);
+      },
       undefined,
       (err) => console.error('Error loading texture:', err)
     );
-    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    tex.flipY = true;
-    return tex;
+    
+    return () => {
+      if (texture) {
+        texture.dispose();
+      }
+    };
   }, [customImage]);
 
   // Clone the FBX and apply materials
@@ -126,33 +135,30 @@ function TShirtModel({
     }
   });
 
-  // Calculate image position and scale - adjusted for FBX model
-  const baseScale = 80;
+  // Calculate image position and scale - adjusted for FBX model chest area
+  const baseScale = 60;
   const imageScale = baseScale * imageTransform.scale;
-  const imageX = imageTransform.x * 40;
-  const imageY = 80 + imageTransform.y * 40;
-  const imageZ = 12; // Front of shirt
+  const imageX = imageTransform.x * 30;
+  const imageY = 95 + imageTransform.y * 30; // Centered on chest
+  const imageZ = 18; // Slightly in front of shirt surface
 
   return (
     <Float speed={1} rotationIntensity={0.1} floatIntensity={0.3}>
       <group ref={meshRef} scale={0.018} position={[0, -1.8, 0]}>
         <primitive object={clonedFbx} />
         
-        {/* Custom Image on shirt front - properly positioned */}
+        {/* Custom Image on shirt front - properly positioned on chest */}
         {texture && (
           <mesh 
             position={[imageX, imageY, imageZ]} 
             rotation={[0, 0, (imageTransform.rotation * Math.PI) / 180]}
           >
             <planeGeometry args={[imageScale, imageScale]} />
-            <meshStandardMaterial 
+            <meshBasicMaterial 
               map={texture} 
               transparent 
-              opacity={0.98}
-              roughness={0.85}
-              metalness={0}
-              side={THREE.DoubleSide}
-              depthWrite={true}
+              side={THREE.FrontSide}
+              toneMapped={false}
             />
           </mesh>
         )}
@@ -160,12 +166,12 @@ function TShirtModel({
         {/* Custom Text */}
         {customText && (
           <Text
-            position={[0, texture ? imageY - imageScale / 2 - 15 : 80, imageZ]}
-            fontSize={12}
+            position={[0, texture ? imageY - imageScale / 2 - 15 : 95, imageZ]}
+            fontSize={10}
             color={textColor || '#ffffff'}
             anchorX="center"
             anchorY="middle"
-            maxWidth={120}
+            maxWidth={100}
             textAlign="center"
           >
             {customText}
