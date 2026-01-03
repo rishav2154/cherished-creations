@@ -1,21 +1,15 @@
 import { Suspense, useRef, useMemo, useEffect, useState } from 'react';
-import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { 
   OrbitControls, 
   Environment, 
   ContactShadows, 
   Html, 
-  Center, 
   Text,
-  useTexture,
-  MeshTransmissionMaterial,
   Float,
-  Lightformer,
-  AccumulativeShadows,
-  RandomizedLight
+  Center
 } from '@react-three/drei';
 import * as THREE from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { Loader2 } from 'lucide-react';
 
 interface ImageTransform {
@@ -49,19 +43,7 @@ function LoadingSpinner() {
   );
 }
 
-// Enhanced fabric material for realistic T-shirt
-function FabricMaterial({ color }: { color: string }) {
-  return (
-    <meshStandardMaterial
-      color={color}
-      roughness={0.85}
-      metalness={0}
-      envMapIntensity={0.3}
-    />
-  );
-}
-
-// Realistic T-Shirt Model using custom FBX
+// Procedural T-Shirt Model - No FBX dependency
 function TShirtModel({ 
   color, 
   customImage, 
@@ -78,10 +60,7 @@ function TShirtModel({
   const meshRef = useRef<THREE.Group>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   
-  // Load FBX model
-  const fbx = useLoader(FBXLoader, '/models/tshirt.fbx');
-  
-  // Create texture from uploaded image - using useEffect for proper async handling
+  // Load texture from uploaded image
   useEffect(() => {
     if (!customImage) {
       setTexture(null);
@@ -92,10 +71,7 @@ function TShirtModel({
     loader.load(
       customImage,
       (loadedTexture) => {
-        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
-        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
         loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.flipY = true;
         loadedTexture.needsUpdate = true;
         setTexture(loadedTexture);
       },
@@ -104,60 +80,115 @@ function TShirtModel({
     );
     
     return () => {
-      if (texture) {
-        texture.dispose();
-      }
+      texture?.dispose();
     };
   }, [customImage]);
 
-  // Clone the FBX and apply materials
-  const clonedFbx = useMemo(() => {
-    const clone = fbx.clone(true);
-    clone.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        child.material = new THREE.MeshStandardMaterial({
-          color: color,
-          roughness: 0.85,
-          metalness: 0,
-          envMapIntensity: 0.3,
-          side: THREE.DoubleSide,
-        });
-      }
-    });
-    return clone;
-  }, [fbx, color]);
-
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1;
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15;
     }
   });
 
-  // Calculate image position and scale - adjusted for FBX model chest area
-  const baseScale = 60;
-  const imageScale = baseScale * imageTransform.scale;
-  const imageX = imageTransform.x * 30;
-  const imageY = 95 + imageTransform.y * 30; // Centered on chest
-  const imageZ = 18; // Slightly in front of shirt surface
+  // Image transform calculations
+  const imageScale = 0.9 * imageTransform.scale;
+  const imageX = imageTransform.x * 0.3;
+  const imageY = 0.3 + imageTransform.y * 0.3;
 
   return (
     <Float speed={1} rotationIntensity={0.1} floatIntensity={0.3}>
-      <group ref={meshRef} scale={0.018} position={[0, -1.8, 0]}>
-        <primitive object={clonedFbx} />
+      <group ref={meshRef} scale={1.4} position={[0, -0.3, 0]}>
+        {/* Main Body - Torso */}
+        <mesh castShadow receiveShadow position={[0, 0, 0]}>
+          <boxGeometry args={[1.6, 2, 0.5]} />
+          <meshStandardMaterial 
+            color={color} 
+            roughness={0.9} 
+            metalness={0}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
         
-        {/* Custom Image on shirt front - properly positioned on chest */}
+        {/* Front panel curve effect */}
+        <mesh position={[0, 0, 0.26]} castShadow>
+          <planeGeometry args={[1.58, 1.98]} />
+          <meshStandardMaterial 
+            color={color} 
+            roughness={0.85} 
+            metalness={0}
+          />
+        </mesh>
+        
+        {/* Collar - V-neck style */}
+        <mesh position={[0, 0.95, 0.15]} rotation={[0.3, 0, 0]}>
+          <torusGeometry args={[0.25, 0.06, 8, 32, Math.PI]} />
+          <meshStandardMaterial color={color} roughness={0.8} />
+        </mesh>
+        
+        {/* Neck opening */}
+        <mesh position={[0, 1.02, 0.1]}>
+          <cylinderGeometry args={[0.22, 0.28, 0.15, 32]} />
+          <meshStandardMaterial 
+            color={color} 
+            roughness={0.85}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        
+        {/* Left Sleeve */}
+        <group position={[-1.0, 0.55, 0]} rotation={[0, 0, 0.4]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.32, 0.38, 0.7, 16]} />
+            <meshStandardMaterial color={color} roughness={0.9} />
+          </mesh>
+          {/* Sleeve hem */}
+          <mesh position={[0, -0.38, 0]}>
+            <torusGeometry args={[0.32, 0.03, 8, 32]} />
+            <meshStandardMaterial color={color} roughness={0.85} />
+          </mesh>
+        </group>
+        
+        {/* Right Sleeve */}
+        <group position={[1.0, 0.55, 0]} rotation={[0, 0, -0.4]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.32, 0.38, 0.7, 16]} />
+            <meshStandardMaterial color={color} roughness={0.9} />
+          </mesh>
+          {/* Sleeve hem */}
+          <mesh position={[0, -0.38, 0]}>
+            <torusGeometry args={[0.32, 0.03, 8, 32]} />
+            <meshStandardMaterial color={color} roughness={0.85} />
+          </mesh>
+        </group>
+        
+        {/* Bottom hem */}
+        <mesh position={[0, -1.02, 0]}>
+          <boxGeometry args={[1.62, 0.08, 0.52]} />
+          <meshStandardMaterial color={color} roughness={0.85} />
+        </mesh>
+        
+        {/* Shoulder seams - left */}
+        <mesh position={[-0.65, 0.85, 0.1]} rotation={[0, 0, 0.3]}>
+          <boxGeometry args={[0.5, 0.04, 0.02]} />
+          <meshStandardMaterial color={color} roughness={0.7} />
+        </mesh>
+        
+        {/* Shoulder seams - right */}
+        <mesh position={[0.65, 0.85, 0.1]} rotation={[0, 0, -0.3]}>
+          <boxGeometry args={[0.5, 0.04, 0.02]} />
+          <meshStandardMaterial color={color} roughness={0.7} />
+        </mesh>
+        
+        {/* Custom Image on chest - VISIBLE! */}
         {texture && (
           <mesh 
-            position={[imageX, imageY, imageZ]} 
+            position={[imageX, imageY, 0.28]} 
             rotation={[0, 0, (imageTransform.rotation * Math.PI) / 180]}
           >
             <planeGeometry args={[imageScale, imageScale]} />
             <meshBasicMaterial 
               map={texture} 
-              transparent 
-              side={THREE.FrontSide}
+              transparent
               toneMapped={false}
             />
           </mesh>
@@ -166,12 +197,12 @@ function TShirtModel({
         {/* Custom Text */}
         {customText && (
           <Text
-            position={[0, texture ? imageY - imageScale / 2 - 15 : 95, imageZ]}
-            fontSize={10}
+            position={[0, texture ? imageY - imageScale / 2 - 0.15 : 0.2, 0.28]}
+            fontSize={0.12}
             color={textColor || '#ffffff'}
             anchorX="center"
             anchorY="middle"
-            maxWidth={100}
+            maxWidth={1.2}
             textAlign="center"
           >
             {customText}
