@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SearchDialog } from '@/components/search/SearchDialog';
 
 const navLinks = [
   { name: 'Home', path: '/' },
@@ -24,6 +25,7 @@ export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = useCartStore((state) => state.getTotalItems());
@@ -112,23 +114,28 @@ export const Navbar = () => {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => setSearchOpen(true)}
               className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 hover:bg-muted transition-colors"
             >
               <Search className="w-5 h-5 text-foreground/70" />
             </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 hover:bg-muted transition-colors relative"
-            >
-              <Heart className="w-5 h-5 text-foreground/70" />
-              {wishlistItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold bg-accent-gradient text-accent-foreground rounded-full">
-                  {wishlistItems.length}
-                </span>
-              )}
-            </motion.button>
+            <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
+            <Link to="/wishlist">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 hover:bg-muted transition-colors relative"
+              >
+                <Heart className="w-5 h-5 text-foreground/70" />
+                {wishlistItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold bg-accent-gradient text-accent-foreground rounded-full">
+                    {wishlistItems.length}
+                  </span>
+                )}
+              </motion.button>
+            </Link>
 
             <motion.button
               whileHover={{ scale: 1.1 }}
