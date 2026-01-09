@@ -18,7 +18,7 @@ export const HeroSection = () => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
     >
       {/* Background with Premium Overlay */}
       <motion.div style={{ y }} className="absolute inset-0">
@@ -27,13 +27,13 @@ export const HeroSection = () => {
           alt="Hero background"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
       </motion.div>
 
       {/* Luxury Gold Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(25)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute rounded-full"
@@ -42,15 +42,16 @@ export const HeroSection = () => {
               top: `${Math.random() * 100}%`,
               width: `${2 + Math.random() * 4}px`,
               height: `${2 + Math.random() * 4}px`,
-              background: i % 3 === 0 
-                ? 'linear-gradient(135deg, hsl(43 74% 49%), hsl(43 74% 70%))'
-                : 'linear-gradient(135deg, hsl(339 78% 53%), hsl(14 100% 59%))',
             }}
+            initial={{ opacity: 0 }}
             animate={{
               y: [0, -50, 0],
               x: [0, Math.random() * 30 - 15, 0],
-              opacity: [0.2, 0.8, 0.2],
+              opacity: [0.2, 0.7, 0.2],
               scale: [1, 1.5, 1],
+              background: i % 3 === 0 
+                ? 'hsl(var(--gold))'
+                : 'hsl(var(--accent))',
             }}
             transition={{
               duration: 4 + Math.random() * 3,
@@ -66,65 +67,65 @@ export const HeroSection = () => {
         <motion.div
           animate={{ rotate: 360, scale: [1, 1.05, 1] }}
           transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-          className="absolute w-[600px] h-[600px] rounded-full border border-gold/10"
+          className="absolute w-[500px] h-[500px] md:w-[600px] md:h-[600px] rounded-full border border-gold/10"
         />
         <motion.div
           animate={{ rotate: -360, scale: [1, 1.1, 1] }}
           transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-          className="absolute w-[800px] h-[800px] rounded-full border border-accent/10"
+          className="absolute w-[700px] h-[700px] md:w-[800px] md:h-[800px] rounded-full border border-accent/10"
         />
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-          className="absolute w-[1000px] h-[1000px] rounded-full border border-gold/5"
+          className="absolute w-[900px] h-[900px] md:w-[1000px] md:h-[1000px] rounded-full border border-gold/5"
         />
       </div>
 
       {/* Content */}
       <motion.div
         style={{ opacity, scale }}
-        className="relative container mx-auto px-4 lg:px-8 text-center z-10"
+        className="relative container mx-auto px-4 lg:px-8 text-center z-10 py-10"
       >
         {/* Premium Badge */}
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-gold/20 via-accent/10 to-gold/20 border border-gold/30 mb-8 backdrop-blur-sm"
+          className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-gold/10 border border-gold/30 mb-6 backdrop-blur-sm"
         >
-          <Crown className="w-5 h-5 text-gold" />
-          <span className="text-sm font-semibold tracking-wider uppercase bg-gradient-to-r from-gold via-accent to-gold bg-clip-text text-transparent">
+          <Crown className="w-4 h-4 text-gold" />
+          <span className="text-xs sm:text-sm font-semibold tracking-wider uppercase text-gold">
             Luxury Personalized Gifts
           </span>
-          <Diamond className="w-4 h-4 text-gold" />
+          <Diamond className="w-3 h-3 text-gold" />
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight mb-8"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
         >
-          <span className="block text-foreground/90">Transform Your</span>
+          <span className="block text-foreground">Transform Your</span>
           <span className="relative inline-block mt-2">
-            <span className="bg-gradient-to-r from-gold via-accent to-accent-warm bg-clip-text text-transparent">
+            <span className="text-gradient-accent">
               Precious Moments
             </span>
             <motion.span
-              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent"
+              className="absolute -bottom-2 left-0 right-0 h-1 bg-accent-gradient"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: 1, delay: 0.5 }}
             />
           </span>
-          <span className="block text-foreground/90 mt-2">Into Timeless Art</span>
+          <span className="block text-foreground mt-2">Into Timeless Art</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed"
+          className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed px-4"
         >
           Craft bespoke treasures that capture life's most cherished memories. 
           <span className="text-foreground/80"> Each piece is meticulously designed </span>
@@ -135,36 +136,29 @@ export const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-6"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
         >
-          <Link to="/customize" className="group">
+          <Link to="/customize" className="group w-full sm:w-auto">
             <motion.span
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
-              className="relative inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-semibold text-lg overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, hsl(43 74% 49%) 0%, hsl(339 78% 53%) 50%, hsl(14 100% 59%) 100%)',
-                boxShadow: '0 20px 60px hsl(339 78% 53% / 0.4), 0 0 40px hsl(43 74% 49% / 0.2)',
-              }}
+              className="relative inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-base overflow-hidden bg-accent-gradient glow-accent"
             >
-              <span className="relative z-10 text-white">Begin Your Creation</span>
+              <span className="relative z-10 text-accent-foreground">Begin Your Creation</span>
               <motion.span
                 animate={{ x: [0, 8, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className="relative z-10"
               >
-                <Sparkles className="w-5 h-5 text-white" />
+                <Sparkles className="w-5 h-5 text-accent-foreground" />
               </motion.span>
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-accent-warm via-accent to-gold opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              />
             </motion.span>
           </Link>
-          <Link to="/shop">
+          <Link to="/shop" className="w-full sm:w-auto">
             <motion.span
-              whileHover={{ scale: 1.05, borderColor: 'hsl(43 74% 49%)' }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-semibold text-lg border-2 border-foreground/20 hover:border-gold text-foreground hover:text-gold transition-all duration-300 backdrop-blur-sm"
+              className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-base border-2 border-border hover:border-gold text-foreground hover:text-gold transition-all duration-300 backdrop-blur-sm"
             >
               Explore Collection
               <ArrowRight className="w-5 h-5" />
@@ -177,7 +171,7 @@ export const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="flex flex-wrap justify-center gap-12 md:gap-20 mt-20"
+          className="flex flex-wrap justify-center gap-8 md:gap-16 mt-16"
         >
           {[
             { value: '50K+', label: 'Happy Customers', icon: '✨' },
@@ -189,10 +183,10 @@ export const HeroSection = () => {
               className="text-center group"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gold via-accent to-accent-warm bg-clip-text text-transparent mb-2">
+              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-gradient-accent mb-2">
                 {stat.value}
               </div>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
                 <span>{stat.icon}</span>
                 <span>{stat.label}</span>
               </div>
@@ -206,15 +200,15 @@ export const HeroSection = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
         <motion.div
           animate={{ y: [0, 12, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-8 h-14 rounded-full border-2 border-gold/40 flex items-start justify-center p-3 backdrop-blur-sm"
+          className="w-7 h-12 rounded-full border-2 border-gold/40 flex items-start justify-center p-2.5 backdrop-blur-sm"
         >
           <motion.div 
-            className="w-1.5 h-3 rounded-full bg-gradient-to-b from-gold to-accent"
+            className="w-1.5 h-2.5 rounded-full bg-accent-gradient"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
