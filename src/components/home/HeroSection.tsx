@@ -1,32 +1,8 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Sparkles, Crown, Diamond } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useRef, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, Float } from '@react-three/drei';
+import { useRef } from 'react';
 import heroBg from '@/assets/hero-bg.jpg';
-
-const GiftBeeModel = () => {
-  const { scene } = useGLTF('/models/gift-bee.glb');
-  
-  return (
-    <Float
-      speed={2}
-      rotationIntensity={0.5}
-      floatIntensity={0.5}
-    >
-      <primitive 
-        object={scene} 
-        scale={2.5} 
-        position={[0, -0.5, 0]}
-        rotation={[0, Math.PI / 4, 0]}
-      />
-    </Float>
-  );
-};
-
-// Preload the model
-useGLTF.preload('/models/gift-bee.glb');
 
 export const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -108,128 +84,87 @@ export const HeroSection = () => {
       {/* Content */}
       <motion.div
         style={{ opacity, scale }}
-        className="relative container mx-auto px-4 lg:px-8 z-10 py-10"
+        className="relative container mx-auto px-4 lg:px-8 text-center z-10 py-10"
       >
-        <div className="grid lg:grid-cols-2 gap-8 items-center">
-          {/* Left side - Text content */}
-          <div className="text-center lg:text-left">
-            {/* Premium Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.8 }}
-              className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-gold/10 border border-gold/30 mb-6 backdrop-blur-sm"
-            >
-              <Crown className="w-4 h-4 text-gold" />
-              <span className="text-xs sm:text-sm font-semibold tracking-wider uppercase text-gold">
-                Luxury Personalized Gifts
-              </span>
-              <Diamond className="w-3 h-3 text-gold" />
-            </motion.div>
+        {/* Premium Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-gold/10 border border-gold/30 mb-6 backdrop-blur-sm"
+        >
+          <Crown className="w-4 h-4 text-gold" />
+          <span className="text-xs sm:text-sm font-semibold tracking-wider uppercase text-gold">
+            Luxury Personalized Gifts
+          </span>
+          <Diamond className="w-3 h-3 text-gold" />
+        </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
-            >
-              <span className="block text-foreground">Transform Your</span>
-              <span className="relative inline-block mt-2">
-                <span className="text-gradient-accent">
-                  Precious Moments
-                </span>
-                <motion.span
-                  className="absolute -bottom-2 left-0 right-0 h-1 bg-accent-gradient"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                />
-              </span>
-              <span className="block text-foreground mt-2">Into Timeless Art</span>
-            </motion.h1>
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
+        >
+          <span className="block text-foreground">Transform Your</span>
+          <span className="relative inline-block mt-2">
+            <span className="text-gradient-accent">
+              Precious Moments
+            </span>
+            <motion.span
+              className="absolute -bottom-2 left-0 right-0 h-1 bg-accent-gradient"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 1, delay: 0.5 }}
+            />
+          </span>
+          <span className="block text-foreground mt-2">Into Timeless Art</span>
+        </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed"
-            >
-              Craft bespoke treasures that capture life's most cherished memories. 
-              <span className="text-foreground/80"> Each piece is meticulously designed </span>
-              to celebrate love, joy, and unforgettable moments.
-            </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed px-4"
+        >
+          Craft bespoke treasures that capture life's most cherished memories. 
+          <span className="text-foreground/80"> Each piece is meticulously designed </span>
+          to celebrate love, joy, and unforgettable moments.
+        </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4 sm:gap-6"
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
+        >
+          <Link to="/customize" className="group w-full sm:w-auto">
+            <motion.span
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-base overflow-hidden bg-accent-gradient glow-accent"
             >
-              <Link to="/customize" className="group w-full sm:w-auto">
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-base overflow-hidden bg-accent-gradient glow-accent"
-                >
-                  <span className="relative z-10 text-accent-foreground">Begin Your Creation</span>
-                  <motion.span
-                    animate={{ x: [0, 8, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="relative z-10"
-                  >
-                    <Sparkles className="w-5 h-5 text-accent-foreground" />
-                  </motion.span>
-                </motion.span>
-              </Link>
-              <Link to="/shop" className="w-full sm:w-auto">
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-base border-2 border-border hover:border-gold text-foreground hover:text-gold transition-all duration-300 backdrop-blur-sm"
-                >
-                  Explore Collection
-                  <ArrowRight className="w-5 h-5" />
-                </motion.span>
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Right side - 3D Model */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="relative h-[400px] md:h-[500px] lg:h-[600px]"
-          >
-            {/* Glow effect behind 3D model */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-72 h-72 md:w-96 md:h-96 rounded-full bg-accent/20 blur-3xl" />
-              <div className="absolute w-48 h-48 md:w-64 md:h-64 rounded-full bg-gold/20 blur-2xl" />
-            </div>
-            
-            <Canvas
-              camera={{ position: [0, 0, 5], fov: 45 }}
-              className="!absolute inset-0"
+              <span className="relative z-10 text-accent-foreground">Begin Your Creation</span>
+              <motion.span
+                animate={{ x: [0, 8, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="relative z-10"
+              >
+                <Sparkles className="w-5 h-5 text-accent-foreground" />
+              </motion.span>
+            </motion.span>
+          </Link>
+          <Link to="/shop" className="w-full sm:w-auto">
+            <motion.span
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-2xl font-semibold text-base border-2 border-border hover:border-gold text-foreground hover:text-gold transition-all duration-300 backdrop-blur-sm"
             >
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[5, 5, 5]} intensity={1.2} />
-              <directionalLight position={[-5, 5, -5]} intensity={0.5} />
-              <pointLight position={[0, 5, 0]} intensity={0.8} color="#FFD700" />
-              <Suspense fallback={null}>
-                <GiftBeeModel />
-                <Environment preset="city" />
-              </Suspense>
-              <OrbitControls 
-                enableZoom={false}
-                enablePan={false}
-                autoRotate
-                autoRotateSpeed={2}
-                minPolarAngle={Math.PI / 3}
-                maxPolarAngle={Math.PI / 1.8}
-              />
-            </Canvas>
-          </motion.div>
-        </div>
+              Explore Collection
+              <ArrowRight className="w-5 h-5" />
+            </motion.span>
+          </Link>
+        </motion.div>
 
         {/* Premium Stats */}
         <motion.div
