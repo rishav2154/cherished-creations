@@ -1,8 +1,8 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Sparkles, Crown, Diamond } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useRef } from 'react';
-import heroBg from '@/assets/hero-bg.jpg';
+import { useRef, Suspense } from 'react';
+import Spline from '@splinetool/react-spline';
 
 export const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -11,7 +11,6 @@ export const HeroSection = () => {
     offset: ['start start', 'end start'],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9]);
 
@@ -20,16 +19,17 @@ export const HeroSection = () => {
       ref={containerRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
     >
-      {/* Background with Premium Overlay */}
-      <motion.div style={{ y }} className="absolute inset-0">
-        <img
-          src={heroBg}
-          alt="Hero background"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
-      </motion.div>
+      {/* Spline 3D Background */}
+      <div className="absolute inset-0">
+        <Suspense fallback={<div className="w-full h-full bg-background" />}>
+          <Spline
+            scene="https://prod.spline.design/M4lt5v1zkLC9BNwq/scene.splinecode"
+            className="w-full h-full"
+          />
+        </Suspense>
+        {/* Overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/80 pointer-events-none" />
+      </div>
 
       {/* Luxury Gold Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
