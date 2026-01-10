@@ -125,7 +125,7 @@ const Wishlist = () => {
                         {item.category.replace('-', ' ')}
                       </p>
                       <div className="flex items-center justify-between mt-4">
-                        <span className="text-lg font-bold">${item.price.toFixed(2)}</span>
+                        <span className="text-lg font-bold">₹{item.price.toFixed(2)}</span>
                       </div>
 
                       {/* Actions */}

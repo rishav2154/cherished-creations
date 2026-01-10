@@ -208,7 +208,7 @@ const Customize = () => {
                         <div className="text-left flex-1">
                           <p className="text-sm font-medium">{product.name}</p>
                           <p className={`text-xs ${selectedProduct === product.id ? 'text-accent-foreground/70' : 'text-muted-foreground'}`}>
-                            ${product.price}
+                            ₹{product.price}
                           </p>
                         </div>
                         {selectedProduct === product.id && (
@@ -599,7 +599,7 @@ const Customize = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Price</p>
                     <p className="text-2xl font-bold text-gradient-accent">
-                      ${currentProduct.price}
+                      ₹{currentProduct.price}
                     </p>
                   </div>
                   <motion.button

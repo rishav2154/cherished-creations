@@ -139,7 +139,7 @@ const OrderSuccess = () => {
               </div>
               <div className="flex justify-between text-sm pt-2 border-t border-border">
                 <span className="font-semibold">Total Amount</span>
-                <span className="text-xl font-bold">${order.total.toFixed(2)}</span>
+                <span className="text-xl font-bold">₹{order.total.toFixed(2)}</span>
               </div>
             </div>
           </motion.div>
