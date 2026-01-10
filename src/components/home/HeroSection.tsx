@@ -1,11 +1,52 @@
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, Crown, Diamond } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useRef, Suspense } from 'react';
+import { useRef, Suspense, useState } from 'react';
 import Spline from '@splinetool/react-spline';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Skeleton loader component for Spline background
+const SplineLoader = () => (
+  <div className="absolute inset-0 bg-background">
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="relative w-full h-full">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-primary/5 to-gold/10 animate-pulse" />
+        
+        {/* Decorative skeleton elements */}
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 md:w-48 md:h-48">
+          <Skeleton className="w-full h-full rounded-full opacity-30" />
+        </div>
+        <div className="absolute bottom-1/3 right-1/4 w-24 h-24 md:w-36 md:h-36">
+          <Skeleton className="w-full h-full rounded-full opacity-20" />
+        </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 md:w-64 md:h-64">
+          <Skeleton className="w-full h-full rounded-full opacity-40" />
+        </div>
+        
+        {/* Loading text */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="w-2 h-2 rounded-full bg-accent"
+                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">Loading 3D Experience...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isSplineLoaded, setIsSplineLoaded] = useState(false);
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end start'],
@@ -19,14 +60,36 @@ export const HeroSection = () => {
       ref={containerRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
     >
-      {/* Spline 3D Background */}
+      {/* Spline 3D Background with Skeleton Loader */}
       <div className="absolute inset-0">
-        <Suspense fallback={<div className="w-full h-full bg-background" />}>
-          <Spline
-            scene="https://prod.spline.design/M4lt5v1zkLC9BNwq/scene.splinecode"
-            className="w-full h-full"
-          />
-        </Suspense>
+        <AnimatePresence>
+          {!isSplineLoaded && (
+            <motion.div
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="absolute inset-0 z-10"
+            >
+              <SplineLoader />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isSplineLoaded ? 1 : 0 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          className="w-full h-full"
+        >
+          <Suspense fallback={null}>
+            <Spline
+              scene="https://prod.spline.design/M4lt5v1zkLC9BNwq/scene.splinecode"
+              className="w-full h-full"
+              onLoad={() => setIsSplineLoaded(true)}
+            />
+          </Suspense>
+        </motion.div>
+        
         {/* Overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/80 pointer-events-none" />
       </div>

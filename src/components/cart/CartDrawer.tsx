@@ -90,7 +90,7 @@ export const CartDrawer = () => {
                             <p className="text-xs text-accent mt-1">Customized</p>
                           )}
                           <p className="text-sm font-semibold mt-2">
-                            ${item.price.toFixed(2)}
+                            ₹{item.price.toFixed(2)}
                           </p>
                         </div>
                         <div className="flex flex-col items-end justify-between">
@@ -136,7 +136,7 @@ export const CartDrawer = () => {
               <div className="p-6 border-t border-border space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="text-xl font-bold">${getTotalPrice().toFixed(2)}</span>
+                  <span className="text-xl font-bold">₹{getTotalPrice().toFixed(2)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Shipping and taxes calculated at checkout
