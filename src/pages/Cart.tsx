@@ -136,7 +136,7 @@ const Cart = () => {
                           </button>
                         </div>
                         <p className="text-xl font-bold">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -162,7 +162,7 @@ const Cart = () => {
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span>${getTotalPrice().toFixed(2)}</span>
+                      <span>₹{getTotalPrice().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
@@ -170,7 +170,7 @@ const Cart = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tax</span>
-                      <span>${(getTotalPrice() * 0.08).toFixed(2)}</span>
+                      <span>₹{(getTotalPrice() * 0.08).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -192,7 +192,7 @@ const Cart = () => {
                     <div className="flex justify-between">
                       <span className="font-semibold">Total</span>
                       <span className="text-2xl font-bold">
-                        ${(getTotalPrice() * 1.08).toFixed(2)}
+                        ₹{(getTotalPrice() * 1.08).toFixed(2)}
                       </span>
                     </div>
                   </div>
