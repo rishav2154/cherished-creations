@@ -1,9 +1,11 @@
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, Crown, Diamond } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useRef, Suspense, useState } from 'react';
-import Spline from '@splinetool/react-spline';
+import { useRef, Suspense, useState, lazy } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load Spline to prevent blocking page transitions
+const Spline = lazy(() => import('@splinetool/react-spline'));
 
 // Skeleton loader component for Spline background
 const SplineLoader = () => (
