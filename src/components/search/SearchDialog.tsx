@@ -192,10 +192,10 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="font-bold">${product.price.toFixed(2)}</p>
+                            <p className="font-bold">₹{product.price.toFixed(2)}</p>
                             {product.originalPrice && (
                               <p className="text-xs text-muted-foreground line-through">
-                                ${product.originalPrice.toFixed(2)}
+                                ₹{product.originalPrice.toFixed(2)}
                               </p>
                             )}
                           </div>
