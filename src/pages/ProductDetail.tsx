@@ -22,6 +22,7 @@ import { getProductById, products } from '@/data/products';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductReviews } from '@/components/reviews/ProductReviews';
 
 import productTshirt from '@/assets/product-tshirt.jpg';
 import productMug from '@/assets/product-mug.jpg';
@@ -312,6 +313,9 @@ const ProductDetail = () => {
               </div>
             </motion.div>
           </div>
+
+          {/* Customer Reviews */}
+          <ProductReviews productId={product.id} />
 
           {/* Related Products */}
           {relatedProducts.length > 0 && (
