@@ -13,12 +13,13 @@ import {
   Minus,
   Upload,
   Type,
-  Palette
+  Palette,
+  Loader2
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
-import { getProductById, products } from '@/data/products';
+import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -42,9 +43,10 @@ const categoryImages: Record<string, string> = {
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const product = getProductById(id || '');
+  const { data: product, isLoading } = useProduct(id || '');
+  const { data: allProducts = [] } = useProducts();
   const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || '');
+  const [selectedColor, setSelectedColor] = useState('');
   const [customText, setCustomText] = useState('');
   
   const addItem = useCartStore((state) => state.addItem);
@@ -52,6 +54,14 @@ const ProductDetail = () => {
   const { isInWishlist, toggleItem } = useWishlistStore();
   
   const inWishlist = product ? isInWishlist(product.id) : false;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -90,7 +100,7 @@ const ProductDetail = () => {
     });
   };
 
-  const relatedProducts = products
+  const relatedProducts = allProducts
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 

@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Grid3X3, Grid2X2, SlidersHorizontal, X, Search } from 'lucide-react';
+import { Filter, Grid3X3, Grid2X2, SlidersHorizontal, X, Search, Loader2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
-import { products, categories } from '@/data/products';
+import { useProducts, categories } from '@/hooks/useProducts';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 
@@ -14,10 +14,11 @@ const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gridCols, setGridCols] = useState<3 | 4>(4);
   const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 200]);
+  const [priceRange, setPriceRange] = useState([0, 1000]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
   const selectedCategory = searchParams.get('category') || '';
+  const { data: products = [], isLoading } = useProducts();
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -29,7 +30,7 @@ const Shop = () => {
         product.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesPrice && matchesSearch;
     });
-  }, [selectedCategory, priceRange, searchQuery]);
+  }, [products, selectedCategory, priceRange, searchQuery]);
 
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId === selectedCategory) {
@@ -127,8 +128,8 @@ const Shop = () => {
                   <Slider
                     value={priceRange}
                     onValueChange={setPriceRange}
-                    max={200}
-                    step={5}
+                    max={1000}
+                    step={10}
                     className="mb-4"
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
@@ -138,13 +139,13 @@ const Shop = () => {
                 </div>
 
                 {/* Clear Filters */}
-                {(selectedCategory || priceRange[0] > 0 || priceRange[1] < 200 || searchQuery) && (
+                {(selectedCategory || priceRange[0] > 0 || priceRange[1] < 1000 || searchQuery) && (
                   <button
                     onClick={() => {
                       searchParams.delete('category');
                       searchParams.delete('search');
                       setSearchParams(searchParams);
-                      setPriceRange([0, 200]);
+                      setPriceRange([0, 1000]);
                       setSearchQuery('');
                     }}
                     className="w-full py-2 text-sm text-accent hover:underline"
@@ -196,46 +197,54 @@ const Shop = () => {
               </div>
 
               {/* Products Grid */}
-              <motion.div
-                layout
-                className={`grid gap-6 ${
-                  gridCols === 3
-                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                }`}
-              >
-                <AnimatePresence mode="popLayout">
-                  {filteredProducts.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* Empty State */}
-              {filteredProducts.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-16"
-                >
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
-                    <Filter className="w-10 h-10 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">No products found</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Try adjusting your filters to see more results.
-                  </p>
-                  <button
-                    onClick={() => {
-                      searchParams.delete('category');
-                      setSearchParams(searchParams);
-                      setPriceRange([0, 200]);
-                    }}
-                    className="btn-luxury"
+              {isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                </div>
+              ) : (
+                <>
+                  <motion.div
+                    layout
+                    className={`grid gap-6 ${
+                      gridCols === 3
+                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                    }`}
                   >
-                    Clear Filters
-                  </button>
-                </motion.div>
+                    <AnimatePresence mode="popLayout">
+                      {filteredProducts.map((product, index) => (
+                        <ProductCard key={product.id} product={product} index={index} />
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* Empty State */}
+                  {filteredProducts.length === 0 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-16"
+                    >
+                      <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+                        <Filter className="w-10 h-10 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-medium mb-2">No products found</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Try adjusting your filters to see more results.
+                      </p>
+                      <button
+                        onClick={() => {
+                          searchParams.delete('category');
+                          setSearchParams(searchParams);
+                          setPriceRange([0, 1000]);
+                        }}
+                        className="btn-luxury"
+                      >
+                        Clear Filters
+                      </button>
+                    </motion.div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -303,8 +312,8 @@ const Shop = () => {
                 <Slider
                   value={priceRange}
                   onValueChange={setPriceRange}
-                  max={200}
-                  step={5}
+                  max={1000}
+                  step={10}
                   className="mb-4"
                 />
                 <div className="flex justify-between text-sm text-muted-foreground">

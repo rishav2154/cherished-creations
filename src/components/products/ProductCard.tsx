@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { Product } from '@/data/products';
+import type { Product } from '@/hooks/useProducts';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartStore } from '@/store/cartStore';
 
