@@ -26,27 +26,31 @@ export const useAdminAuth = () => {
       } catch (err) {
         console.error('Error:', err);
         setIsAdmin(false);
+      } finally {
+        setLoading(false);
       }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        // Don't set loading to false here - wait for admin check
         setTimeout(() => {
           checkAdminStatus(session.user.id);
         }, 0);
       } else {
         setIsAdmin(false);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminStatus(session.user.id);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
