@@ -41,7 +41,7 @@ const categoryImages: Record<string, string> = {
 const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice, clearCart, appliedCoupon, getDiscount, getFinalPrice } = useCartStore();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -58,9 +58,11 @@ const Checkout = () => {
   });
 
   const subtotal = getTotalPrice();
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const discount = getDiscount();
+  const discountedSubtotal = getFinalPrice();
+  const shipping = appliedCoupon?.discountType === 'free_shipping' ? 0 : (subtotal > 500 ? 0 : 50);
+  const tax = discountedSubtotal * 0.08;
+  const total = discountedSubtotal + shipping + tax;
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -152,12 +154,14 @@ const Checkout = () => {
           user_id: user.id,
           order_number: `ORD-${Date.now()}`,
           subtotal,
+          discount,
           shipping,
           tax,
           total,
           payment_method: paymentMethod,
           payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
           status: 'pending',
+          notes: appliedCoupon ? `Coupon: ${appliedCoupon.code}` : null,
           shipping_address: {
             full_name: address.fullName,
             phone: address.phone,
@@ -428,6 +432,18 @@ const Checkout = () => {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>₹{subtotal.toFixed(2)}</span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-500">Discount ({appliedCoupon?.code})</span>
+                      <span className="text-green-500">-₹{discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {appliedCoupon?.discountType === 'free_shipping' && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-500">Free Shipping ({appliedCoupon.code})</span>
+                      <span className="text-green-500">Applied</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
                     <span className={shipping === 0 ? 'text-green-500' : ''}>
