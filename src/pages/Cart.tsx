@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
+import { CouponInput } from '@/components/cart/CouponInput';
 import { useCartStore } from '@/store/cartStore';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 
@@ -23,13 +24,12 @@ const categoryImages: Record<string, string> = {
 };
 
 const Cart = () => {
-  const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
+  const { items, removeItem, updateQuantity, getTotalPrice, clearCart, appliedCoupon, getDiscount, getFinalPrice } = useCartStore();
 
   const getItemImage = (item: typeof items[0]) => {
     if (item.image && item.image !== '/placeholder.svg') {
       return item.image;
     }
-    // Try to get from category images based on product name
     for (const [category, image] of Object.entries(categoryImages)) {
       if (item.name.toLowerCase().includes(category.replace('-', ' '))) {
         return image;
@@ -37,6 +37,12 @@ const Cart = () => {
     }
     return productTshirt;
   };
+
+  const subtotal = getTotalPrice();
+  const discount = getDiscount();
+  const shipping = appliedCoupon?.discountType === 'free_shipping' ? 0 : (subtotal > 500 ? 0 : 50);
+  const tax = getFinalPrice() * 0.08;
+  const total = getFinalPrice() + shipping + tax;
 
   return (
     <div className="min-h-screen bg-background">
@@ -162,37 +168,36 @@ const Cart = () => {
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span>₹{getTotalPrice().toFixed(2)}</span>
+                      <span>₹{subtotal.toFixed(2)}</span>
                     </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-500">Discount ({appliedCoupon?.code})</span>
+                        <span className="text-green-500">-₹{discount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-accent">Free</span>
+                      <span className={shipping === 0 ? 'text-green-500' : ''}>
+                        {shipping === 0 ? 'Free' : `₹${shipping.toFixed(2)}`}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Tax</span>
-                      <span>₹{(getTotalPrice() * 0.08).toFixed(2)}</span>
+                      <span className="text-muted-foreground">Tax (8%)</span>
+                      <span>₹{tax.toFixed(2)}</span>
                     </div>
                   </div>
 
                   {/* Coupon */}
                   <div className="mb-6">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Coupon code"
-                        className="flex-1 px-4 py-3 rounded-xl bg-muted/50 border border-border focus:border-accent focus:outline-none transition-colors text-sm"
-                      />
-                      <button className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors text-sm font-medium">
-                        Apply
-                      </button>
-                    </div>
+                    <CouponInput />
                   </div>
 
                   <div className="border-t border-border pt-4 mb-6">
                     <div className="flex justify-between">
                       <span className="font-semibold">Total</span>
                       <span className="text-2xl font-bold">
-                        ₹{(getTotalPrice() * 1.08).toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
                   </div>

@@ -15,9 +15,18 @@ export interface CartItem {
   };
 }
 
+export interface AppliedCoupon {
+  code: string;
+  discountType: 'percentage' | 'fixed' | 'free_shipping';
+  discountValue: number;
+  maxDiscount?: number;
+  description?: string;
+}
+
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
+  appliedCoupon: AppliedCoupon | null;
   addItem: (item: Omit<CartItem, 'id'>) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -27,6 +36,10 @@ interface CartStore {
   closeCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+  applyCoupon: (coupon: AppliedCoupon) => void;
+  removeCoupon: () => void;
+  getDiscount: () => number;
+  getFinalPrice: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -34,6 +47,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      appliedCoupon: null,
 
       addItem: (item) => {
         const id = `${item.productId}-${Date.now()}`;
@@ -60,7 +74,7 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], appliedCoupon: null }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
@@ -75,6 +89,34 @@ export const useCartStore = create<CartStore>()(
           (total, item) => total + item.price * item.quantity,
           0
         );
+      },
+
+      applyCoupon: (coupon) => set({ appliedCoupon: coupon }),
+      removeCoupon: () => set({ appliedCoupon: null }),
+
+      getDiscount: () => {
+        const { appliedCoupon, getTotalPrice } = get();
+        if (!appliedCoupon) return 0;
+
+        const subtotal = getTotalPrice();
+
+        if (appliedCoupon.discountType === 'percentage') {
+          const discount = (subtotal * appliedCoupon.discountValue) / 100;
+          return appliedCoupon.maxDiscount
+            ? Math.min(discount, appliedCoupon.maxDiscount)
+            : discount;
+        }
+
+        if (appliedCoupon.discountType === 'fixed') {
+          return Math.min(appliedCoupon.discountValue, subtotal);
+        }
+
+        return 0; // free_shipping doesn't affect product price
+      },
+
+      getFinalPrice: () => {
+        const { getTotalPrice, getDiscount } = get();
+        return getTotalPrice() - getDiscount();
       },
     }),
     {
