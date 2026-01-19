@@ -8,12 +8,14 @@ import {
   Users,
   LogOut,
   ChevronLeft,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+  { icon: Package, label: 'Products', path: '/admin/products' },
   { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
   { icon: Tag, label: 'Coupons', path: '/admin/coupons' },
   { icon: Users, label: 'Users', path: '/admin/users' },
