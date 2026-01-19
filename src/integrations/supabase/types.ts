@@ -240,6 +240,57 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string
+          created_at: string | null
+          customization_options: Json | null
+          description: string | null
+          id: string
+          image_url: string | null
+          images: string[] | null
+          is_active: boolean | null
+          name: string
+          original_price: number | null
+          price: number
+          stock: number | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          customization_options?: Json | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          name: string
+          original_price?: number | null
+          price?: number
+          stock?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          customization_options?: Json | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          stock?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
