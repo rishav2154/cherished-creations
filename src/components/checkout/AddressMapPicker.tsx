@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { Icon, LatLng } from 'leaflet';
+import L from 'leaflet';
 import { Search, MapPin, Loader2, Navigation } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icon
-const customIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
 });
 
 interface AddressResult {
@@ -46,26 +43,26 @@ interface AddressMapPickerProps {
   initialAddress?: string;
 }
 
-// Component to handle map click events
-const MapClickHandler = ({ onLocationSelect }: { onLocationSelect: (latlng: LatLng) => void }) => {
+// Component to handle map interactions
+function MapEvents({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
   useMapEvents({
     click: (e) => {
-      onLocationSelect(e.latlng);
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
     },
   });
   return null;
-};
+}
 
 // Component to recenter map
-const MapRecenter = ({ position }: { position: [number, number] }) => {
+function MapRecenter({ position }: { position: [number, number] }) {
   const map = useMap();
   useEffect(() => {
     map.setView(position, 16);
   }, [position, map]);
   return null;
-};
+}
 
-export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMapPickerProps) => {
+export function AddressMapPicker({ onAddressSelect, initialAddress }: AddressMapPickerProps) {
   const [searchQuery, setSearchQuery] = useState(initialAddress || '');
   const [searchResults, setSearchResults] = useState<AddressResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -73,6 +70,7 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
   const [selectedPosition, setSelectedPosition] = useState<[number, number]>([12.9716, 77.5946]); // Default: Bangalore
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [isLocating, setIsLocating] = useState(false);
+  const [mapKey, setMapKey] = useState(0);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -126,16 +124,8 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
     }
   };
 
-  // Handle location selection from search results
-  const handleResultSelect = (result: AddressResult) => {
-    const lat = parseFloat(result.lat);
-    const lon = parseFloat(result.lon);
-    setSelectedPosition([lat, lon]);
-    setSearchQuery(result.display_name);
-    setSelectedAddress(result.display_name);
-    setShowResults(false);
-
-    // Extract address components
+  // Extract and send address components
+  const processAddress = (result: AddressResult) => {
     const addr = result.address;
     const addressLine1 = [addr.house_number, addr.road].filter(Boolean).join(' ') || result.display_name.split(',')[0];
     const addressLine2 = addr.suburb || '';
@@ -152,29 +142,27 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
     });
   };
 
+  // Handle location selection from search results
+  const handleResultSelect = (result: AddressResult) => {
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    setSelectedPosition([lat, lon]);
+    setSearchQuery(result.display_name);
+    setSelectedAddress(result.display_name);
+    setShowResults(false);
+    setMapKey(prev => prev + 1);
+    processAddress(result);
+  };
+
   // Handle map click
-  const handleMapClick = async (latlng: LatLng) => {
-    setSelectedPosition([latlng.lat, latlng.lng]);
+  const handleMapClick = async (lat: number, lng: number) => {
+    setSelectedPosition([lat, lng]);
     
-    const result = await reverseGeocode(latlng.lat, latlng.lng);
+    const result = await reverseGeocode(lat, lng);
     if (result) {
       setSearchQuery(result.display_name);
       setSelectedAddress(result.display_name);
-
-      const addr = result.address;
-      const addressLine1 = [addr.house_number, addr.road].filter(Boolean).join(' ') || result.display_name.split(',')[0];
-      const addressLine2 = addr.suburb || '';
-      const city = addr.city || addr.town || addr.village || '';
-      const state = addr.state || '';
-      const pincode = addr.postcode || '';
-
-      onAddressSelect({
-        addressLine1,
-        addressLine2,
-        city,
-        state,
-        pincode,
-      });
+      processAddress(result);
     }
   };
 
@@ -191,26 +179,13 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         setSelectedPosition([lat, lon]);
+        setMapKey(prev => prev + 1);
 
         const result = await reverseGeocode(lat, lon);
         if (result) {
           setSearchQuery(result.display_name);
           setSelectedAddress(result.display_name);
-
-          const addr = result.address;
-          const addressLine1 = [addr.house_number, addr.road].filter(Boolean).join(' ') || result.display_name.split(',')[0];
-          const addressLine2 = addr.suburb || '';
-          const city = addr.city || addr.town || addr.village || '';
-          const state = addr.state || '';
-          const pincode = addr.postcode || '';
-
-          onAddressSelect({
-            addressLine1,
-            addressLine2,
-            city,
-            state,
-            pincode,
-          });
+          processAddress(result);
         }
         setIsLocating(false);
       },
@@ -297,6 +272,7 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
       {/* Map Container */}
       <div className="rounded-xl overflow-hidden border border-border h-64 md:h-80">
         <MapContainer
+          key={mapKey}
           center={selectedPosition}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
@@ -306,8 +282,8 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <Marker position={selectedPosition} icon={customIcon} />
-          <MapClickHandler onLocationSelect={handleMapClick} />
+          <Marker position={selectedPosition} />
+          <MapEvents onLocationSelect={handleMapClick} />
           <MapRecenter position={selectedPosition} />
         </MapContainer>
       </div>
@@ -331,4 +307,4 @@ export const AddressMapPicker = ({ onAddressSelect, initialAddress }: AddressMap
       </p>
     </div>
   );
-};
+}
