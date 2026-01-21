@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -10,7 +11,7 @@ interface ProductCardProps {
   index?: number;
 }
 
-const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
+export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ product, index = 0 }, ref) => {
   const { isInWishlist, toggleItem } = useWishlistStore();
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -43,11 +44,11 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
   return (
     <motion.div
-      layout
+      ref={ref}
       initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
     >
       <Link to={`/product/${product.id}`}>
         <motion.div
@@ -56,7 +57,7 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
         >
           {/* Image Container */}
           <div className="relative aspect-square overflow-hidden">
-            <img
+            <motion.img
               src={product.images[0]}
               alt={product.name}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -142,6 +143,6 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       </Link>
     </motion.div>
   );
-};
+});
 
-export { ProductCard };
+ProductCard.displayName = 'ProductCard';

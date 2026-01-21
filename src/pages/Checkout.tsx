@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { AddressMapPicker } from '@/components/checkout/AddressMapPicker';
 import { 
   MapPin, 
   CreditCard, 
@@ -257,23 +256,6 @@ const Checkout = () => {
                     <MapPin className="w-5 h-5 text-accent" />
                   </div>
                   <h2 className="text-xl font-semibold">Shipping Address</h2>
-                </div>
-
-                {/* Map Picker */}
-                <div className="mb-6">
-                  <Label className="mb-2 block">Search & Select Location</Label>
-                  <AddressMapPicker
-                    onAddressSelect={(mapAddress) => {
-                      setAddress(prev => ({
-                        ...prev,
-                        addressLine1: mapAddress.addressLine1 || prev.addressLine1,
-                        addressLine2: mapAddress.addressLine2 || prev.addressLine2,
-                        city: mapAddress.city || prev.city,
-                        state: mapAddress.state || prev.state,
-                        pincode: mapAddress.pincode || prev.pincode,
-                      }));
-                    }}
-                  />
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
