@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -10,7 +11,7 @@ interface ProductCardProps {
   index?: number;
 }
 
-export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
+export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ product, index = 0 }, ref) => {
   const { isInWishlist, toggleItem } = useWishlistStore();
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -43,6 +44,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -129,7 +131,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 )}
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-yellow-500">★</span>
+                <span className="text-accent">★</span>
                 <span className="text-sm font-medium">{product.rating}</span>
                 <span className="text-xs text-muted-foreground">
                   ({product.reviewCount})
@@ -141,4 +143,6 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       </Link>
     </motion.div>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
