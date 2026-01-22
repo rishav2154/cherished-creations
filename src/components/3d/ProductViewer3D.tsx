@@ -20,7 +20,7 @@ interface ImageTransform {
 }
 
 interface ProductViewer3DProps {
-  productType: 'tshirt' | 'mug' | 'frame' | 'phone' | 'poster' | 'combo';
+  productType: 'mug' | 'frame' | 'phone' | 'keychain-heart' | 'keychain-circle' | 'keychain-square' | 'keychain-cubes' | 'night-lamp' | 'frame-6x8';
   color?: string;
   customImage?: string | null;
   customText?: string;
@@ -807,15 +807,6 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
       
       <Suspense fallback={<LoadingSpinner />}>
         <Center>
-          {productType === 'tshirt' && (
-            <TShirtModel 
-              color={productColor} 
-              customImage={customImage} 
-              customText={customText} 
-              textColor={textColor}
-              imageTransform={transform}
-            />
-          )}
           {productType === 'mug' && (
             <MugModel 
               color={productColor} 
@@ -825,7 +816,7 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
               imageTransform={transform}
             />
           )}
-          {productType === 'frame' && (
+          {(productType === 'frame' || productType === 'frame-6x8') && (
             <FrameModel 
               color={productColor} 
               customImage={customImage}
@@ -841,7 +832,7 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
               imageTransform={transform}
             />
           )}
-          {productType === 'poster' && (
+          {productType === 'night-lamp' && (
             <PosterModel 
               color={productColor} 
               customImage={customImage} 
@@ -850,7 +841,15 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
               imageTransform={transform}
             />
           )}
-          {productType === 'combo' && <ComboModel color={productColor} />}
+          {(productType === 'keychain-heart' || productType === 'keychain-circle' || productType === 'keychain-square' || productType === 'keychain-cubes') && (
+            <MugModel 
+              color={productColor} 
+              customImage={customImage} 
+              customText={customText} 
+              textColor={textColor}
+              imageTransform={transform}
+            />
+          )}
         </Center>
         
         <ContactShadows 
