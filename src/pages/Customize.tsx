@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, Type, Palette, RotateCcw, ShoppingBag, 
-  Shirt, Coffee, Frame, Smartphone, Image, Gift,
+  Coffee, Frame, Smartphone, Gift,
   Sparkles, Check, X, Move, ZoomIn, RotateCw,
   Minus, Plus, ChevronLeft, ChevronRight, ChevronUp, ChevronDown
 } from 'lucide-react';
@@ -14,12 +14,15 @@ import ProductViewer3D from '@/components/3d/ProductViewer3D';
 import { Slider } from '@/components/ui/slider';
 
 const productTypes = [
-  { id: 'tshirt', name: 'T-Shirt', icon: Shirt, price: 29.99 },
-  { id: 'mug', name: 'Mug', icon: Coffee, price: 19.99 },
-  { id: 'frame', name: 'Frame', icon: Frame, price: 34.99 },
-  { id: 'phone', name: 'Phone Cover', icon: Smartphone, price: 24.99 },
-  { id: 'poster', name: 'Poster', icon: Image, price: 14.99 },
-  { id: 'combo', name: 'Gift Combo', icon: Gift, price: 79.99 },
+  { id: 'mug', name: 'Magic Cup', icon: Coffee, price: 299 },
+  { id: 'frame', name: 'Fibre Photo Frame 7x5', icon: Frame, price: 349 },
+  { id: 'keychain-heart', name: 'Keychain Heart Shape', icon: Gift, price: 149 },
+  { id: 'keychain-circle', name: 'Keychain Circle', icon: Gift, price: 149 },
+  { id: 'keychain-square', name: 'Keychain Square', icon: Gift, price: 149 },
+  { id: 'phone', name: 'Phone Cover', icon: Smartphone, price: 399 },
+  { id: 'night-lamp', name: 'Night Lamp', icon: Sparkles, price: 599 },
+  { id: 'frame-6x8', name: 'Fibre Photo Frame 6x8', icon: Frame, price: 449 },
+  { id: 'keychain-cubes', name: 'Keychain Cubes', icon: Gift, price: 199 },
 ] as const;
 
 const productColors = [
@@ -55,7 +58,7 @@ interface ImageTransform {
 }
 
 const Customize = () => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductType>('tshirt');
+  const [selectedProduct, setSelectedProduct] = useState<ProductType>('mug');
   const [selectedColor, setSelectedColor] = useState('#ffffff');
   const [customText, setCustomText] = useState('');
   const [textColor, setTextColor] = useState('#000000');
