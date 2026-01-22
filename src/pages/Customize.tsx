@@ -14,14 +14,14 @@ import ProductViewer3D from '@/components/3d/ProductViewer3D';
 import { Slider } from '@/components/ui/slider';
 
 const productTypes = [
-  { id: 'mug', name: 'Magic Cup', icon: Coffee, price: 299 },
-  { id: 'frame', name: 'Fibre Photo Frame 7x5', icon: Frame, price: 349 },
+  { id: 'mug', name: 'Magic Cup', icon: Coffee, price: 349 },
+  { id: 'frame', name: 'Fibre Photo Frame 7x5', icon: Frame, price: 299 },
   { id: 'keychain-heart', name: 'Keychain Heart Shape', icon: Gift, price: 149 },
-  { id: 'keychain-circle', name: 'Keychain Circle', icon: Gift, price: 149 },
-  { id: 'keychain-square', name: 'Keychain Square', icon: Gift, price: 149 },
+  { id: 'keychain-circle', name: 'Keychain Circle', icon: Gift, price: 129 },
+  { id: 'keychain-square', name: 'Keychain Square', icon: Gift, price: 129 },
   { id: 'phone', name: 'Phone Cover', icon: Smartphone, price: 399 },
   { id: 'night-lamp', name: 'Night Lamp', icon: Sparkles, price: 599 },
-  { id: 'frame-6x8', name: 'Fibre Photo Frame 6x8', icon: Frame, price: 449 },
+  { id: 'frame-6x8', name: 'Fibre Photo Frame 6x8', icon: Frame, price: 349 },
   { id: 'keychain-cubes', name: 'Keychain Cubes', icon: Gift, price: 199 },
 ] as const;
 

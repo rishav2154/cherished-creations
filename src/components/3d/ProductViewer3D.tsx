@@ -1,4 +1,4 @@
-import { Suspense, useRef, useMemo, useEffect, useState } from 'react';
+import { Suspense, useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { 
   OrbitControls, 
@@ -43,177 +43,7 @@ function LoadingSpinner() {
   );
 }
 
-// Procedural T-Shirt Model - No FBX dependency
-function TShirtModel({ 
-  color, 
-  customImage, 
-  customText, 
-  textColor,
-  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
-}: { 
-  color: string; 
-  customImage?: string | null;
-  customText?: string;
-  textColor?: string;
-  imageTransform?: ImageTransform;
-}) {
-  const meshRef = useRef<THREE.Group>(null);
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  
-  // Load texture from uploaded image
-  useEffect(() => {
-    if (!customImage) {
-      setTexture(null);
-      return;
-    }
-    
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      customImage,
-      (loadedTexture) => {
-        loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.needsUpdate = true;
-        setTexture(loadedTexture);
-      },
-      undefined,
-      (err) => console.error('Error loading texture:', err)
-    );
-    
-    return () => {
-      texture?.dispose();
-    };
-  }, [customImage]);
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.15;
-    }
-  });
-
-  // Image transform calculations
-  const imageScale = 0.9 * imageTransform.scale;
-  const imageX = imageTransform.x * 0.3;
-  const imageY = 0.3 + imageTransform.y * 0.3;
-
-  return (
-    <Float speed={1} rotationIntensity={0.1} floatIntensity={0.3}>
-      <group ref={meshRef} scale={1.4} position={[0, -0.3, 0]}>
-        {/* Main Body - Torso */}
-        <mesh castShadow receiveShadow position={[0, 0, 0]}>
-          <boxGeometry args={[1.6, 2, 0.5]} />
-          <meshStandardMaterial 
-            color={color} 
-            roughness={0.9} 
-            metalness={0}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        
-        {/* Front panel curve effect */}
-        <mesh position={[0, 0, 0.26]} castShadow>
-          <planeGeometry args={[1.58, 1.98]} />
-          <meshStandardMaterial 
-            color={color} 
-            roughness={0.85} 
-            metalness={0}
-          />
-        </mesh>
-        
-        {/* Collar - V-neck style */}
-        <mesh position={[0, 0.95, 0.15]} rotation={[0.3, 0, 0]}>
-          <torusGeometry args={[0.25, 0.06, 8, 32, Math.PI]} />
-          <meshStandardMaterial color={color} roughness={0.8} />
-        </mesh>
-        
-        {/* Neck opening */}
-        <mesh position={[0, 1.02, 0.1]}>
-          <cylinderGeometry args={[0.22, 0.28, 0.15, 32]} />
-          <meshStandardMaterial 
-            color={color} 
-            roughness={0.85}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-        
-        {/* Left Sleeve */}
-        <group position={[-1.0, 0.55, 0]} rotation={[0, 0, 0.4]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.32, 0.38, 0.7, 16]} />
-            <meshStandardMaterial color={color} roughness={0.9} />
-          </mesh>
-          {/* Sleeve hem */}
-          <mesh position={[0, -0.38, 0]}>
-            <torusGeometry args={[0.32, 0.03, 8, 32]} />
-            <meshStandardMaterial color={color} roughness={0.85} />
-          </mesh>
-        </group>
-        
-        {/* Right Sleeve */}
-        <group position={[1.0, 0.55, 0]} rotation={[0, 0, -0.4]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.32, 0.38, 0.7, 16]} />
-            <meshStandardMaterial color={color} roughness={0.9} />
-          </mesh>
-          {/* Sleeve hem */}
-          <mesh position={[0, -0.38, 0]}>
-            <torusGeometry args={[0.32, 0.03, 8, 32]} />
-            <meshStandardMaterial color={color} roughness={0.85} />
-          </mesh>
-        </group>
-        
-        {/* Bottom hem */}
-        <mesh position={[0, -1.02, 0]}>
-          <boxGeometry args={[1.62, 0.08, 0.52]} />
-          <meshStandardMaterial color={color} roughness={0.85} />
-        </mesh>
-        
-        {/* Shoulder seams - left */}
-        <mesh position={[-0.65, 0.85, 0.1]} rotation={[0, 0, 0.3]}>
-          <boxGeometry args={[0.5, 0.04, 0.02]} />
-          <meshStandardMaterial color={color} roughness={0.7} />
-        </mesh>
-        
-        {/* Shoulder seams - right */}
-        <mesh position={[0.65, 0.85, 0.1]} rotation={[0, 0, -0.3]}>
-          <boxGeometry args={[0.5, 0.04, 0.02]} />
-          <meshStandardMaterial color={color} roughness={0.7} />
-        </mesh>
-        
-        {/* Custom Image on chest - VISIBLE! */}
-        {texture && (
-          <mesh 
-            position={[imageX, imageY, 0.28]} 
-            rotation={[0, 0, (imageTransform.rotation * Math.PI) / 180]}
-          >
-            <planeGeometry args={[imageScale, imageScale]} />
-            <meshBasicMaterial 
-              map={texture} 
-              transparent
-              toneMapped={false}
-            />
-          </mesh>
-        )}
-        
-        {/* Custom Text */}
-        {customText && (
-          <Text
-            position={[0, texture ? imageY - imageScale / 2 - 0.15 : 0.2, 0.28]}
-            fontSize={0.12}
-            color={textColor || '#ffffff'}
-            anchorX="center"
-            anchorY="middle"
-            maxWidth={1.2}
-            textAlign="center"
-          >
-            {customText}
-          </Text>
-        )}
-      </group>
-    </Float>
-  );
-}
-
-// Realistic Ceramic Mug with glossy finish
+// Realistic Ceramic Mug with glossy finish (Magic Cup)
 function MugModel({ 
   color, 
   customImage, 
@@ -335,11 +165,13 @@ function MugModel({
 function FrameModel({ 
   color, 
   customImage,
-  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
+  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 },
+  size = '7x5'
 }: { 
   color: string; 
   customImage?: string | null;
   imageTransform?: ImageTransform;
+  size?: '7x5' | '6x8';
 }) {
   const meshRef = useRef<THREE.Group>(null);
   
@@ -358,16 +190,18 @@ function FrameModel({
   });
 
   const imageScale = imageTransform.scale;
-
-  // Determine if color is dark for frame profile
   const isMetallic = color === '#ca8a04' || color === '#1a1a1a';
+  
+  // Different dimensions based on size
+  const frameWidth = size === '6x8' ? 2.4 : 2.8;
+  const frameHeight = size === '6x8' ? 3.2 : 3.6;
 
   return (
     <Float speed={0.8} rotationIntensity={0.08} floatIntensity={0.15}>
       <group ref={meshRef} scale={1.1}>
         {/* Outer Frame Border */}
         <mesh position={[0, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[2.8, 3.6, 0.2]} />
+          <boxGeometry args={[frameWidth, frameHeight, 0.2]} />
           <meshStandardMaterial 
             color={color} 
             roughness={isMetallic ? 0.25 : 0.5} 
@@ -376,36 +210,33 @@ function FrameModel({
           />
         </mesh>
         
-        {/* Frame bevels - top */}
-        <mesh position={[0, 1.6, 0.11]}>
-          <boxGeometry args={[2.5, 0.18, 0.08]} />
+        {/* Frame bevels */}
+        <mesh position={[0, frameHeight/2 - 0.2, 0.11]}>
+          <boxGeometry args={[frameWidth - 0.3, 0.18, 0.08]} />
           <meshStandardMaterial color={color} roughness={0.4} metalness={isMetallic ? 0.5 : 0} />
         </mesh>
-        {/* Frame bevels - bottom */}
-        <mesh position={[0, -1.6, 0.11]}>
-          <boxGeometry args={[2.5, 0.18, 0.08]} />
+        <mesh position={[0, -frameHeight/2 + 0.2, 0.11]}>
+          <boxGeometry args={[frameWidth - 0.3, 0.18, 0.08]} />
           <meshStandardMaterial color={color} roughness={0.4} metalness={isMetallic ? 0.5 : 0} />
         </mesh>
-        {/* Frame bevels - left */}
-        <mesh position={[-1.25, 0, 0.11]}>
-          <boxGeometry args={[0.18, 3.05, 0.08]} />
+        <mesh position={[-frameWidth/2 + 0.15, 0, 0.11]}>
+          <boxGeometry args={[0.18, frameHeight - 0.55, 0.08]} />
           <meshStandardMaterial color={color} roughness={0.4} metalness={isMetallic ? 0.5 : 0} />
         </mesh>
-        {/* Frame bevels - right */}
-        <mesh position={[1.25, 0, 0.11]}>
-          <boxGeometry args={[0.18, 3.05, 0.08]} />
+        <mesh position={[frameWidth/2 - 0.15, 0, 0.11]}>
+          <boxGeometry args={[0.18, frameHeight - 0.55, 0.08]} />
           <meshStandardMaterial color={color} roughness={0.4} metalness={isMetallic ? 0.5 : 0} />
         </mesh>
         
         {/* Inner mat */}
         <mesh position={[0, 0, 0.08]}>
-          <boxGeometry args={[2.2, 3, 0.04]} />
+          <boxGeometry args={[frameWidth - 0.6, frameHeight - 0.6, 0.04]} />
           <meshStandardMaterial color="#fafafa" roughness={0.95} />
         </mesh>
         
         {/* Glass effect */}
         <mesh position={[0, 0, 0.12]}>
-          <planeGeometry args={[2.1, 2.9]} />
+          <planeGeometry args={[frameWidth - 0.7, frameHeight - 0.7]} />
           <meshStandardMaterial 
             color="#ffffff"
             transparent
@@ -420,7 +251,7 @@ function FrameModel({
           position={[imageTransform.x * 0.3, imageTransform.y * 0.4, 0.1]} 
           rotation={[0, 0, imageTransform.rotation * Math.PI / 180]}
         >
-          <planeGeometry args={[2 * imageScale, 2.8 * imageScale]} />
+          <planeGeometry args={[(frameWidth - 0.8) * imageScale, (frameHeight - 0.8) * imageScale]} />
           {texture ? (
             <meshStandardMaterial map={texture} roughness={0.5} />
           ) : (
@@ -429,7 +260,7 @@ function FrameModel({
         </mesh>
         
         {/* Frame Stand */}
-        <mesh position={[0, -1.9, -0.4]} rotation={[Math.PI / 5, 0, 0]} castShadow>
+        <mesh position={[0, -frameHeight/2 - 0.3, -0.4]} rotation={[Math.PI / 5, 0, 0]} castShadow>
           <boxGeometry args={[0.9, 1.5, 0.08]} />
           <meshStandardMaterial 
             color={color} 
@@ -450,7 +281,7 @@ function PhoneModel({
   textColor,
   imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
 }: { 
-  color: string;
+  color: string; 
   customImage?: string | null;
   customText?: string;
   textColor?: string;
@@ -468,18 +299,18 @@ function PhoneModel({
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.2;
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
     }
   });
 
-  const imageScale = 1.0 * imageTransform.scale;
+  const imageScale = 1.1 * imageTransform.scale;
 
   return (
-    <Float speed={1.2} rotationIntensity={0.12} floatIntensity={0.25}>
-      <group ref={meshRef} scale={1.15}>
-        {/* Phone Case Back - Main body */}
-        <mesh position={[0, 0, -0.1]} castShadow receiveShadow>
-          <boxGeometry args={[1.5, 3, 0.12]} />
+    <Float speed={1.2} rotationIntensity={0.08} floatIntensity={0.15}>
+      <group ref={meshRef} scale={1.3} rotation={[0, Math.PI, 0]}>
+        {/* Phone Case Body - Back side facing camera */}
+        <mesh position={[0, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.4, 2.9, 0.18]} />
           <meshStandardMaterial 
             color={color} 
             roughness={0.4} 
@@ -488,82 +319,58 @@ function PhoneModel({
           />
         </mesh>
         
-        {/* Case edge - left */}
-        <mesh position={[-0.73, 0, -0.02]}>
-          <boxGeometry args={[0.08, 2.95, 0.28]} />
-          <meshStandardMaterial color={color} roughness={0.35} metalness={0.2} />
+        {/* Rounded edges simulation */}
+        <mesh position={[0.68, 0, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 2.85, 16]} />
+          <meshStandardMaterial color={color} roughness={0.4} metalness={0.15} />
         </mesh>
-        {/* Case edge - right */}
-        <mesh position={[0.73, 0, -0.02]}>
-          <boxGeometry args={[0.08, 2.95, 0.28]} />
-          <meshStandardMaterial color={color} roughness={0.35} metalness={0.2} />
-        </mesh>
-        {/* Case edge - top */}
-        <mesh position={[0, 1.45, -0.02]}>
-          <boxGeometry args={[1.38, 0.08, 0.28]} />
-          <meshStandardMaterial color={color} roughness={0.35} metalness={0.2} />
-        </mesh>
-        {/* Case edge - bottom */}
-        <mesh position={[0, -1.45, -0.02]}>
-          <boxGeometry args={[1.38, 0.08, 0.28]} />
-          <meshStandardMaterial color={color} roughness={0.35} metalness={0.2} />
+        <mesh position={[-0.68, 0, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 2.85, 16]} />
+          <meshStandardMaterial color={color} roughness={0.4} metalness={0.15} />
         </mesh>
         
-        {/* Phone Screen - Super glossy */}
-        <mesh position={[0, 0, 0.06]}>
-          <boxGeometry args={[1.38, 2.85, 0.04]} />
-          <meshStandardMaterial 
-            color="#050505" 
-            roughness={0.02} 
-            metalness={0.95}
-            envMapIntensity={1.5}
-          />
+        {/* Camera Cutout */}
+        <mesh position={[-0.35, 1, -0.1]}>
+          <boxGeometry args={[0.7, 0.9, 0.1]} />
+          <meshStandardMaterial color="#0a0a0a" roughness={0.1} metalness={0.9} />
         </mesh>
         
-        {/* Screen bezel */}
-        <mesh position={[0, 0, 0.08]}>
-          <planeGeometry args={[1.3, 2.75]} />
-          <meshStandardMaterial color="#111111" roughness={0.05} metalness={0.8} />
-        </mesh>
-        
-        {/* Camera Module - Island style */}
-        <mesh position={[-0.4, 1.05, -0.18]} castShadow>
-          <boxGeometry args={[0.6, 0.75, 0.08]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.2} metalness={0.8} />
-        </mesh>
-        
-        {/* Camera lenses */}
-        <mesh position={[-0.5, 1.2, -0.24]}>
-          <cylinderGeometry args={[0.12, 0.12, 0.04, 24]} />
-          <meshStandardMaterial color="#1a2040" roughness={0.05} metalness={0.95} />
-        </mesh>
-        <mesh position={[-0.5, 1.2, -0.26]}>
-          <cylinderGeometry args={[0.08, 0.08, 0.02, 24]} />
+        {/* Camera Lenses */}
+        <mesh position={[-0.55, 1.15, -0.16]}>
+          <cylinderGeometry args={[0.13, 0.13, 0.08, 24]} />
           <meshStandardMaterial color="#0a0a15" roughness={0} metalness={1} />
         </mesh>
-        <mesh position={[-0.3, 1.2, -0.24]}>
-          <cylinderGeometry args={[0.12, 0.12, 0.04, 24]} />
+        <mesh position={[-0.55, 1.15, -0.21]}>
+          <cylinderGeometry args={[0.08, 0.08, 0.04, 24]} />
           <meshStandardMaterial color="#1a2040" roughness={0.05} metalness={0.95} />
         </mesh>
-        <mesh position={[-0.3, 1.2, -0.26]}>
-          <cylinderGeometry args={[0.08, 0.08, 0.02, 24]} />
+        <mesh position={[-0.2, 1.15, -0.16]}>
+          <cylinderGeometry args={[0.13, 0.13, 0.08, 24]} />
           <meshStandardMaterial color="#0a0a15" roughness={0} metalness={1} />
         </mesh>
-        <mesh position={[-0.4, 0.95, -0.24]}>
-          <cylinderGeometry args={[0.1, 0.1, 0.04, 24]} />
+        <mesh position={[-0.2, 1.15, -0.21]}>
+          <cylinderGeometry args={[0.08, 0.08, 0.04, 24]} />
+          <meshStandardMaterial color="#1a2040" roughness={0.05} metalness={0.95} />
+        </mesh>
+        <mesh position={[-0.55, 0.85, -0.16]}>
+          <cylinderGeometry args={[0.13, 0.13, 0.08, 24]} />
+          <meshStandardMaterial color="#0a0a15" roughness={0} metalness={1} />
+        </mesh>
+        <mesh position={[-0.55, 0.85, -0.21]}>
+          <cylinderGeometry args={[0.08, 0.08, 0.04, 24]} />
           <meshStandardMaterial color="#1a2040" roughness={0.05} metalness={0.95} />
         </mesh>
         
         {/* Flash */}
-        <mesh position={[-0.55, 0.95, -0.22]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.02, 16]} />
-          <meshStandardMaterial color="#fffae6" roughness={0.2} emissive="#fffae6" emissiveIntensity={0.1} />
+        <mesh position={[-0.2, 0.85, -0.16]}>
+          <cylinderGeometry args={[0.06, 0.06, 0.05, 16]} />
+          <meshStandardMaterial color="#fffae6" roughness={0.2} emissive="#fffae6" emissiveIntensity={0.2} />
         </mesh>
         
         {/* Custom Image on back */}
         {texture && (
           <mesh 
-            position={[imageTransform.x * 0.2, -0.3 + imageTransform.y * 0.3, -0.17]} 
+            position={[imageTransform.x * 0.2, -0.3 + imageTransform.y * 0.3, -0.1]} 
             rotation={[0, Math.PI, imageTransform.rotation * Math.PI / 180]}
           >
             <planeGeometry args={[imageScale, imageScale * 1.3]} />
@@ -574,7 +381,7 @@ function PhoneModel({
         {/* Custom Text on back */}
         {customText && (
           <Text
-            position={[0, customImage ? -1.1 : -0.3, -0.17]}
+            position={[0, customImage ? -1.1 : -0.3, -0.1]}
             rotation={[0, Math.PI, 0]}
             fontSize={0.1}
             color={textColor || '#ffffff'}
@@ -591,15 +398,282 @@ function PhoneModel({
   );
 }
 
-// High-Quality Poster with paper texture
-function PosterModel({ 
+// Heart Shape Keychain
+function KeychainHeartModel({ 
   color, 
   customImage, 
   customText, 
   textColor,
   imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
 }: { 
-  color: string;
+  color: string; 
+  customImage?: string | null;
+  customText?: string;
+  textColor?: string;
+  imageTransform?: ImageTransform;
+}) {
+  const meshRef = useRef<THREE.Group>(null);
+  
+  const texture = useMemo(() => {
+    if (!customImage) return null;
+    const tex = new THREE.TextureLoader().load(customImage);
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [customImage]);
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.008;
+    }
+  });
+
+  const imageScale = 0.8 * imageTransform.scale;
+
+  // Heart shape using custom geometry
+  const heartShape = useMemo(() => {
+    const shape = new THREE.Shape();
+    const x = 0, y = 0;
+    shape.moveTo(x, y + 0.5);
+    shape.bezierCurveTo(x, y + 0.5, x - 0.5, y, x - 0.5, y);
+    shape.bezierCurveTo(x - 0.5, y - 0.35, x, y - 0.6, x, y - 0.9);
+    shape.bezierCurveTo(x, y - 0.6, x + 0.5, y - 0.35, x + 0.5, y);
+    shape.bezierCurveTo(x + 0.5, y, x, y + 0.5, x, y + 0.5);
+    return shape;
+  }, []);
+
+  return (
+    <Float speed={2} rotationIntensity={0.1} floatIntensity={0.3}>
+      <group ref={meshRef} scale={2}>
+        {/* Keychain Ring */}
+        <mesh position={[0, 0.8, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.15, 0.03, 12, 32]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Chain connector */}
+        <mesh position={[0, 0.6, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.2, 12]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Heart Body - Front */}
+        <mesh position={[0, 0, 0.08]} castShadow>
+          <extrudeGeometry args={[heartShape, { depth: 0.15, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 }]} />
+          <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
+        </mesh>
+        
+        {/* Custom Image */}
+        {texture && (
+          <mesh 
+            position={[imageTransform.x * 0.2, -0.2 + imageTransform.y * 0.2, 0.24]} 
+            rotation={[0, 0, imageTransform.rotation * Math.PI / 180]}
+          >
+            <planeGeometry args={[imageScale * 0.7, imageScale * 0.7]} />
+            <meshStandardMaterial map={texture} transparent opacity={0.95} roughness={0.3} />
+          </mesh>
+        )}
+        
+        {/* Custom Text */}
+        {customText && (
+          <Text
+            position={[0, customImage ? -0.7 : -0.2, 0.24]}
+            fontSize={0.08}
+            color={textColor || '#ffffff'}
+            anchorX="center"
+            anchorY="middle"
+            maxWidth={0.8}
+            textAlign="center"
+          >
+            {customText}
+          </Text>
+        )}
+      </group>
+    </Float>
+  );
+}
+
+// Circle Keychain
+function KeychainCircleModel({ 
+  color, 
+  customImage, 
+  customText, 
+  textColor,
+  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
+}: { 
+  color: string; 
+  customImage?: string | null;
+  customText?: string;
+  textColor?: string;
+  imageTransform?: ImageTransform;
+}) {
+  const meshRef = useRef<THREE.Group>(null);
+  
+  const texture = useMemo(() => {
+    if (!customImage) return null;
+    const tex = new THREE.TextureLoader().load(customImage);
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [customImage]);
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.008;
+    }
+  });
+
+  const imageScale = 0.9 * imageTransform.scale;
+
+  return (
+    <Float speed={2} rotationIntensity={0.1} floatIntensity={0.3}>
+      <group ref={meshRef} scale={1.8}>
+        {/* Keychain Ring */}
+        <mesh position={[0, 0.9, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.15, 0.03, 12, 32]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Chain connector */}
+        <mesh position={[0, 0.7, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.2, 12]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Circle Body */}
+        <mesh position={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.6, 0.6, 0.12, 48]} />
+          <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
+        </mesh>
+        
+        {/* Rim */}
+        <mesh position={[0, 0, 0]}>
+          <torusGeometry args={[0.6, 0.04, 12, 48]} />
+          <meshStandardMaterial color={color} roughness={0.2} metalness={0.4} />
+        </mesh>
+        
+        {/* Custom Image */}
+        {texture && (
+          <mesh 
+            position={[imageTransform.x * 0.2, imageTransform.y * 0.2, 0.07]} 
+            rotation={[0, 0, imageTransform.rotation * Math.PI / 180]}
+          >
+            <circleGeometry args={[0.45 * imageScale, 48]} />
+            <meshStandardMaterial map={texture} transparent opacity={0.95} roughness={0.3} />
+          </mesh>
+        )}
+        
+        {/* Custom Text */}
+        {customText && (
+          <Text
+            position={[0, customImage ? -0.35 : 0, 0.07]}
+            fontSize={0.08}
+            color={textColor || '#ffffff'}
+            anchorX="center"
+            anchorY="middle"
+            maxWidth={0.9}
+            textAlign="center"
+          >
+            {customText}
+          </Text>
+        )}
+      </group>
+    </Float>
+  );
+}
+
+// Square Keychain
+function KeychainSquareModel({ 
+  color, 
+  customImage, 
+  customText, 
+  textColor,
+  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
+}: { 
+  color: string; 
+  customImage?: string | null;
+  customText?: string;
+  textColor?: string;
+  imageTransform?: ImageTransform;
+}) {
+  const meshRef = useRef<THREE.Group>(null);
+  
+  const texture = useMemo(() => {
+    if (!customImage) return null;
+    const tex = new THREE.TextureLoader().load(customImage);
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [customImage]);
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.008;
+    }
+  });
+
+  const imageScale = 0.9 * imageTransform.scale;
+
+  return (
+    <Float speed={2} rotationIntensity={0.1} floatIntensity={0.3}>
+      <group ref={meshRef} scale={1.8}>
+        {/* Keychain Ring */}
+        <mesh position={[0, 0.9, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.15, 0.03, 12, 32]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Chain connector */}
+        <mesh position={[0, 0.7, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.2, 12]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Square Body */}
+        <mesh position={[0, 0, 0]} castShadow>
+          <boxGeometry args={[1, 1, 0.12]} />
+          <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
+        </mesh>
+        
+        {/* Custom Image */}
+        {texture && (
+          <mesh 
+            position={[imageTransform.x * 0.2, imageTransform.y * 0.2, 0.07]} 
+            rotation={[0, 0, imageTransform.rotation * Math.PI / 180]}
+          >
+            <planeGeometry args={[0.85 * imageScale, 0.85 * imageScale]} />
+            <meshStandardMaterial map={texture} transparent opacity={0.95} roughness={0.3} />
+          </mesh>
+        )}
+        
+        {/* Custom Text */}
+        {customText && (
+          <Text
+            position={[0, customImage ? -0.35 : 0, 0.07]}
+            fontSize={0.08}
+            color={textColor || '#ffffff'}
+            anchorX="center"
+            anchorY="middle"
+            maxWidth={0.9}
+            textAlign="center"
+          >
+            {customText}
+          </Text>
+        )}
+      </group>
+    </Float>
+  );
+}
+
+// Cubes Keychain (3D rotating cube)
+function KeychainCubesModel({ 
+  color, 
+  customImage, 
+  customText, 
+  textColor,
+  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
+}: { 
+  color: string; 
   customImage?: string | null;
   customText?: string;
   textColor?: string;
@@ -617,164 +691,199 @@ function PosterModel({
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.15) * 0.12;
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.5;
+      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.2;
+    }
+  });
+
+  const imageScale = 0.7 * imageTransform.scale;
+
+  return (
+    <Float speed={1.5} rotationIntensity={0.15} floatIntensity={0.3}>
+      <group scale={1.6}>
+        {/* Keychain Ring */}
+        <mesh position={[0, 1.1, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.15, 0.03, 12, 32]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Chain connector */}
+        <mesh position={[0, 0.9, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.2, 12]} />
+          <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
+        </mesh>
+        
+        {/* Rotating Cube */}
+        <group ref={meshRef}>
+          <mesh position={[0, 0, 0]} castShadow>
+            <boxGeometry args={[0.9, 0.9, 0.9]} />
+            <meshStandardMaterial color={color} roughness={0.25} metalness={0.3} />
+          </mesh>
+          
+          {/* Images on each visible face */}
+          {texture && (
+            <>
+              {/* Front */}
+              <mesh position={[0, 0, 0.46]}>
+                <planeGeometry args={[0.75 * imageScale, 0.75 * imageScale]} />
+                <meshStandardMaterial map={texture} transparent opacity={0.95} />
+              </mesh>
+              {/* Right */}
+              <mesh position={[0.46, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+                <planeGeometry args={[0.75 * imageScale, 0.75 * imageScale]} />
+                <meshStandardMaterial map={texture} transparent opacity={0.95} />
+              </mesh>
+              {/* Left */}
+              <mesh position={[-0.46, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+                <planeGeometry args={[0.75 * imageScale, 0.75 * imageScale]} />
+                <meshStandardMaterial map={texture} transparent opacity={0.95} />
+              </mesh>
+              {/* Back */}
+              <mesh position={[0, 0, -0.46]} rotation={[0, Math.PI, 0]}>
+                <planeGeometry args={[0.75 * imageScale, 0.75 * imageScale]} />
+                <meshStandardMaterial map={texture} transparent opacity={0.95} />
+              </mesh>
+            </>
+          )}
+          
+          {/* Custom Text */}
+          {customText && !texture && (
+            <Text
+              position={[0, 0, 0.46]}
+              fontSize={0.1}
+              color={textColor || '#ffffff'}
+              anchorX="center"
+              anchorY="middle"
+              maxWidth={0.7}
+              textAlign="center"
+            >
+              {customText}
+            </Text>
+          )}
+        </group>
+      </group>
+    </Float>
+  );
+}
+
+// Night Lamp with glowing effect
+function NightLampModel({ 
+  color, 
+  customImage, 
+  customText, 
+  textColor,
+  imageTransform = { x: 0, y: 0, scale: 1, rotation: 0 }
+}: { 
+  color: string; 
+  customImage?: string | null;
+  customText?: string;
+  textColor?: string;
+  imageTransform?: ImageTransform;
+}) {
+  const meshRef = useRef<THREE.Group>(null);
+  
+  const texture = useMemo(() => {
+    if (!customImage) return null;
+    const tex = new THREE.TextureLoader().load(customImage);
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [customImage]);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.15;
     }
   });
 
   const imageScale = imageTransform.scale;
 
   return (
-    <Float speed={0.6} rotationIntensity={0.06} floatIntensity={0.1}>
-      <group ref={meshRef} scale={1.05}>
-        {/* Poster Paper */}
-        <mesh position={[0, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[2.6, 3.8, 0.02]} />
+    <Float speed={0.8} rotationIntensity={0.05} floatIntensity={0.1}>
+      <group ref={meshRef} scale={1.1}>
+        {/* Base */}
+        <mesh position={[0, -1.8, 0]} castShadow>
+          <cylinderGeometry args={[1.2, 1.4, 0.3, 48]} />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.3} metalness={0.6} />
+        </mesh>
+        
+        {/* Base rim */}
+        <mesh position={[0, -1.65, 0]}>
+          <torusGeometry args={[1.2, 0.05, 8, 48]} />
+          <meshStandardMaterial color="#404040" roughness={0.2} metalness={0.8} />
+        </mesh>
+        
+        {/* LED Strip on base */}
+        <mesh position={[0, -1.55, 0]}>
+          <torusGeometry args={[1.1, 0.08, 8, 48]} />
           <meshStandardMaterial 
-            color="#fefefe" 
-            roughness={0.95}
-            metalness={0}
+            color="#ffffff" 
+            emissive="#ffffff" 
+            emissiveIntensity={0.8}
+            roughness={0.1}
           />
         </mesh>
         
-        {/* Slight curl effect - top corners */}
-        <mesh position={[-1.25, 1.85, 0.04]} rotation={[0.1, 0, -0.1]}>
-          <boxGeometry args={[0.15, 0.15, 0.01]} />
-          <meshStandardMaterial color="#fafafa" roughness={0.9} />
-        </mesh>
-        <mesh position={[1.25, 1.85, 0.04]} rotation={[0.1, 0, 0.1]}>
-          <boxGeometry args={[0.15, 0.15, 0.01]} />
-          <meshStandardMaterial color="#fafafa" roughness={0.9} />
+        {/* Acrylic Panel */}
+        <mesh position={[0, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[2.2, 3, 0.15]} />
+          <meshStandardMaterial 
+            color={color}
+            transparent
+            opacity={0.85}
+            roughness={0.05}
+            metalness={0.1}
+            envMapIntensity={0.8}
+          />
         </mesh>
         
-        {/* Custom Image - Full poster print */}
-        {texture ? (
+        {/* Glowing edges */}
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[2.25, 3.05, 0.12]} />
+          <meshStandardMaterial 
+            color="#ffffff"
+            transparent
+            opacity={0.15}
+            emissive="#ffffff"
+            emissiveIntensity={0.4}
+          />
+        </mesh>
+        
+        {/* Inner glow effect */}
+        <pointLight position={[0, 0, 0.5]} intensity={0.5} color="#ffffff" distance={3} />
+        <pointLight position={[0, 0, -0.5]} intensity={0.3} color="#ffffff" distance={2} />
+        
+        {/* Custom Image - etched effect */}
+        {texture && (
           <mesh 
-            position={[imageTransform.x * 0.3, imageTransform.y * 0.4, 0.015]} 
+            position={[imageTransform.x * 0.3, imageTransform.y * 0.4, 0.08]} 
             rotation={[0, 0, imageTransform.rotation * Math.PI / 180]}
           >
-            <planeGeometry args={[2.4 * imageScale, 3.6 * imageScale]} />
-            <meshStandardMaterial map={texture} roughness={0.8} />
-          </mesh>
-        ) : (
-          <mesh position={[0, 0, 0.015]}>
-            <planeGeometry args={[2.4, 3.6]} />
-            <meshStandardMaterial color={color} roughness={0.75} />
+            <planeGeometry args={[1.8 * imageScale, 2.4 * imageScale]} />
+            <meshStandardMaterial 
+              map={texture} 
+              transparent 
+              opacity={0.9}
+              emissive="#ffffff"
+              emissiveIntensity={0.1}
+            />
           </mesh>
         )}
         
-        {/* Custom Text overlay */}
+        {/* Custom Text */}
         {customText && (
           <Text
-            position={[0, -1.5, 0.02]}
-            fontSize={0.18}
-            color={textColor || '#1a1a1a'}
+            position={[0, customImage ? -1.2 : 0, 0.08]}
+            fontSize={0.15}
+            color={textColor || '#ffffff'}
             anchorX="center"
             anchorY="middle"
-            maxWidth={2.2}
+            maxWidth={1.8}
             textAlign="center"
           >
             {customText}
           </Text>
         )}
-        
-        {/* Paper shadow edge */}
-        <mesh position={[0, 0, -0.015]}>
-          <planeGeometry args={[2.65, 3.85]} />
-          <meshBasicMaterial color="#00000015" transparent opacity={0.1} />
-        </mesh>
-      </group>
-    </Float>
-  );
-}
-
-// Premium Gift Combo Box
-function ComboModel({ color }: { color: string }) {
-  const meshRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.3;
-    }
-  });
-
-  return (
-    <Float speed={1} rotationIntensity={0.1} floatIntensity={0.2}>
-      <group ref={meshRef} scale={1.1}>
-        {/* Box Body - Matte luxury finish */}
-        <mesh position={[0, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[2.4, 1.8, 2.4]} />
-          <meshStandardMaterial 
-            color={color} 
-            roughness={0.6} 
-            metalness={0.15}
-            envMapIntensity={0.4}
-          />
-        </mesh>
-        
-        {/* Box Lid */}
-        <mesh position={[0, 1, 0]} castShadow>
-          <boxGeometry args={[2.5, 0.22, 2.5]} />
-          <meshStandardMaterial 
-            color={color} 
-            roughness={0.5} 
-            metalness={0.2}
-          />
-        </mesh>
-        
-        {/* Lid edge detail */}
-        <mesh position={[0, 0.88, 0]}>
-          <boxGeometry args={[2.52, 0.04, 2.52]} />
-          <meshStandardMaterial color="#ffffff20" transparent opacity={0.2} roughness={0.2} metalness={0.5} />
-        </mesh>
-        
-        {/* Satin Ribbon Horizontal */}
-        <mesh position={[0, 0.6, 0]} castShadow>
-          <boxGeometry args={[2.55, 0.35, 0.1]} />
-          <meshStandardMaterial 
-            color="#DD2476" 
-            roughness={0.25} 
-            metalness={0.5}
-            envMapIntensity={0.8}
-          />
-        </mesh>
-        
-        {/* Satin Ribbon Vertical */}
-        <mesh position={[0, 0.6, 0]} castShadow>
-          <boxGeometry args={[0.1, 0.35, 2.55]} />
-          <meshStandardMaterial 
-            color="#DD2476" 
-            roughness={0.25} 
-            metalness={0.5}
-          />
-        </mesh>
-        
-        {/* Elegant Bow - Left loop */}
-        <mesh position={[-0.35, 1.3, 0]} rotation={[0, 0, Math.PI / 3.5]} castShadow>
-          <torusGeometry args={[0.22, 0.08, 8, 16, Math.PI]} />
-          <meshStandardMaterial color="#DD2476" roughness={0.3} metalness={0.4} />
-        </mesh>
-        
-        {/* Bow - Right loop */}
-        <mesh position={[0.35, 1.3, 0]} rotation={[0, 0, -Math.PI / 3.5]} castShadow>
-          <torusGeometry args={[0.22, 0.08, 8, 16, Math.PI]} />
-          <meshStandardMaterial color="#DD2476" roughness={0.3} metalness={0.4} />
-        </mesh>
-        
-        {/* Bow center knot */}
-        <mesh position={[0, 1.25, 0]} castShadow>
-          <sphereGeometry args={[0.14, 16, 16]} />
-          <meshStandardMaterial color="#DD2476" roughness={0.3} metalness={0.4} />
-        </mesh>
-        
-        {/* Ribbon tails */}
-        <mesh position={[-0.15, 1.1, 0]} rotation={[0, 0, 0.3]}>
-          <boxGeometry args={[0.08, 0.4, 0.06]} />
-          <meshStandardMaterial color="#DD2476" roughness={0.3} metalness={0.4} />
-        </mesh>
-        <mesh position={[0.15, 1.1, 0]} rotation={[0, 0, -0.3]}>
-          <boxGeometry args={[0.08, 0.4, 0.06]} />
-          <meshStandardMaterial color="#DD2476" roughness={0.3} metalness={0.4} />
-        </mesh>
       </group>
     </Float>
   );
@@ -816,11 +925,20 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
               imageTransform={transform}
             />
           )}
-          {(productType === 'frame' || productType === 'frame-6x8') && (
+          {productType === 'frame' && (
             <FrameModel 
               color={productColor} 
               customImage={customImage}
               imageTransform={transform}
+              size="7x5"
+            />
+          )}
+          {productType === 'frame-6x8' && (
+            <FrameModel 
+              color={productColor} 
+              customImage={customImage}
+              imageTransform={transform}
+              size="6x8"
             />
           )}
           {productType === 'phone' && (
@@ -832,8 +950,8 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
               imageTransform={transform}
             />
           )}
-          {productType === 'night-lamp' && (
-            <PosterModel 
+          {productType === 'keychain-heart' && (
+            <KeychainHeartModel 
               color={productColor} 
               customImage={customImage} 
               customText={customText} 
@@ -841,8 +959,35 @@ function Scene({ productType, color, customImage, customText, textColor, imageTr
               imageTransform={transform}
             />
           )}
-          {(productType === 'keychain-heart' || productType === 'keychain-circle' || productType === 'keychain-square' || productType === 'keychain-cubes') && (
-            <MugModel 
+          {productType === 'keychain-circle' && (
+            <KeychainCircleModel 
+              color={productColor} 
+              customImage={customImage} 
+              customText={customText} 
+              textColor={textColor}
+              imageTransform={transform}
+            />
+          )}
+          {productType === 'keychain-square' && (
+            <KeychainSquareModel 
+              color={productColor} 
+              customImage={customImage} 
+              customText={customText} 
+              textColor={textColor}
+              imageTransform={transform}
+            />
+          )}
+          {productType === 'keychain-cubes' && (
+            <KeychainCubesModel 
+              color={productColor} 
+              customImage={customImage} 
+              customText={customText} 
+              textColor={textColor}
+              imageTransform={transform}
+            />
+          )}
+          {productType === 'night-lamp' && (
+            <NightLampModel 
               color={productColor} 
               customImage={customImage} 
               customText={customText} 
