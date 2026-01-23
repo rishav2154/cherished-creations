@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, Package } from 'lucide-react';
+import { Loader2, Eye, Package, Download } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +42,32 @@ const AdminOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const { toast } = useToast();
+
+  const downloadImage = async (imageUrl: string, orderNumber: string, itemName: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const extension = blob.type.split('/')[1] || 'png';
+      link.download = `${orderNumber}_${itemName.replace(/\s+/g, '-')}_customization.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({
+        title: 'Downloaded',
+        description: 'Customization image saved successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Download failed',
+        description: 'Could not download the image',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -256,20 +282,34 @@ const AdminOrders = () => {
                               <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Customer Customization</p>
                               <div className="flex flex-wrap gap-4">
                                 {customization.imageUrl && (
-                                  <div className="space-y-1">
+                                  <div className="space-y-2">
                                     <p className="text-xs text-muted-foreground">Uploaded Image</p>
-                                    <a 
-                                      href={customization.imageUrl} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="block"
-                                    >
-                                      <img
-                                        src={customization.imageUrl}
-                                        alt="Customer uploaded"
-                                        className="w-24 h-24 rounded-lg object-cover border border-border hover:border-accent transition-colors cursor-pointer"
-                                      />
-                                    </a>
+                                    <div className="relative group">
+                                      <a 
+                                        href={customization.imageUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="block"
+                                      >
+                                        <img
+                                          src={customization.imageUrl}
+                                          alt="Customer uploaded"
+                                          className="w-24 h-24 rounded-lg object-cover border border-border hover:border-accent transition-colors cursor-pointer"
+                                        />
+                                      </a>
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-7 text-xs gap-1 shadow-md"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          downloadImage(customization.imageUrl!, selectedOrder.order_number, item.product_name);
+                                        }}
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        Save
+                                      </Button>
+                                    </div>
                                   </div>
                                 )}
                                 {customization.text && (
