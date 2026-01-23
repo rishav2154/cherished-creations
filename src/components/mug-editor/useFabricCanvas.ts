@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import * as fabric from 'fabric';
+import type { Canvas as FabricCanvas, FabricImage, Rect } from 'fabric';
 import { MugVariant, CanvasExportOptions } from './types';
 
 interface UseFabricCanvasOptions {
@@ -9,9 +9,10 @@ interface UseFabricCanvasOptions {
 
 export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOptions) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricRef = useRef<fabric.Canvas | null>(null);
+  const fabricRef = useRef<FabricCanvas | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [hasImage, setHasImage] = useState(false);
+  const [fabricModule, setFabricModule] = useState<typeof import('fabric') | null>(null);
 
   // Calculate canvas display size (fit within container while maintaining aspect ratio)
   const getCanvasDisplaySize = useCallback(() => {
@@ -30,14 +31,32 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
     return { width, height };
   }, [variant]);
 
-  // Initialize fabric canvas
+  // Load fabric.js dynamically to avoid React context conflicts
   useEffect(() => {
-    if (!canvasRef.current) return;
+    let mounted = true;
+    
+    const loadFabric = async () => {
+      const fabric = await import('fabric');
+      if (mounted) {
+        setFabricModule(fabric);
+      }
+    };
+    
+    loadFabric();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Initialize fabric canvas after module is loaded
+  useEffect(() => {
+    if (!canvasRef.current || !fabricModule) return;
 
     const { width, height } = getCanvasDisplaySize();
     
     // Create fabric canvas
-    const canvas = new fabric.Canvas(canvasRef.current, {
+    const canvas = new fabricModule.Canvas(canvasRef.current, {
       width,
       height,
       backgroundColor: '#ffffff',
@@ -46,7 +65,7 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
     });
 
     // Add print-safe area border visualization
-    const printAreaBorder = new fabric.Rect({
+    const printAreaBorder = new fabricModule.Rect({
       left: 0,
       top: 0,
       width: width,
@@ -67,7 +86,12 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
 
     // Export canvas on any change
     const handleChange = () => {
-      exportCanvas();
+      if (fabricRef.current) {
+        const dataUrl = exportCanvasInternal(fabricRef.current, variant, getCanvasDisplaySize);
+        if (dataUrl) {
+          onCanvasUpdate(dataUrl);
+        }
+      }
     };
 
     canvas.on('object:modified', handleChange);
@@ -79,45 +103,56 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
       fabricRef.current = null;
       setIsReady(false);
     };
-  }, [variant, getCanvasDisplaySize]);
+  }, [fabricModule, variant, getCanvasDisplaySize, onCanvasUpdate]);
 
-  // Export canvas as data URL
-  const exportCanvas = useCallback((options?: Partial<CanvasExportOptions>) => {
-    if (!fabricRef.current) return null;
-
-    const { width, height } = getCanvasDisplaySize();
-    const multiplier = options?.multiplier || (variant.printArea.width / width); // Scale to print resolution
+  // Internal export function
+  const exportCanvasInternal = (
+    canvas: FabricCanvas, 
+    variant: MugVariant, 
+    getSize: () => { width: number; height: number },
+    options?: Partial<CanvasExportOptions>
+  ) => {
+    const { width } = getSize();
+    const multiplier = options?.multiplier || (variant.printArea.width / width);
 
     // Temporarily hide the border for export
-    const objects = fabricRef.current.getObjects();
+    const objects = canvas.getObjects();
     const border = objects.find(obj => (obj as any).__isPrintAreaBorder === true);
     if (border) {
       border.visible = false;
     }
 
-    const dataUrl = fabricRef.current.toDataURL({
+    const dataUrl = canvas.toDataURL({
       format: options?.format || 'png',
       quality: options?.quality || 1,
-      multiplier: Math.min(multiplier, 4), // Cap at 4x to prevent memory issues
+      multiplier: Math.min(multiplier, 4),
     });
 
     if (border) {
       border.visible = true;
     }
 
+    return dataUrl;
+  };
+
+  // Export canvas as data URL
+  const exportCanvas = useCallback((options?: Partial<CanvasExportOptions>) => {
+    if (!fabricRef.current) return null;
+    
+    const dataUrl = exportCanvasInternal(fabricRef.current, variant, getCanvasDisplaySize, options);
     onCanvasUpdate(dataUrl);
     return dataUrl;
   }, [variant, getCanvasDisplaySize, onCanvasUpdate]);
 
   // Add image to canvas
   const addImage = useCallback(async (imageUrl: string) => {
-    if (!fabricRef.current) return;
+    if (!fabricRef.current || !fabricModule) return;
 
     const canvas = fabricRef.current;
     const { width, height } = getCanvasDisplaySize();
 
     try {
-      const img = await fabric.FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' });
+      const img = await fabricModule.FabricImage.fromURL(imageUrl, { crossOrigin: 'anonymous' });
       
       // Calculate scale to fit within print area while maintaining aspect ratio
       const imgAspect = img.width! / img.height!;
@@ -125,10 +160,8 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
       
       let scale: number;
       if (imgAspect > canvasAspect) {
-        // Image is wider than canvas
         scale = (width * 0.9) / img.width!;
       } else {
-        // Image is taller than canvas
         scale = (height * 0.9) / img.height!;
       }
 
@@ -162,7 +195,7 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
     } catch (error) {
       console.error('Failed to load image:', error);
     }
-  }, [getCanvasDisplaySize, exportCanvas]);
+  }, [fabricModule, getCanvasDisplaySize, exportCanvas]);
 
   // Remove selected object
   const removeSelected = useCallback(() => {
