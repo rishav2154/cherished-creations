@@ -12,6 +12,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { useCartStore } from '@/store/cartStore';
 import ProductViewer3D from '@/components/3d/ProductViewer3D';
 import { Slider } from '@/components/ui/slider';
+import { MugCustomizer } from '@/components/mug-editor';
 
 const productTypes = [
   { id: 'mug', name: 'Magic Cup', icon: Coffee, price: 349 },
@@ -180,8 +181,21 @@ const Customize = () => {
             </p>
           </motion.div>
 
+          {/* Magic Cup gets special Fabric.js + 3D editor */}
+          {selectedProduct === 'mug' ? (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-4"
+            >
+              <MugCustomizer />
+            </motion.div>
+          ) : (
+          /* Original layout for other products */
+          <>
           <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
-            {/* Left Sidebar - Product Selection */}
+            {/* Left Sidebar - Product Selection (hidden since already shown above) */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -652,6 +666,8 @@ const Customize = () => {
               </div>
             </motion.div>
           </div>
+          </>
+          )}
         </div>
       </main>
 

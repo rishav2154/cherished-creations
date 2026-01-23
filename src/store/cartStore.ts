@@ -12,6 +12,8 @@ export interface CartItem {
     text?: string;
     imageUrl?: string;
     color?: string;
+    variant?: string;
+    designUrl?: string;
   };
 }
 
