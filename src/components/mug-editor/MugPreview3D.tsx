@@ -55,11 +55,13 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     loader.load(
       textureUrl,
       (loadedTexture) => {
-        // Configure texture for proper UV mapping
-        loadedTexture.wrapS = THREE.RepeatWrapping;
+        // Configure texture for proper UV mapping - ClampToEdge prevents repeating
+        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
         loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
         loadedTexture.colorSpace = THREE.SRGBColorSpace;
         loadedTexture.flipY = true;
+        loadedTexture.minFilter = THREE.LinearFilter;
+        loadedTexture.magFilter = THREE.LinearFilter;
         loadedTexture.needsUpdate = true;
         setTexture(loadedTexture);
       },
@@ -117,14 +119,16 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     
     // Create a cylinder segment that wraps around the front of the mug
     // The wrap starts and ends at the handle position
-    const handleAngle = Math.PI * 0.18; // Gap for handle
+    const handleAngle = Math.PI * 0.15; // Small gap for handle
     const wrapAngle = Math.PI * 2 - (handleAngle * 2); // Full wrap minus handle gaps
     
+    const radialSegments = 128; // More segments for smoother UV mapping
+    
     const geometry = new THREE.CylinderGeometry(
-      topRadius + 0.003,    // Top radius (slightly larger than mug)
-      bottomRadius + 0.003, // Bottom radius
+      topRadius + 0.004,    // Top radius (slightly larger than mug)
+      bottomRadius + 0.004, // Bottom radius
       height,
-      64,                   // Radial segments for smooth curve
+      radialSegments,       // Radial segments for smooth curve
       1,                    // Height segments
       true,                 // Open ended
       handleAngle,          // Start angle (after handle)
@@ -132,7 +136,7 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     );
     
     // Recalculate UVs for proper texture mapping
-    // UV should go from 0 to 1 horizontally as we go around the mug
+    // The entire image should map across the visible wrap area
     const uvs = geometry.attributes.uv;
     const positions = geometry.attributes.position;
     
@@ -141,13 +145,16 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
       const z = positions.getZ(i);
       const y = positions.getY(i);
       
-      // Calculate angle from center
+      // Calculate angle from center relative to handle position
       let angle = Math.atan2(z, x);
+      if (angle < 0) angle += Math.PI * 2;
       
-      // Normalize angle to 0-1 range for U coordinate
-      // Adjust so that U=0 is at one edge of handle and U=1 is at other edge
-      const normalizedAngle = (angle - handleAngle) / wrapAngle;
-      const u = 1 - normalizedAngle; // Flip for correct orientation
+      // Normalize to get U coordinate (0 to 1 across the wrap)
+      // Subtract handleAngle to start from 0, divide by wrapAngle to normalize
+      let u = (angle - handleAngle) / wrapAngle;
+      
+      // Clamp and ensure proper range
+      u = Math.max(0, Math.min(1, u));
       
       // V coordinate based on height (0 at bottom, 1 at top)
       const v = (y / height) + 0.5;
