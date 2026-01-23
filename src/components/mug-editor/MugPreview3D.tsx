@@ -1,15 +1,13 @@
-import { Suspense, useRef, useMemo, useEffect, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Suspense, useRef, useMemo, useEffect, useState, forwardRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { 
   OrbitControls, 
   Environment, 
   ContactShadows, 
   Html,
-  Float,
-  useTexture
+  Float
 } from '@react-three/drei';
 import * as THREE from 'three';
-import { Loader2 } from 'lucide-react';
 import { MugVariant } from './types';
 
 interface MugPreview3DProps {
@@ -18,7 +16,8 @@ interface MugPreview3DProps {
   mugColor?: string;
 }
 
-function LoadingSpinner() {
+// Loading spinner component
+const LoadingSpinner = forwardRef<THREE.Group>((_, ref) => {
   return (
     <Html center>
       <div className="flex flex-col items-center gap-3">
@@ -30,7 +29,9 @@ function LoadingSpinner() {
       </div>
     </Html>
   );
-}
+});
+
+LoadingSpinner.displayName = 'LoadingSpinner';
 
 interface RealisticMugProps {
   textureUrl: string | null;
@@ -38,7 +39,8 @@ interface RealisticMugProps {
   variant: MugVariant;
 }
 
-function RealisticMug({ textureUrl, color, variant }: RealisticMugProps) {
+// Realistic mug component with proper UV mapping
+const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, color, variant }, ref) => {
   const meshRef = useRef<THREE.Group>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
@@ -71,56 +73,66 @@ function RealisticMug({ textureUrl, color, variant }: RealisticMugProps) {
   // Gentle rotation animation
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.2;
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.15;
     }
   });
 
-  // Create mug geometry based on variant
+  // Create mug body geometry using lathe
   const mugProfile = useMemo(() => {
-    const points = [];
+    const points: THREE.Vector2[] = [];
     const isLarge = variant.id === '15oz';
     const bodyWidth = isLarge ? 0.85 : 0.75;
-    const topWidth = isLarge ? 1.05 : 0.92;
-    const height = isLarge ? 2.6 : 2.3;
+    const topWidth = isLarge ? 1.0 : 0.88;
+    const height = isLarge ? 2.5 : 2.2;
     
-    // Bottom curve
+    // Bottom flat
     points.push(new THREE.Vector2(0, 0));
-    points.push(new THREE.Vector2(bodyWidth * 0.92, 0));
-    points.push(new THREE.Vector2(bodyWidth, 0.1));
+    points.push(new THREE.Vector2(bodyWidth * 0.9, 0));
+    points.push(new THREE.Vector2(bodyWidth, 0.08));
     
-    // Body curve with slight taper
-    for (let i = 0; i <= 20; i++) {
-      const t = i / 20;
-      const radius = bodyWidth + Math.sin(t * Math.PI * 0.3) * 0.08 + t * (topWidth - bodyWidth);
-      points.push(new THREE.Vector2(radius, 0.1 + t * height));
+    // Body curve with classic mug taper
+    const steps = 24;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      // Slight curve outward toward top
+      const radius = bodyWidth + (topWidth - bodyWidth) * t + Math.sin(t * Math.PI) * 0.03;
+      points.push(new THREE.Vector2(radius, 0.08 + t * height));
     }
     
     // Rim
-    points.push(new THREE.Vector2(topWidth + 0.03, height + 0.15));
-    points.push(new THREE.Vector2(topWidth, height + 0.2));
+    const rimHeight = height + 0.08;
+    points.push(new THREE.Vector2(topWidth + 0.04, rimHeight));
+    points.push(new THREE.Vector2(topWidth + 0.02, rimHeight + 0.06));
+    points.push(new THREE.Vector2(topWidth - 0.02, rimHeight + 0.06));
     
     return points;
   }, [variant]);
 
-  // Calculate wrap geometry for the print area
+  // Create print wrap geometry that covers the mug body from handle to handle
   const printWrapGeometry = useMemo(() => {
     const isLarge = variant.id === '15oz';
-    const radius = isLarge ? 0.95 : 0.85;
-    const height = isLarge ? 2.0 : 1.75;
+    const bottomRadius = isLarge ? 0.88 : 0.78;
+    const topRadius = isLarge ? 1.02 : 0.90;
+    const height = isLarge ? 1.9 : 1.65;
     
-    // Create a cylinder segment that wraps around the mug
+    // Create a cylinder segment that wraps around the front of the mug
+    // The wrap starts and ends at the handle position
+    const handleAngle = Math.PI * 0.18; // Gap for handle
+    const wrapAngle = Math.PI * 2 - (handleAngle * 2); // Full wrap minus handle gaps
+    
     const geometry = new THREE.CylinderGeometry(
-      radius + 0.002, // Slightly larger to sit on surface
-      radius * 0.95 + 0.002,
+      topRadius + 0.003,    // Top radius (slightly larger than mug)
+      bottomRadius + 0.003, // Bottom radius
       height,
-      64,
-      1,
-      true,
-      Math.PI * 0.15, // Start angle
-      Math.PI * 1.7   // Sweep angle (~270°)
+      64,                   // Radial segments for smooth curve
+      1,                    // Height segments
+      true,                 // Open ended
+      handleAngle,          // Start angle (after handle)
+      wrapAngle             // Arc length (wraps around to other side of handle)
     );
     
     // Recalculate UVs for proper texture mapping
+    // UV should go from 0 to 1 horizontally as we go around the mug
     const uvs = geometry.attributes.uv;
     const positions = geometry.attributes.position;
     
@@ -129,11 +141,15 @@ function RealisticMug({ textureUrl, color, variant }: RealisticMugProps) {
       const z = positions.getZ(i);
       const y = positions.getY(i);
       
-      // Calculate angle for U coordinate
-      const angle = Math.atan2(z, x);
-      const u = (angle + Math.PI) / (Math.PI * 2);
+      // Calculate angle from center
+      let angle = Math.atan2(z, x);
       
-      // Calculate V coordinate based on height
+      // Normalize angle to 0-1 range for U coordinate
+      // Adjust so that U=0 is at one edge of handle and U=1 is at other edge
+      const normalizedAngle = (angle - handleAngle) / wrapAngle;
+      const u = 1 - normalizedAngle; // Flip for correct orientation
+      
+      // V coordinate based on height (0 at bottom, 1 at top)
       const v = (y / height) + 0.5;
       
       uvs.setXY(i, u, v);
@@ -144,97 +160,117 @@ function RealisticMug({ textureUrl, color, variant }: RealisticMugProps) {
     return geometry;
   }, [variant]);
 
-  const handleRadius = variant.id === '15oz' ? 0.55 : 0.5;
+  const isLarge = variant.id === '15oz';
+  const handleRadius = isLarge ? 0.52 : 0.46;
+  const mugHeight = isLarge ? 2.5 : 2.2;
 
   return (
-    <Float speed={0.8} rotationIntensity={0.02} floatIntensity={0.1}>
-      <group ref={meshRef} scale={1.15}>
+    <Float speed={0.6} rotationIntensity={0.015} floatIntensity={0.08}>
+      <group ref={meshRef} scale={1.1}>
         {/* Main Mug Body */}
-        <mesh position={[0, -1.1, 0]} castShadow receiveShadow>
+        <mesh position={[0, -mugHeight / 2, 0]} castShadow receiveShadow>
           <latheGeometry args={[mugProfile, 64]} />
           <meshStandardMaterial 
             color={color}
-            roughness={0.1}
-            metalness={0.02}
-            envMapIntensity={1}
+            roughness={0.12}
+            metalness={0.01}
+            envMapIntensity={0.9}
           />
         </mesh>
         
-        {/* Inner cavity */}
-        <mesh position={[0, variant.id === '15oz' ? 0.4 : 0.25, 0]}>
+        {/* Inner cavity - dark interior */}
+        <mesh position={[0, isLarge ? 0.55 : 0.4, 0]}>
           <cylinderGeometry args={[
-            variant.id === '15oz' ? 0.92 : 0.82, 
-            variant.id === '15oz' ? 0.82 : 0.72, 
-            variant.id === '15oz' ? 2.4 : 2.1, 
+            isLarge ? 0.88 : 0.78, 
+            isLarge ? 0.78 : 0.68, 
+            isLarge ? 2.3 : 2.0, 
             48, 
             1, 
             true
           ]} />
           <meshStandardMaterial 
             color="#1a1a1a" 
-            roughness={0.4}
+            roughness={0.5}
             side={THREE.BackSide}
           />
         </mesh>
         
-        {/* Coffee surface */}
-        <mesh position={[0, variant.id === '15oz' ? 1.0 : 0.8, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[variant.id === '15oz' ? 0.85 : 0.75, 48]} />
-          <meshStandardMaterial color="#2a1810" roughness={0.9} />
+        {/* Coffee/liquid surface */}
+        <mesh 
+          position={[0, isLarge ? 1.1 : 0.9, 0]} 
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <circleGeometry args={[isLarge ? 0.8 : 0.7, 48]} />
+          <meshStandardMaterial 
+            color="#2a1810" 
+            roughness={0.85} 
+            metalness={0.1}
+          />
         </mesh>
         
-        {/* Handle */}
-        <group position={[variant.id === '15oz' ? 1.15 : 1.05, 0, 0]}>
-          <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-            <torusGeometry args={[handleRadius, 0.1, 20, 48, Math.PI * 0.95]} />
-            <meshStandardMaterial color={color} roughness={0.1} metalness={0.02} />
+        {/* Handle - positioned at the back */}
+        <group position={[isLarge ? 1.1 : 1.0, 0.05, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <mesh castShadow>
+            <torusGeometry args={[handleRadius, 0.095, 16, 32, Math.PI * 0.92]} />
+            <meshStandardMaterial 
+              color={color} 
+              roughness={0.12} 
+              metalness={0.01}
+              envMapIntensity={0.9}
+            />
           </mesh>
         </group>
         
-        {/* Print Area Wrap - The main design area */}
+        {/* Print Area Wrap - wraps from one side of handle to the other */}
         {texture && (
           <mesh 
-            position={[0, variant.id === '15oz' ? 0.35 : 0.2, 0]}
-            rotation={[0, Math.PI * 0.85, 0]}
+            position={[0, isLarge ? 0.45 : 0.3, 0]}
+            rotation={[0, Math.PI, 0]} // Rotate to align with handle position
           >
             <primitive object={printWrapGeometry} attach="geometry" />
             <meshStandardMaterial 
               map={texture}
               transparent
-              opacity={0.98}
-              roughness={0.15}
-              side={THREE.DoubleSide}
+              opacity={0.97}
+              roughness={0.18}
+              side={THREE.FrontSide}
+              depthWrite={true}
             />
           </mesh>
         )}
       </group>
     </Float>
   );
-}
+});
 
-function Scene({ canvasTexture, variant, mugColor }: MugPreview3DProps) {
+RealisticMug.displayName = 'RealisticMug';
+
+interface SceneProps extends MugPreview3DProps {}
+
+// Scene component
+const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mugColor }, ref) => {
   return (
     <>
       {/* Studio Lighting */}
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.4} />
       <spotLight 
         position={[5, 8, 5]} 
-        angle={0.22} 
+        angle={0.25} 
         penumbra={1} 
-        intensity={1.8} 
+        intensity={1.6} 
         castShadow 
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0001}
       />
       <spotLight 
         position={[-5, 5, -5]} 
-        angle={0.28} 
+        angle={0.3} 
         penumbra={1} 
-        intensity={0.5}
+        intensity={0.45}
         color="#ffeedd"
       />
-      <pointLight position={[0, 6, 0]} intensity={0.3} />
-      <pointLight position={[-4, 3, 5]} intensity={0.25} color="#fff5ee" />
+      <pointLight position={[0, 6, 0]} intensity={0.35} />
+      <pointLight position={[-4, 3, 5]} intensity={0.2} color="#fff5ee" />
       
       <Suspense fallback={<LoadingSpinner />}>
         <RealisticMug 
@@ -244,29 +280,31 @@ function Scene({ canvasTexture, variant, mugColor }: MugPreview3DProps) {
         />
         
         <ContactShadows 
-          position={[0, -2.5, 0]} 
-          opacity={0.5} 
+          position={[0, -2.3, 0]} 
+          opacity={0.45} 
           scale={10} 
-          blur={2.2} 
-          far={6}
+          blur={2.4} 
+          far={5}
           color="#000000"
         />
-        <Environment preset="studio" environmentIntensity={0.6} />
+        <Environment preset="studio" environmentIntensity={0.55} />
       </Suspense>
       
       <OrbitControls 
         enableZoom={true}
         enablePan={false}
         minDistance={4}
-        maxDistance={12}
+        maxDistance={10}
         minPolarAngle={Math.PI / 6}
-        maxPolarAngle={Math.PI / 1.5}
+        maxPolarAngle={Math.PI / 1.6}
         autoRotate={false}
         makeDefault
       />
     </>
   );
-}
+});
+
+Scene.displayName = 'Scene';
 
 export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: MugPreview3DProps) {
   return (
@@ -275,14 +313,14 @@ export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: M
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
       
       <Canvas
-        camera={{ position: [0, 0, 7], fov: 38 }}
+        camera={{ position: [0, 0.5, 6], fov: 40 }}
         dpr={[1, 2]}
         gl={{ 
           antialias: true, 
           alpha: true,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.1
+          toneMappingExposure: 1.05
         }}
         shadows
       >
