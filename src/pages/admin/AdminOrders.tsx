@@ -225,28 +225,79 @@ const AdminOrders = () => {
 
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Order Items</p>
-                  <div className="space-y-2">
-                    {orderItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          {item.product_image && (
-                            <img
-                              src={item.product_image}
-                              alt={item.product_name}
-                              className="w-12 h-12 rounded object-cover"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{item.product_name}</p>
-                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                  <div className="space-y-4">
+                    {orderItems.map((item) => {
+                      const customization = item.customization as { imageUrl?: string; text?: string; color?: string } | null;
+                      return (
+                        <div
+                          key={item.id}
+                          className="p-4 rounded-lg bg-muted/50 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {item.product_image && (
+                                <img
+                                  src={item.product_image}
+                                  alt={item.product_name}
+                                  className="w-12 h-12 rounded object-cover"
+                                />
+                              )}
+                              <div>
+                                <p className="font-medium">{item.product_name}</p>
+                                <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                              </div>
+                            </div>
+                            <p className="font-medium">₹{Number(item.price).toFixed(2)}</p>
                           </div>
+                          
+                          {/* Customization Details */}
+                          {customization && (
+                            <div className="border-t border-border pt-3">
+                              <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Customer Customization</p>
+                              <div className="flex flex-wrap gap-4">
+                                {customization.imageUrl && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Uploaded Image</p>
+                                    <a 
+                                      href={customization.imageUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="block"
+                                    >
+                                      <img
+                                        src={customization.imageUrl}
+                                        alt="Customer uploaded"
+                                        className="w-24 h-24 rounded-lg object-cover border border-border hover:border-accent transition-colors cursor-pointer"
+                                      />
+                                    </a>
+                                  </div>
+                                )}
+                                {customization.text && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Custom Text</p>
+                                    <p className="text-sm font-medium bg-background px-3 py-2 rounded-md border border-border">
+                                      "{customization.text}"
+                                    </p>
+                                  </div>
+                                )}
+                                {customization.color && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Selected Color</p>
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="w-6 h-6 rounded-full border border-border"
+                                        style={{ backgroundColor: customization.color }}
+                                      />
+                                      <span className="text-xs font-mono">{customization.color}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <p className="font-medium">₹{Number(item.price).toFixed(2)}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
