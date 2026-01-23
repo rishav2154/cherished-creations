@@ -111,7 +111,10 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
           preserveObjectStacking: true,
         });
 
-        // Add print-safe area border visualization
+        // Add print area visual indicators
+        const safeMargin = 10; // Safe margin inside border
+        
+        // Main print area border (outer edge)
         const printAreaBorder = new fabricModule.Rect({
           left: 0,
           top: 0,
@@ -124,9 +127,60 @@ export function useFabricCanvas({ variant, onCanvasUpdate }: UseFabricCanvasOpti
           selectable: false,
           evented: false,
         });
-        // Use custom property to identify the border
         (printAreaBorder as any).__isPrintAreaBorder = true;
+        
+        // Safe zone border (inner recommended area)
+        const safeZone = new fabricModule.Rect({
+          left: safeMargin,
+          top: safeMargin,
+          width: width - (safeMargin * 2),
+          height: height - (safeMargin * 2),
+          fill: 'transparent',
+          stroke: '#22c55e',
+          strokeWidth: 1,
+          strokeDashArray: [4, 4],
+          selectable: false,
+          evented: false,
+          opacity: 0.6,
+        });
+        (safeZone as any).__isPrintAreaBorder = true;
+
+        // Corner markers for visual guidance
+        const cornerSize = 20;
+        const cornerStroke = '#3b82f6';
+        const corners = [
+          // Top-left
+          { points: [0, cornerSize, 0, 0, cornerSize, 0] },
+          // Top-right  
+          { points: [width - cornerSize, 0, width, 0, width, cornerSize] },
+          // Bottom-left
+          { points: [0, height - cornerSize, 0, height, cornerSize, height] },
+          // Bottom-right
+          { points: [width - cornerSize, height, width, height, width, height - cornerSize] },
+        ];
+
+        corners.forEach(({ points }) => {
+          const cornerLine = new fabricModule.Polyline(
+            [
+              { x: points[0], y: points[1] },
+              { x: points[2], y: points[3] },
+              { x: points[4], y: points[5] },
+            ],
+            {
+              fill: 'transparent',
+              stroke: cornerStroke,
+              strokeWidth: 3,
+              selectable: false,
+              evented: false,
+            }
+          );
+          (cornerLine as any).__isPrintAreaBorder = true;
+          canvas.add(cornerLine);
+        });
+
+        // Add all border elements
         canvas.add(printAreaBorder);
+        canvas.add(safeZone);
 
         fabricRef.current = canvas;
 

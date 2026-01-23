@@ -187,9 +187,20 @@ export function Fabric2DEditor({
 
       {/* Canvas Container */}
       <div className="relative flex justify-center items-center p-4 bg-muted/30 rounded-xl min-h-[400px]">
-        {/* Print Area Info */}
-        <div className="absolute top-2 left-2 text-xs text-muted-foreground bg-background/80 backdrop-blur px-2 py-1 rounded">
-          Print Area: {variant.printArea.width / 300}"×{variant.printArea.height / 300}" @ 300 DPI
+        {/* Print Area Legend */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 text-xs bg-background/90 backdrop-blur px-3 py-2 rounded-lg border shadow-sm">
+          <div className="font-medium text-foreground mb-1">Print Area Guide</div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-0.5 border-dashed border-t-2 border-primary" />
+            <span className="text-muted-foreground">Print boundary</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-0.5 border-dashed border-t border-emerald-500 opacity-60" />
+            <span className="text-muted-foreground">Safe zone</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1">
+            {variant.printArea.width / 300}" × {variant.printArea.height / 300}" @ 300 DPI
+          </div>
         </div>
         
         {/* Canvas */}
@@ -214,6 +225,7 @@ export function Fabric2DEditor({
               </div>
               <p className="text-foreground font-medium">Click to upload your image</p>
               <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP up to 10MB</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">Keep design inside green safe zone</p>
             </motion.div>
           )}
         </motion.div>
