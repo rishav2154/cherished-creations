@@ -29,19 +29,17 @@ const CameraController = forwardRef<
     reset: () => {
       camera.position.set(0, 0.5, 6);
       camera.lookAt(0, 0, 0);
-      if (controlsRef.current) {
-        controlsRef.current.reset();
-      }
+      controlsRef.current?.reset();
     },
     zoomIn: () => {
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-      camera.position.addScaledVector(direction, 0.5);
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      camera.position.addScaledVector(dir, 0.5);
     },
     zoomOut: () => {
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-      camera.position.addScaledVector(direction, -0.5);
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      camera.position.addScaledVector(dir, -0.5);
     }
   }));
   
@@ -50,7 +48,7 @@ const CameraController = forwardRef<
 
 CameraController.displayName = 'CameraController';
 
-// Loading spinner component
+// Loading spinner
 const LoadingSpinner = () => (
   <Html center>
     <div className="flex flex-col items-center gap-3">
@@ -63,206 +61,201 @@ const LoadingSpinner = () => (
   </Html>
 );
 
-interface RealisticMugProps {
-  textureUrl: string | null;
-  color: string;
+// Print wrap component - separate for cleaner texture handling
+interface PrintWrapProps {
+  textureUrl: string;
   variant: MugVariant;
+  mugHeight: number;
+  bottomRadius: number;
+  topRadius: number;
 }
 
-// Realistic mug component
-const RealisticMug = ({ textureUrl, color, variant }: RealisticMugProps) => {
-  const meshRef = useRef<THREE.Group>(null);
+const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
+  const meshRef = useRef<THREE.Mesh>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
-  // Load texture when URL changes
+  // Load texture from data URL
   useEffect(() => {
-    if (!textureUrl) {
-      setTexture(null);
-      return;
-    }
+    if (!textureUrl) return;
 
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      textureUrl,
-      (loadedTexture) => {
-        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
-        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
-        loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.flipY = true;
-        loadedTexture.minFilter = THREE.LinearFilter;
-        loadedTexture.magFilter = THREE.LinearFilter;
-        loadedTexture.generateMipmaps = false;
-        loadedTexture.needsUpdate = true;
-        setTexture(loadedTexture);
-      },
-      undefined,
-      (error) => console.error('Error loading texture:', error)
-    );
+    const img = new Image();
+    img.onload = () => {
+      const tex = new THREE.Texture(img);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.flipY = true;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      tex.needsUpdate = true;
+      setTexture(tex);
+    };
+    img.src = textureUrl;
+
+    return () => {
+      if (texture) texture.dispose();
+    };
   }, [textureUrl]);
 
-  // Gentle rotation animation
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.15;
-    }
-  });
-
-  const isLarge = variant.id === '15oz';
-  
-  // Mug dimensions
-  const mugHeight = isLarge ? 2.6 : 2.3;
-  const bottomRadius = isLarge ? 0.85 : 0.75;
-  const topRadius = isLarge ? 1.0 : 0.88;
-  const handleRadius = isLarge ? 0.5 : 0.44;
-
-  // Create mug body geometry using lathe - profile starts at y=0
-  const mugProfile = useMemo(() => {
-    const points: THREE.Vector2[] = [];
-    
-    // Bottom
-    points.push(new THREE.Vector2(0, 0));
-    points.push(new THREE.Vector2(bottomRadius * 0.9, 0));
-    points.push(new THREE.Vector2(bottomRadius, 0.08));
-    
-    // Body curve
-    const steps = 24;
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const radius = bottomRadius + (topRadius - bottomRadius) * t + Math.sin(t * Math.PI) * 0.025;
-      points.push(new THREE.Vector2(radius, 0.08 + t * mugHeight));
-    }
-    
-    // Rim
-    const rimHeight = mugHeight + 0.08;
-    points.push(new THREE.Vector2(topRadius + 0.04, rimHeight));
-    points.push(new THREE.Vector2(topRadius + 0.02, rimHeight + 0.05));
-    points.push(new THREE.Vector2(topRadius - 0.02, rimHeight + 0.05));
-    
-    return points;
-  }, [bottomRadius, topRadius, mugHeight]);
-
-  // Print wrap geometry - wraps around mug with gap for handle
-  const { printGeometry, printYOffset } = useMemo(() => {
-    // Handle is at the back (angle = PI), gap centered there
-    const handleGapAngle = Math.PI * 0.3; // ~54 degrees gap for handle
+  // Create geometry with proper UV mapping
+  const geometry = useMemo(() => {
+    const handleGapAngle = Math.PI * 0.3; // Gap for handle
     const printArcAngle = Math.PI * 2 - handleGapAngle;
-    
-    // Start angle: print starts after half the gap (from front, going both ways)
-    // Handle at back means gap at PI, so print goes from ~0.15PI to ~1.85PI
     const startAngle = handleGapAngle / 2;
-    
-    // Calculate print dimensions preserving aspect ratio
+
+    // Calculate print height to preserve aspect ratio
     const printAspectRatio = variant.printArea.width / variant.printArea.height;
     const avgRadius = (bottomRadius + topRadius) / 2;
-    const arcLength = printArcAngle * avgRadius; // Circumference covered
-    const printHeight = arcLength / printAspectRatio;
-    
-    // Clamp height to fit on mug with margins
-    const maxPrintHeight = mugHeight * 0.85;
-    const actualPrintHeight = Math.min(printHeight, maxPrintHeight);
-    
-    // Calculate vertical margins to center print on mug
-    const verticalMargin = (mugHeight - actualPrintHeight) / 2;
-    const printBottomY = verticalMargin;
-    const printTopY = mugHeight - verticalMargin;
-    
+    const arcLength = printArcAngle * avgRadius;
+    const idealPrintHeight = arcLength / printAspectRatio;
+    const actualPrintHeight = Math.min(idealPrintHeight, mugHeight * 0.85);
+
     // Calculate radii at print boundaries
-    const bottomT = printBottomY / mugHeight;
-    const topT = printTopY / mugHeight;
-    const printBottomRadius = bottomRadius + (topRadius - bottomRadius) * bottomT + 0.005;
-    const printTopRadius = bottomRadius + (topRadius - bottomRadius) * topT + 0.005;
-    
+    const verticalMargin = (mugHeight - actualPrintHeight) / 2;
+    const bottomT = verticalMargin / mugHeight;
+    const topT = 1 - bottomT;
+    const printBottomRadius = bottomRadius + (topRadius - bottomRadius) * bottomT + 0.006;
+    const printTopRadius = bottomRadius + (topRadius - bottomRadius) * topT + 0.006;
+
     const radialSegments = 128;
     const heightSegments = 1;
-    
-    const geometry = new THREE.CylinderGeometry(
+
+    const geo = new THREE.CylinderGeometry(
       printTopRadius,
       printBottomRadius,
       actualPrintHeight,
       radialSegments,
       heightSegments,
-      true, // open-ended
+      true,
       startAngle,
       printArcAngle
     );
-    
-    // Custom UV mapping for correct image display
-    const uvs = geometry.attributes.uv;
-    const count = uvs.count;
+
+    // Fix UV mapping
+    const uvs = geo.attributes.uv;
     const vertsPerRing = radialSegments + 1;
-    
+
     for (let ring = 0; ring <= heightSegments; ring++) {
       for (let seg = 0; seg <= radialSegments; seg++) {
         const idx = ring * vertsPerRing + seg;
-        if (idx < count) {
-          // U: maps image width across the arc (0 = start, 1 = end)
+        if (idx < uvs.count) {
           const u = seg / radialSegments;
-          // V: maps image height (0 = bottom, 1 = top)
           const v = ring / heightSegments;
           uvs.setXY(idx, u, v);
         }
       }
     }
     uvs.needsUpdate = true;
-    
-    // CylinderGeometry is centered at origin, so we need to offset it
-    // Mug body uses latheGeometry starting at y=0, so mug bottom is at y=0
-    // Print should be centered vertically on the mug body
-    const yOffset = 0.08 + mugHeight / 2; // 0.08 is the base height offset in profile
-    
-    return { printGeometry: geometry, printYOffset: yOffset };
+
+    return geo;
   }, [variant, bottomRadius, topRadius, mugHeight]);
+
+  // Calculate Y position for the print wrap
+  const yPosition = useMemo(() => {
+    // The mug body is positioned at y = -mugHeight/2
+    // The lathe geometry starts at y=0 and goes up
+    // So actual mug spans from -mugHeight/2 to +mugHeight/2 + 0.08
+    // Center the print wrap at y=0 (middle of the mug)
+    return 0;
+  }, []);
+
+  if (!texture) return null;
+
+  return (
+    <mesh ref={meshRef} position={[0, yPosition, 0]}>
+      <primitive object={geometry} attach="geometry" />
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        opacity={0.98}
+        roughness={0.15}
+        side={THREE.FrontSide}
+        depthWrite={true}
+      />
+    </mesh>
+  );
+};
+
+interface RealisticMugProps {
+  textureUrl: string | null;
+  color: string;
+  variant: MugVariant;
+}
+
+const RealisticMug = ({ textureUrl, color, variant }: RealisticMugProps) => {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.15;
+    }
+  });
+
+  const isLarge = variant.id === '15oz';
+  const mugHeight = isLarge ? 2.6 : 2.3;
+  const bottomRadius = isLarge ? 0.85 : 0.75;
+  const topRadius = isLarge ? 1.0 : 0.88;
+  const handleRadius = isLarge ? 0.5 : 0.44;
+
+  // Mug body profile
+  const mugProfile = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    points.push(new THREE.Vector2(0, 0));
+    points.push(new THREE.Vector2(bottomRadius * 0.9, 0));
+    points.push(new THREE.Vector2(bottomRadius, 0.08));
+
+    for (let i = 0; i <= 24; i++) {
+      const t = i / 24;
+      const r = bottomRadius + (topRadius - bottomRadius) * t + Math.sin(t * Math.PI) * 0.025;
+      points.push(new THREE.Vector2(r, 0.08 + t * mugHeight));
+    }
+
+    points.push(new THREE.Vector2(topRadius + 0.04, mugHeight + 0.08));
+    points.push(new THREE.Vector2(topRadius + 0.02, mugHeight + 0.13));
+    points.push(new THREE.Vector2(topRadius - 0.02, mugHeight + 0.13));
+
+    return points;
+  }, [bottomRadius, topRadius, mugHeight]);
 
   return (
     <Float speed={0.6} rotationIntensity={0.015} floatIntensity={0.08}>
-      <group ref={meshRef} scale={1.1}>
-        {/* Main Mug Body - positioned so bottom is at y = -mugHeight/2 */}
+      <group ref={groupRef} scale={1.1}>
+        {/* Mug body */}
         <mesh position={[0, -mugHeight / 2, 0]} castShadow receiveShadow>
           <latheGeometry args={[mugProfile, 64]} />
-          <meshStandardMaterial 
-            color={color}
-            roughness={0.12}
-            metalness={0.01}
-            envMapIntensity={0.9}
-          />
+          <meshStandardMaterial color={color} roughness={0.12} metalness={0.01} envMapIntensity={0.9} />
         </mesh>
-        
+
         {/* Inner cavity */}
         <mesh position={[0, mugHeight * 0.15, 0]}>
           <cylinderGeometry args={[topRadius - 0.08, bottomRadius - 0.06, mugHeight * 0.9, 48, 1, true]} />
           <meshStandardMaterial color="#1a1a1a" roughness={0.5} side={THREE.BackSide} />
         </mesh>
-        
+
         {/* Coffee surface */}
         <mesh position={[0, mugHeight * 0.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[topRadius - 0.15, 48]} />
           <meshStandardMaterial color="#2a1810" roughness={0.85} metalness={0.1} />
         </mesh>
-        
-        {/* Handle - at back (PI angle) */}
-        <group 
-          position={[-(topRadius + 0.05), -0.05, 0]} 
-          rotation={[0, 0, Math.PI / 2]}
-        >
+
+        {/* Handle */}
+        <group position={[-(topRadius + 0.05), -0.05, 0]} rotation={[0, 0, Math.PI / 2]}>
           <mesh castShadow>
             <torusGeometry args={[handleRadius, 0.09, 16, 32, Math.PI * 0.92]} />
             <meshStandardMaterial color={color} roughness={0.12} metalness={0.01} envMapIntensity={0.9} />
           </mesh>
         </group>
-        
-        {/* Print Area Wrap */}
-        {texture && (
-          <mesh position={[0, printYOffset - mugHeight / 2, 0]}>
-            <primitive object={printGeometry} attach="geometry" />
-            <meshStandardMaterial 
-              map={texture}
-              transparent
-              opacity={0.98}
-              roughness={0.15}
-              side={THREE.FrontSide}
-              depthWrite={true}
-            />
-          </mesh>
+
+        {/* Print wrap - only render when texture exists */}
+        {textureUrl && (
+          <PrintWrap
+            textureUrl={textureUrl}
+            variant={variant}
+            mugHeight={mugHeight}
+            bottomRadius={bottomRadius}
+            topRadius={topRadius}
+          />
         )}
       </group>
     </Float>
@@ -277,30 +270,22 @@ interface SceneProps extends MugPreview3DProps {
 const Scene = ({ canvasTexture, variant, mugColor, cameraRef, controlsRef }: SceneProps) => (
   <>
     <ambientLight intensity={0.4} />
-    <spotLight 
-      position={[5, 8, 5]} 
-      angle={0.25} 
-      penumbra={1} 
-      intensity={1.6} 
-      castShadow 
-      shadow-mapSize={[2048, 2048]}
-      shadow-bias={-0.0001}
-    />
+    <spotLight position={[5, 8, 5]} angle={0.25} penumbra={1} intensity={1.6} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0001} />
     <spotLight position={[-5, 5, -5]} angle={0.3} penumbra={1} intensity={0.45} color="#ffeedd" />
     <pointLight position={[0, 6, 0]} intensity={0.35} />
     <pointLight position={[-4, 3, 5]} intensity={0.2} color="#fff5ee" />
-    
+
     <CameraController ref={cameraRef} controlsRef={controlsRef} />
-    
+
     <Suspense fallback={<LoadingSpinner />}>
       <RealisticMug textureUrl={canvasTexture} color={mugColor || '#ffffff'} variant={variant} />
       <ContactShadows position={[0, -2.3, 0]} opacity={0.45} scale={10} blur={2.4} far={5} color="#000000" />
       <Environment preset="studio" environmentIntensity={0.55} />
     </Suspense>
-    
-    <OrbitControls 
+
+    <OrbitControls
       ref={controlsRef}
-      enableZoom={true}
+      enableZoom
       enablePan={false}
       minDistance={3}
       maxDistance={12}
@@ -319,56 +304,28 @@ export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: M
   return (
     <div className="relative w-full h-full min-h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 via-background to-muted/20">
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
-      
-      {/* Zoom Controls */}
+
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm"
-          onClick={() => cameraRef.current?.zoomIn()}
-        >
+        <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm" onClick={() => cameraRef.current?.zoomIn()}>
           <ZoomIn className="h-4 w-4" />
         </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm"
-          onClick={() => cameraRef.current?.zoomOut()}
-        >
+        <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm" onClick={() => cameraRef.current?.zoomOut()}>
           <ZoomOut className="h-4 w-4" />
         </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm"
-          onClick={() => cameraRef.current?.reset()}
-        >
+        <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm" onClick={() => cameraRef.current?.reset()}>
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <Canvas
         camera={{ position: [0, 0.5, 6], fov: 40 }}
         dpr={[1, 2]}
-        gl={{ 
-          antialias: true, 
-          alpha: true,
-          powerPreference: "high-performance",
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.05
-        }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
         shadows
       >
-        <Scene 
-          canvasTexture={canvasTexture}
-          variant={variant}
-          mugColor={mugColor}
-          cameraRef={cameraRef}
-          controlsRef={controlsRef}
-        />
+        <Scene canvasTexture={canvasTexture} variant={variant} mugColor={mugColor} cameraRef={cameraRef} controlsRef={controlsRef} />
       </Canvas>
-      
+
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 backdrop-blur px-3 py-1.5 rounded-full">
         Drag to rotate • Scroll to zoom
       </div>
