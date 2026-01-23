@@ -28,9 +28,10 @@ export const ProductReviews = ({ productId }: ProductReviewsProps) => {
 
   const fetchReviews = async () => {
     try {
+      // Select only non-sensitive fields - exclude user_id to protect privacy
       const { data, error } = await supabase
         .from('reviews')
-        .select('*')
+        .select('id, product_id, user_name, rating, title, content, verified_purchase, helpful_count, created_at, updated_at')
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
