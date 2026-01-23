@@ -33,6 +33,7 @@ export function MugCustomizer({ onAddToCart }: MugCustomizerProps) {
   const { toast } = useToast();
 
   const handleCanvasUpdate = useCallback((dataUrl: string) => {
+    console.log('MugCustomizer: Canvas updated, dataUrl length:', dataUrl?.length);
     setCanvasTexture(dataUrl);
   }, []);
 

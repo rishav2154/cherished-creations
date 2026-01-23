@@ -72,31 +72,59 @@ interface PrintWrapProps {
 
 const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const textureRef = useRef<THREE.Texture | null>(null);
+  const [textureLoaded, setTextureLoaded] = useState(false);
 
-  // Load texture from data URL
+  // Load texture from data URL using TextureLoader
   useEffect(() => {
-    if (!textureUrl) return;
+    if (!textureUrl) {
+      if (textureRef.current) {
+        textureRef.current.dispose();
+        textureRef.current = null;
+        setTextureLoaded(false);
+      }
+      return;
+    }
 
-    const img = new Image();
-    img.onload = () => {
-      const tex = new THREE.Texture(img);
-      tex.wrapS = THREE.ClampToEdgeWrapping;
-      tex.wrapT = THREE.ClampToEdgeWrapping;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.flipY = true;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.generateMipmaps = false;
-      tex.needsUpdate = true;
-      setTexture(tex);
-    };
-    img.src = textureUrl;
+    console.log('PrintWrap: Loading texture, URL length:', textureUrl.length);
+    
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      textureUrl,
+      (loadedTexture) => {
+        console.log('PrintWrap: Texture loaded successfully');
+        // Dispose old texture
+        if (textureRef.current) {
+          textureRef.current.dispose();
+        }
+        
+        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+        loadedTexture.colorSpace = THREE.SRGBColorSpace;
+        loadedTexture.flipY = true;
+        loadedTexture.minFilter = THREE.LinearFilter;
+        loadedTexture.magFilter = THREE.LinearFilter;
+        loadedTexture.generateMipmaps = false;
+        loadedTexture.needsUpdate = true;
+        
+        textureRef.current = loadedTexture;
+        setTextureLoaded(true);
+      },
+      undefined,
+      (error) => {
+        console.error('PrintWrap: Error loading texture:', error);
+      }
+    );
 
     return () => {
-      if (texture) texture.dispose();
+      if (textureRef.current) {
+        textureRef.current.dispose();
+        textureRef.current = null;
+      }
     };
   }, [textureUrl]);
+
+  const texture = textureRef.current;
 
   // Create geometry with proper UV mapping
   const geometry = useMemo(() => {
@@ -185,6 +213,11 @@ interface RealisticMugProps {
 
 const RealisticMug = ({ textureUrl, color, variant }: RealisticMugProps) => {
   const groupRef = useRef<THREE.Group>(null);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('RealisticMug: textureUrl received:', textureUrl ? `data URL (${textureUrl.length} chars)` : 'null');
+  }, [textureUrl]);
 
   useFrame((state) => {
     if (groupRef.current) {
