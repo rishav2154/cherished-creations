@@ -51,8 +51,10 @@ const CameraController = forwardRef<{ reset: () => void; zoomIn: () => void; zoo
   }
 );
 
+CameraController.displayName = 'CameraController';
+
 // Loading spinner component
-const LoadingSpinner = forwardRef<THREE.Group>((_, ref) => {
+const LoadingSpinner = () => {
   return (
     <Html center>
       <div className="flex flex-col items-center gap-3">
@@ -64,9 +66,7 @@ const LoadingSpinner = forwardRef<THREE.Group>((_, ref) => {
       </div>
     </Html>
   );
-});
-
-LoadingSpinner.displayName = 'LoadingSpinner';
+};
 
 interface RealisticMugProps {
   textureUrl: string | null;
@@ -94,7 +94,7 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
         loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
         loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
         loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.flipY = false; // Don't flip - our UV mapping handles orientation
+        loadedTexture.flipY = true; // Standard image orientation
         loadedTexture.minFilter = THREE.LinearFilter;
         loadedTexture.magFilter = THREE.LinearFilter;
         loadedTexture.generateMipmaps = false;
@@ -115,90 +115,135 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     }
   });
 
+  const isLarge = variant.id === '15oz';
+  
+  // Mug dimensions based on variant
+  const mugHeight = isLarge ? 2.6 : 2.3;
+  const bottomRadius = isLarge ? 0.85 : 0.75;
+  const topRadius = isLarge ? 1.0 : 0.88;
+  
+  // Handle position - placed at angle PI (back of mug, negative X)
+  const handleAngle = Math.PI;
+  const handleXPos = Math.cos(handleAngle) * (topRadius + 0.05);
+  const handleZPos = Math.sin(handleAngle) * (topRadius + 0.05);
+  const handleRadius = isLarge ? 0.5 : 0.44;
+
   // Create mug body geometry using lathe
   const mugProfile = useMemo(() => {
     const points: THREE.Vector2[] = [];
-    const isLarge = variant.id === '15oz';
-    const bodyWidth = isLarge ? 0.85 : 0.75;
-    const topWidth = isLarge ? 1.0 : 0.88;
-    const height = isLarge ? 2.5 : 2.2;
     
     // Bottom flat
     points.push(new THREE.Vector2(0, 0));
-    points.push(new THREE.Vector2(bodyWidth * 0.9, 0));
-    points.push(new THREE.Vector2(bodyWidth, 0.08));
+    points.push(new THREE.Vector2(bottomRadius * 0.9, 0));
+    points.push(new THREE.Vector2(bottomRadius, 0.08));
     
     // Body curve with classic mug taper
     const steps = 24;
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
-      const radius = bodyWidth + (topWidth - bodyWidth) * t + Math.sin(t * Math.PI) * 0.03;
-      points.push(new THREE.Vector2(radius, 0.08 + t * height));
+      const radius = bottomRadius + (topRadius - bottomRadius) * t + Math.sin(t * Math.PI) * 0.025;
+      points.push(new THREE.Vector2(radius, 0.08 + t * mugHeight));
     }
     
     // Rim
-    const rimHeight = height + 0.08;
-    points.push(new THREE.Vector2(topWidth + 0.04, rimHeight));
-    points.push(new THREE.Vector2(topWidth + 0.02, rimHeight + 0.06));
-    points.push(new THREE.Vector2(topWidth - 0.02, rimHeight + 0.06));
+    const rimHeight = mugHeight + 0.08;
+    points.push(new THREE.Vector2(topRadius + 0.04, rimHeight));
+    points.push(new THREE.Vector2(topRadius + 0.02, rimHeight + 0.05));
+    points.push(new THREE.Vector2(topRadius - 0.02, rimHeight + 0.05));
     
     return points;
-  }, [variant]);
+  }, [bottomRadius, topRadius, mugHeight]);
 
-  // Create print wrap geometry - wraps around the mug excluding handle area
+  // Create print wrap geometry - wraps around the mug with gap for handle
+  // The print area covers approximately 85% of the mug circumference
   const printWrapGeometry = useMemo(() => {
-    const isLarge = variant.id === '15oz';
-    const bottomRadius = isLarge ? 0.88 : 0.78;
-    const topRadius = isLarge ? 1.02 : 0.90;
-    const height = isLarge ? 2.1 : 1.85; // Increased height to show full image
+    // Calculate the arc that the print covers (leaving gap for handle at PI)
+    const handleGapAngle = Math.PI * 0.28; // Gap for handle (~50 degrees)
+    const printArcAngle = Math.PI * 2 - handleGapAngle;
     
-    // Handle is at angle 0 (positive X axis), we need to leave a gap there
-    const handleGapAngle = Math.PI * 0.3;
-    const arcAngle = Math.PI * 2 - handleGapAngle;
-    const startAngle = handleGapAngle / 2;
+    // Start angle: positioned so handle gap is at PI (back)
+    const startAngle = handleGapAngle / 2 + Math.PI / 2;
+    
+    // Print dimensions scaled to 3D space
+    // The aspect ratio must match the 2D editor
+    const printAspectRatio = variant.printArea.width / variant.printArea.height;
+    
+    // Calculate wrap height to maintain aspect ratio
+    // Circumference covered = printArcAngle * averageRadius
+    const avgRadius = (bottomRadius + topRadius) / 2 + 0.004; // Slightly offset from mug surface
+    const printWidth3D = printArcAngle * avgRadius; // Width in 3D units
+    const printHeight3D = printWidth3D / printAspectRatio; // Height based on aspect ratio
+    
+    // Clamp height to not exceed mug height
+    const maxHeight = mugHeight * 0.85;
+    const actualHeight = Math.min(printHeight3D, maxHeight);
     
     const radialSegments = 128;
     const heightSegments = 1;
     
+    // Calculate top and bottom radius at print position
+    const heightRatio = actualHeight / mugHeight;
+    const printBottomY = (mugHeight - actualHeight) / 2 + 0.08;
+    const printTopY = printBottomY + actualHeight;
+    
+    // Interpolate radius at print heights
+    const bottomT = (printBottomY - 0.08) / mugHeight;
+    const topT = (printTopY - 0.08) / mugHeight;
+    const printBottomRadius = bottomRadius + (topRadius - bottomRadius) * bottomT + 0.004;
+    const printTopRadius = bottomRadius + (topRadius - bottomRadius) * topT + 0.004;
+    
     const geometry = new THREE.CylinderGeometry(
-      topRadius + 0.003,
-      bottomRadius + 0.003,
-      height,
+      printTopRadius,
+      printBottomRadius,
+      actualHeight,
       radialSegments,
       heightSegments,
       true,
       startAngle,
-      arcAngle
+      printArcAngle
     );
     
-    // Fix UV mapping for full image display
+    // UV mapping: properly map the full image without stretching
     const uvs = geometry.attributes.uv;
+    const positions = geometry.attributes.position;
     const count = uvs.count;
-    const verticesPerRow = radialSegments + 1;
     
-    for (let i = 0; i < count; i++) {
-      const row = Math.floor(i / verticesPerRow);
-      const col = i % verticesPerRow;
-      
-      // U: 0 to 1 across the arc (image width)
-      const u = col / radialSegments;
-      
-      // V: 0 to 1 from bottom to top (image height) - no offset
-      const v = row / heightSegments;
-      
-      // Mirror U for correct orientation when viewed from outside
-      uvs.setXY(i, 1 - u, v);
+    // For CylinderGeometry, vertices are arranged in rings
+    // Each ring has (radialSegments + 1) vertices
+    const verticesPerRing = radialSegments + 1;
+    const numRings = heightSegments + 1;
+    
+    for (let ring = 0; ring < numRings; ring++) {
+      for (let seg = 0; seg <= radialSegments; seg++) {
+        const idx = ring * verticesPerRing + seg;
+        if (idx < count) {
+          // U: horizontal position (0 = left edge of image, 1 = right edge)
+          // Map segment to U, going from 0 to 1 across the arc
+          const u = seg / radialSegments;
+          
+          // V: vertical position (0 = bottom of image, 1 = top)
+          // Ring 0 is bottom, ring 1 is top for heightSegments=1
+          const v = ring / heightSegments;
+          
+          uvs.setXY(idx, u, v);
+        }
+      }
     }
     
     uvs.needsUpdate = true;
     
     return geometry;
-  }, [variant]);
+  }, [variant, bottomRadius, topRadius, mugHeight]);
 
-  const isLarge = variant.id === '15oz';
-  const handleRadius = isLarge ? 0.52 : 0.46;
-  const mugHeight = isLarge ? 2.5 : 2.2;
-  const handleXPos = isLarge ? 1.08 : 0.98;
+  // Calculate print wrap Y position
+  const printAspectRatio = variant.printArea.width / variant.printArea.height;
+  const avgRadius = (bottomRadius + topRadius) / 2;
+  const printArcAngle = Math.PI * 2 - Math.PI * 0.28;
+  const printWidth3D = printArcAngle * avgRadius;
+  const printHeight3D = printWidth3D / printAspectRatio;
+  const maxHeight = mugHeight * 0.85;
+  const actualHeight = Math.min(printHeight3D, maxHeight);
+  const printCenterY = -mugHeight / 2 + 0.08 + (mugHeight / 2);
 
   return (
     <Float speed={0.6} rotationIntensity={0.015} floatIntensity={0.08}>
@@ -215,11 +260,11 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
         </mesh>
         
         {/* Inner cavity - dark interior */}
-        <mesh position={[0, isLarge ? 0.55 : 0.4, 0]}>
+        <mesh position={[0, mugHeight * 0.15, 0]}>
           <cylinderGeometry args={[
-            isLarge ? 0.88 : 0.78, 
-            isLarge ? 0.78 : 0.68, 
-            isLarge ? 2.3 : 2.0, 
+            topRadius - 0.08, 
+            bottomRadius - 0.06, 
+            mugHeight * 0.9, 
             48, 
             1, 
             true
@@ -233,10 +278,10 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
         
         {/* Coffee/liquid surface */}
         <mesh 
-          position={[0, isLarge ? 1.1 : 0.9, 0]} 
+          position={[0, mugHeight * 0.4, 0]} 
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          <circleGeometry args={[isLarge ? 0.8 : 0.7, 48]} />
+          <circleGeometry args={[topRadius - 0.15, 48]} />
           <meshStandardMaterial 
             color="#2a1810" 
             roughness={0.85} 
@@ -244,10 +289,13 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
           />
         </mesh>
         
-        {/* Handle - positioned at positive X (angle 0) */}
-        <group position={[handleXPos, 0.05, 0]} rotation={[0, 0, Math.PI / 2]}>
+        {/* Handle - positioned at back (PI angle) */}
+        <group 
+          position={[handleXPos, -0.05, handleZPos]} 
+          rotation={[0, handleAngle - Math.PI / 2, Math.PI / 2]}
+        >
           <mesh castShadow>
-            <torusGeometry args={[handleRadius, 0.095, 16, 32, Math.PI * 0.92]} />
+            <torusGeometry args={[handleRadius, 0.09, 16, 32, Math.PI * 0.92]} />
             <meshStandardMaterial 
               color={color} 
               roughness={0.12} 
@@ -257,10 +305,10 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
           </mesh>
         </group>
         
-        {/* Print Area Wrap - positioned to align with handle gap */}
+        {/* Print Area Wrap */}
         {texture && (
           <mesh 
-            position={[0, isLarge ? 0.45 : 0.3, 0]}
+            position={[0, printCenterY, 0]}
             rotation={[0, 0, 0]}
           >
             <primitive object={printWrapGeometry} attach="geometry" />
@@ -287,7 +335,7 @@ interface SceneProps extends MugPreview3DProps {
 }
 
 // Scene component
-const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mugColor, cameraRef, controlsRef }, ref) => {
+const Scene = ({ canvasTexture, variant, mugColor, cameraRef, controlsRef }: SceneProps) => {
   return (
     <>
       {/* Studio Lighting */}
@@ -344,9 +392,7 @@ const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mug
       />
     </>
   );
-});
-
-Scene.displayName = 'Scene';
+};
 
 export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: MugPreview3DProps) {
   const cameraRef = useRef<{ reset: () => void; zoomIn: () => void; zoomOut: () => void }>(null);
