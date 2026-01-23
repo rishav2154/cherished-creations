@@ -55,13 +55,14 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     loader.load(
       textureUrl,
       (loadedTexture) => {
-        // Configure texture for proper UV mapping - ClampToEdge prevents repeating
+        // Configure texture for proper display
         loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
         loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
         loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.flipY = true;
+        loadedTexture.flipY = false; // Don't flip - our UV mapping handles orientation
         loadedTexture.minFilter = THREE.LinearFilter;
         loadedTexture.magFilter = THREE.LinearFilter;
+        loadedTexture.generateMipmaps = false;
         loadedTexture.needsUpdate = true;
         setTexture(loadedTexture);
       },
@@ -109,59 +110,52 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     return points;
   }, [variant]);
 
-  // Create print wrap geometry - full cylinder that wraps completely around
+  // Create print wrap geometry - wraps around the mug excluding handle area
   const printWrapGeometry = useMemo(() => {
     const isLarge = variant.id === '15oz';
     const bottomRadius = isLarge ? 0.88 : 0.78;
     const topRadius = isLarge ? 1.02 : 0.90;
     const height = isLarge ? 1.9 : 1.65;
     
-    // Create a partial cylinder that leaves space for the handle
-    // Handle is positioned at angle 0 (positive X axis)
-    const handleGapAngle = Math.PI * 0.25; // Gap where handle attaches
-    const startAngle = handleGapAngle / 2; // Start after handle
-    const arcAngle = Math.PI * 2 - handleGapAngle; // Wrap around, leaving gap for handle
+    // Handle is at angle 0 (positive X axis), we need to leave a gap there
+    const handleGapAngle = Math.PI * 0.3; // 54 degrees gap for handle
+    const arcAngle = Math.PI * 2 - handleGapAngle; // Remaining wrap angle
+    const startAngle = handleGapAngle / 2; // Start just after handle gap begins
     
     const radialSegments = 128;
+    const heightSegments = 1;
     
     const geometry = new THREE.CylinderGeometry(
-      topRadius + 0.005,
-      bottomRadius + 0.005,
+      topRadius + 0.003,
+      bottomRadius + 0.003,
       height,
       radialSegments,
-      1,
-      true,
+      heightSegments,
+      true, // open-ended
       startAngle,
       arcAngle
     );
     
-    // Recalculate UVs so the full image maps across the visible wrap
+    // Fix UV mapping - the default UVs from CylinderGeometry need adjustment
     const uvs = geometry.attributes.uv;
-    const positions = geometry.attributes.position;
+    const count = uvs.count;
     
-    for (let i = 0; i < uvs.count; i++) {
-      const x = positions.getX(i);
-      const z = positions.getZ(i);
-      const y = positions.getY(i);
+    // CylinderGeometry creates vertices in rows (bottom to top)
+    // Each row has (radialSegments + 1) vertices
+    const verticesPerRow = radialSegments + 1;
+    
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / verticesPerRow);
+      const col = i % verticesPerRow;
       
-      // Calculate angle from positive X axis
-      let angle = Math.atan2(z, x);
-      if (angle < 0) angle += Math.PI * 2;
+      // U goes from 0 to 1 across the arc (left to right of image)
+      const u = col / radialSegments;
       
-      // Map angle to U coordinate (0 to 1 across the arc)
-      let u = (angle - startAngle) / arcAngle;
+      // V goes from 0 to 1 bottom to top (correct orientation for image)
+      const v = row / heightSegments;
       
-      // Handle wrap-around for angles near 0/2π
-      if (u < 0) u += 1;
-      if (u > 1) u -= 1;
-      
-      // Clamp to valid range
-      u = Math.max(0, Math.min(1, u));
-      
-      // V coordinate based on height
-      const v = (y / height) + 0.5;
-      
-      uvs.setXY(i, 1 - u, v); // Flip U for correct image orientation
+      // Flip U to match image orientation (mirror horizontally)
+      uvs.setXY(i, 1 - u, v);
     }
     
     uvs.needsUpdate = true;
