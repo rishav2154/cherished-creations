@@ -170,8 +170,7 @@ export const HeroSection = () => {
       }} transition={{
         duration: 0.8,
         delay: 0.2
-      }} className="text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed font-serif text-primary-foreground px-[30px] md:text-3xl py-0 my-[130px] text-center">Transform Your Precious Moments Into Timeless Art<span className="text-foreground/80"> Each piece is meticulously designed </span>
-          to celebrate love, joy, and unforgettable moments.
+      }} className="text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed font-serif text-primary-foreground px-[30px] md:text-3xl py-0 my-[130px] text-center">Transform Your Precious Moments Into Timeless Art<span className="text-foreground/80">
         </motion.p>
 
         <motion.div initial={{
