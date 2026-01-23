@@ -1,5 +1,5 @@
-import { Suspense, useRef, useMemo, useEffect, useState, forwardRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Suspense, useRef, useMemo, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { 
   OrbitControls, 
   Environment, 
@@ -9,12 +9,47 @@ import {
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { MugVariant } from './types';
+import { Button } from '@/components/ui/button';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface MugPreview3DProps {
   canvasTexture: string | null;
   variant: MugVariant;
   mugColor?: string;
 }
+
+// Camera controller for zoom controls
+interface CameraControllerProps {
+  controlsRef: React.RefObject<any>;
+}
+
+const CameraController = forwardRef<{ reset: () => void; zoomIn: () => void; zoomOut: () => void }, CameraControllerProps>(
+  ({ controlsRef }, ref) => {
+    const { camera } = useThree();
+    
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        camera.position.set(0, 0.5, 6);
+        camera.lookAt(0, 0, 0);
+        if (controlsRef.current) {
+          controlsRef.current.reset();
+        }
+      },
+      zoomIn: () => {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        camera.position.addScaledVector(direction, 0.5);
+      },
+      zoomOut: () => {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        camera.position.addScaledVector(direction, -0.5);
+      }
+    }));
+    
+    return null;
+  }
+);
 
 // Loading spinner component
 const LoadingSpinner = forwardRef<THREE.Group>((_, ref) => {
@@ -115,12 +150,12 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
     const isLarge = variant.id === '15oz';
     const bottomRadius = isLarge ? 0.88 : 0.78;
     const topRadius = isLarge ? 1.02 : 0.90;
-    const height = isLarge ? 1.9 : 1.65;
+    const height = isLarge ? 2.1 : 1.85; // Increased height to show full image
     
     // Handle is at angle 0 (positive X axis), we need to leave a gap there
-    const handleGapAngle = Math.PI * 0.3; // 54 degrees gap for handle
-    const arcAngle = Math.PI * 2 - handleGapAngle; // Remaining wrap angle
-    const startAngle = handleGapAngle / 2; // Start just after handle gap begins
+    const handleGapAngle = Math.PI * 0.3;
+    const arcAngle = Math.PI * 2 - handleGapAngle;
+    const startAngle = handleGapAngle / 2;
     
     const radialSegments = 128;
     const heightSegments = 1;
@@ -131,30 +166,27 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
       height,
       radialSegments,
       heightSegments,
-      true, // open-ended
+      true,
       startAngle,
       arcAngle
     );
     
-    // Fix UV mapping - the default UVs from CylinderGeometry need adjustment
+    // Fix UV mapping for full image display
     const uvs = geometry.attributes.uv;
     const count = uvs.count;
-    
-    // CylinderGeometry creates vertices in rows (bottom to top)
-    // Each row has (radialSegments + 1) vertices
     const verticesPerRow = radialSegments + 1;
     
     for (let i = 0; i < count; i++) {
       const row = Math.floor(i / verticesPerRow);
       const col = i % verticesPerRow;
       
-      // U goes from 0 to 1 across the arc (left to right of image)
+      // U: 0 to 1 across the arc (image width)
       const u = col / radialSegments;
       
-      // V goes from 0 to 1 bottom to top (correct orientation for image)
+      // V: 0 to 1 from bottom to top (image height) - no offset
       const v = row / heightSegments;
       
-      // Flip U to match image orientation (mirror horizontally)
+      // Mirror U for correct orientation when viewed from outside
       uvs.setXY(i, 1 - u, v);
     }
     
@@ -249,10 +281,13 @@ const RealisticMug = forwardRef<THREE.Group, RealisticMugProps>(({ textureUrl, c
 
 RealisticMug.displayName = 'RealisticMug';
 
-interface SceneProps extends MugPreview3DProps {}
+interface SceneProps extends MugPreview3DProps {
+  cameraRef: React.RefObject<{ reset: () => void; zoomIn: () => void; zoomOut: () => void }>;
+  controlsRef: React.RefObject<any>;
+}
 
 // Scene component
-const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mugColor }, ref) => {
+const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mugColor, cameraRef, controlsRef }, ref) => {
   return (
     <>
       {/* Studio Lighting */}
@@ -276,6 +311,8 @@ const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mug
       <pointLight position={[0, 6, 0]} intensity={0.35} />
       <pointLight position={[-4, 3, 5]} intensity={0.2} color="#fff5ee" />
       
+      <CameraController ref={cameraRef} controlsRef={controlsRef} />
+      
       <Suspense fallback={<LoadingSpinner />}>
         <RealisticMug 
           textureUrl={canvasTexture}
@@ -295,10 +332,11 @@ const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mug
       </Suspense>
       
       <OrbitControls 
+        ref={controlsRef}
         enableZoom={true}
         enablePan={false}
-        minDistance={4}
-        maxDistance={10}
+        minDistance={3}
+        maxDistance={12}
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI / 1.6}
         autoRotate={false}
@@ -311,10 +349,41 @@ const Scene = forwardRef<THREE.Group, SceneProps>(({ canvasTexture, variant, mug
 Scene.displayName = 'Scene';
 
 export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: MugPreview3DProps) {
+  const cameraRef = useRef<{ reset: () => void; zoomIn: () => void; zoomOut: () => void }>(null);
+  const controlsRef = useRef<any>(null);
+
   return (
     <div className="relative w-full h-full min-h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 via-background to-muted/20">
       {/* Subtle pattern overlay */}
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
+      
+      {/* Zoom Controls */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm"
+          onClick={() => cameraRef.current?.zoomIn()}
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm"
+          onClick={() => cameraRef.current?.zoomOut()}
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm"
+          onClick={() => cameraRef.current?.reset()}
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+      </div>
       
       <Canvas
         camera={{ position: [0, 0.5, 6], fov: 40 }}
@@ -332,6 +401,8 @@ export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: M
           canvasTexture={canvasTexture}
           variant={variant}
           mugColor={mugColor}
+          cameraRef={cameraRef}
+          controlsRef={controlsRef}
         />
       </Canvas>
       
