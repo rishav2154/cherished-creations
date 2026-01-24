@@ -82,8 +82,8 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
     // Print area height - 70% of mug height
     const actualPrintHeight = mugHeight * 0.7;
 
-    // MUCH LARGER offset to fully prevent z-fighting
-    const radiusOffset = 0.05;
+    // Offset to sit just above the mug surface
+    const radiusOffset = 0.02;
     const printBottomRadius = bottomRadius + radiusOffset;
     const printTopRadius = topRadius + radiusOffset;
 
@@ -101,7 +101,7 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
       printArcAngle
     );
 
-    // Correct UV mapping
+    // Correct UV mapping - fix orientation
     const uvs = geo.attributes.uv;
     const vertsPerRing = radialSegments + 1;
 
@@ -110,7 +110,7 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
         const idx = ring * vertsPerRing + seg;
         if (idx < uvs.count) {
           const u = 1 - (seg / radialSegments);
-          const v = ring / heightSegments;
+          const v = 1 - (ring / heightSegments); // Flip V to fix upside down
           uvs.setXY(idx, u, v);
         }
       }
@@ -122,16 +122,25 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
 
   const yPosition = 0.05;
 
+  // Use polygon offset to prevent z-fighting while keeping proper depth
+  const material = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.FrontSide,
+      transparent: false,
+      toneMapped: false,
+      depthTest: true,
+      depthWrite: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    });
+    return mat;
+  }, [texture]);
+
   return (
-    <mesh ref={meshRef} position={[0, yPosition, 0]} renderOrder={10}>
+    <mesh ref={meshRef} position={[0, yPosition, 0]} material={material}>
       <primitive object={geometry} attach="geometry" />
-      <meshBasicMaterial
-        map={texture}
-        side={THREE.DoubleSide}
-        transparent={false}
-        toneMapped={false}
-        depthTest={false}
-      />
     </mesh>
   );
 };
