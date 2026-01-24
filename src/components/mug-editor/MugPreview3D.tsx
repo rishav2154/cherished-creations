@@ -75,15 +75,15 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
 
   // Create geometry with proper UV mapping
   const geometry = useMemo(() => {
-    const handleGapAngle = Math.PI * 0.35; // Gap for handle
+    const handleGapAngle = Math.PI * 0.4; // Gap for handle (wider for safety)
     const printArcAngle = Math.PI * 2 - handleGapAngle;
     const startAngle = Math.PI + handleGapAngle / 2; // Start opposite to handle
 
-    // Print area height - 80% of mug height
-    const actualPrintHeight = mugHeight * 0.8;
+    // Print area height - 75% of mug height
+    const actualPrintHeight = mugHeight * 0.75;
 
-    // Add small offset to radius to prevent z-fighting
-    const radiusOffset = 0.012;
+    // LARGER offset to prevent z-fighting - this is the key fix
+    const radiusOffset = 0.025;
     const printBottomRadius = bottomRadius + radiusOffset;
     const printTopRadius = topRadius + radiusOffset;
 
@@ -120,21 +120,19 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
     return geo;
   }, [variant, bottomRadius, topRadius, mugHeight]);
 
-  // The mug body lathe geometry goes from y=0 to y=(mugHeight+0.13)
-  // The mug body mesh is positioned at y = -mugHeight/2
-  // So the actual mug body spans from y = -mugHeight/2 to y = mugHeight/2 + 0.13
-  // Center of the mug body is approximately at y = 0.065
-  // Position print wrap to align with the center of the visible mug surface
-  const yPosition = 0.04; // Slight offset to center on the curved surface
+  // Position print wrap at center of mug
+  const yPosition = 0.05;
 
   return (
-    <mesh ref={meshRef} position={[0, yPosition, 0]}>
+    <mesh ref={meshRef} position={[0, yPosition, 0]} renderOrder={1}>
       <primitive object={geometry} attach="geometry" />
       <meshBasicMaterial
         map={texture}
-        side={THREE.FrontSide}
+        side={THREE.DoubleSide}
         transparent={false}
         toneMapped={false}
+        depthTest={true}
+        depthWrite={true}
       />
     </mesh>
   );
