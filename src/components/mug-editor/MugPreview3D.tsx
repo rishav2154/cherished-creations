@@ -61,91 +61,7 @@ const LoadingSpinner = () => (
   </Html>
 );
 
-// Print wrap mesh component - handles the actual 3D rendering
-interface PrintWrapMeshProps {
-  texture: THREE.Texture;
-  variant: MugVariant;
-  mugHeight: number;
-  bottomRadius: number;
-  topRadius: number;
-}
-
-const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }: PrintWrapMeshProps) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-
-  // Create geometry with proper UV mapping
-  const geometry = useMemo(() => {
-    const handleGapAngle = Math.PI * 0.4; // Gap for handle
-    const printArcAngle = Math.PI * 2 - handleGapAngle;
-    const startAngle = Math.PI + handleGapAngle / 2; // Start opposite to handle
-
-    // Print area height - 70% of mug height
-    const actualPrintHeight = mugHeight * 0.7;
-
-    // Offset to sit just above the mug surface
-    const radiusOffset = 0.02;
-    const printBottomRadius = bottomRadius + radiusOffset;
-    const printTopRadius = topRadius + radiusOffset;
-
-    const radialSegments = 64;
-    const heightSegments = 1;
-
-    const geo = new THREE.CylinderGeometry(
-      printTopRadius,
-      printBottomRadius,
-      actualPrintHeight,
-      radialSegments,
-      heightSegments,
-      true, // open-ended
-      startAngle,
-      printArcAngle
-    );
-
-    // Correct UV mapping - fix orientation
-    const uvs = geo.attributes.uv;
-    const vertsPerRing = radialSegments + 1;
-
-    for (let ring = 0; ring <= heightSegments; ring++) {
-      for (let seg = 0; seg <= radialSegments; seg++) {
-        const idx = ring * vertsPerRing + seg;
-        if (idx < uvs.count) {
-          const u = 1 - (seg / radialSegments);
-          const v = 1 - (ring / heightSegments); // Flip V to fix upside down
-          uvs.setXY(idx, u, v);
-        }
-      }
-    }
-    uvs.needsUpdate = true;
-
-    return geo;
-  }, [variant, bottomRadius, topRadius, mugHeight]);
-
-  const yPosition = 0.05;
-
-  // Use polygon offset to prevent z-fighting while keeping proper depth
-  const material = useMemo(() => {
-    const mat = new THREE.MeshBasicMaterial({
-      map: texture,
-      side: THREE.FrontSide,
-      transparent: false,
-      toneMapped: false,
-      depthTest: true,
-      depthWrite: true,
-      polygonOffset: true,
-      polygonOffsetFactor: -1,
-      polygonOffsetUnits: -1,
-    });
-    return mat;
-  }, [texture]);
-
-  return (
-    <mesh ref={meshRef} position={[0, yPosition, 0]} material={material}>
-      <primitive object={geometry} attach="geometry" />
-    </mesh>
-  );
-};
-
-// Print wrap component - handles texture loading
+// Print wrap component - simplified approach
 interface PrintWrapProps {
   textureUrl: string;
   variant: MugVariant;
@@ -155,21 +71,18 @@ interface PrintWrapProps {
 }
 
 const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
-  const [textureState, setTextureState] = useState<{ texture: THREE.Texture; id: number } | null>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
+  // Load texture
   useEffect(() => {
     if (!textureUrl) {
-      setTextureState(null);
+      setTexture(null);
       return;
     }
 
-    console.log('PrintWrap: Loading texture from data URL...');
-    
     const img = new Image();
-    
     img.onload = () => {
-      console.log('PrintWrap: Image loaded, size:', img.width, 'x', img.height);
-      
       const tex = new THREE.Texture(img);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.wrapS = THREE.ClampToEdgeWrapping;
@@ -177,44 +90,65 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
-      tex.flipY = true;
+      tex.flipY = false; // Don't flip - we handle orientation in UVs
       tex.needsUpdate = true;
       
-      setTextureState(prev => {
-        // Dispose previous texture
-        if (prev?.texture) {
-          prev.texture.dispose();
-        }
-        return { texture: tex, id: Date.now() };
+      setTexture(prev => {
+        if (prev) prev.dispose();
+        return tex;
       });
-      
-      console.log('PrintWrap: Texture ready for rendering');
     };
-    
-    img.onerror = (e) => {
-      console.error('PrintWrap: Image load failed', e);
-    };
-    
     img.src = textureUrl;
-
-    return () => {
-      // Cleanup on unmount
-    };
   }, [textureUrl]);
 
-  if (!textureState) {
-    return null;
-  }
+  // Create cylinder geometry wrapping around the mug
+  const geometry = useMemo(() => {
+    const handleGapAngle = Math.PI * 0.4;
+    const printArcAngle = Math.PI * 2 - handleGapAngle;
+    const startAngle = Math.PI + handleGapAngle / 2;
+    
+    const actualPrintHeight = mugHeight * 0.7;
+    const radiusOffset = 0.015;
+    
+    const geo = new THREE.CylinderGeometry(
+      topRadius + radiusOffset,
+      bottomRadius + radiusOffset,
+      actualPrintHeight,
+      64,
+      1,
+      true,
+      startAngle,
+      printArcAngle
+    );
+
+    // Remap UVs for correct texture display
+    const uvs = geo.attributes.uv;
+    for (let i = 0; i < uvs.count; i++) {
+      const u = uvs.getX(i);
+      const v = uvs.getY(i);
+      // Flip both U and V for correct orientation
+      uvs.setXY(i, 1 - u, v);
+    }
+    uvs.needsUpdate = true;
+
+    return geo;
+  }, [mugHeight, bottomRadius, topRadius]);
+
+  if (!texture) return null;
 
   return (
-    <PrintWrapMesh
-      key={textureState.id}
-      texture={textureState.texture}
-      variant={variant}
-      mugHeight={mugHeight}
-      bottomRadius={bottomRadius}
-      topRadius={topRadius}
-    />
+    <mesh ref={meshRef} geometry={geometry} position={[0, 0.04, 0]}>
+      <meshStandardMaterial
+        map={texture}
+        side={THREE.FrontSide}
+        roughness={0.3}
+        metalness={0}
+        envMapIntensity={0.5}
+        polygonOffset
+        polygonOffsetFactor={-4}
+        polygonOffsetUnits={-4}
+      />
+    </mesh>
   );
 };
 
