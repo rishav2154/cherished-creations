@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SearchDialog } from '@/components/search/SearchDialog';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const navLinks = [
   { name: 'Home', path: '/' },
@@ -111,6 +112,11 @@ export const Navbar = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
+
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
@@ -247,6 +253,18 @@ export const Navbar = () => {
                   </Link>
                 </motion.div>
               ))}
+              
+              {/* Theme Toggle in Mobile Menu */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+                className="flex items-center gap-2"
+              >
+                <span className="text-lg font-medium text-foreground/70">Theme</span>
+                <ThemeToggle />
+              </motion.div>
+
               {user ? (
                 <motion.button
                   initial={{ opacity: 0, x: -20 }}
