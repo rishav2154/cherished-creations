@@ -90,7 +90,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
-      tex.flipY = false; // Don't flip - we handle orientation in UVs
+      tex.flipY = true; // Standard WebGL texture flip
       tex.needsUpdate = true;
       
       setTexture(prev => {
@@ -108,7 +108,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     const startAngle = Math.PI + handleGapAngle / 2;
     
     const actualPrintHeight = mugHeight * 0.7;
-    const radiusOffset = 0.015;
+    const radiusOffset = 0.02;
     
     const geo = new THREE.CylinderGeometry(
       topRadius + radiusOffset,
@@ -121,13 +121,12 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       printArcAngle
     );
 
-    // Remap UVs for correct texture display
+    // Remap UVs: flip U for horizontal mirror, keep V as-is for correct vertical orientation
     const uvs = geo.attributes.uv;
     for (let i = 0; i < uvs.count; i++) {
       const u = uvs.getX(i);
       const v = uvs.getY(i);
-      // Flip both U and V for correct orientation
-      uvs.setXY(i, 1 - u, v);
+      uvs.setXY(i, 1 - u, 1 - v); // Flip both for correct orientation with flipY=true
     }
     uvs.needsUpdate = true;
 
@@ -138,15 +137,13 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
 
   return (
     <mesh ref={meshRef} geometry={geometry} position={[0, 0.04, 0]}>
-      <meshStandardMaterial
+      <meshBasicMaterial
         map={texture}
         side={THREE.FrontSide}
-        roughness={0.3}
-        metalness={0}
-        envMapIntensity={0.5}
+        toneMapped={false}
         polygonOffset
-        polygonOffsetFactor={-4}
-        polygonOffsetUnits={-4}
+        polygonOffsetFactor={-2}
+        polygonOffsetUnits={-2}
       />
     </mesh>
   );
