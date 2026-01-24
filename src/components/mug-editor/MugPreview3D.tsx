@@ -72,8 +72,8 @@ interface PrintWrapProps {
 
 const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  const [geometryKey, setGeometryKey] = useState(0);
 
   // Load texture
   useEffect(() => {
@@ -84,21 +84,31 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
 
     const img = new Image();
     img.onload = () => {
-      const tex = new THREE.Texture(img);
+      // Create canvas to flip image manually
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Flip vertically by drawing upside down
+        ctx.translate(0, img.height);
+        ctx.scale(1, -1);
+        ctx.drawImage(img, 0, 0);
+      }
+      
+      const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.wrapS = THREE.ClampToEdgeWrapping;
       tex.wrapT = THREE.ClampToEdgeWrapping;
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
-      tex.flipY = false; // Don't flip in texture - we'll handle in UVs
       tex.needsUpdate = true;
       
       setTexture(prev => {
         if (prev) prev.dispose();
         return tex;
       });
-      setGeometryKey(k => k + 1);
     };
     img.src = textureUrl;
   }, [textureUrl]);
@@ -110,7 +120,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     const startAngle = Math.PI + handleGapAngle / 2;
     
     const actualPrintHeight = mugHeight * 0.7;
-    const radiusOffset = 0.025;
+    const radiusOffset = 0.03;
     
     const geo = new THREE.CylinderGeometry(
       topRadius + radiusOffset,
@@ -123,33 +133,30 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       printArcAngle
     );
 
-    // Fix UV mapping for correct image orientation
-    // CylinderGeometry UV: U goes around circumference, V goes along height
-    // Default: V=0 at bottom, V=1 at top (which is correct for images)
-    // We only need to flip U to mirror the image correctly
+    // Flip U to correct horizontal orientation
     const uvs = geo.attributes.uv;
     for (let i = 0; i < uvs.count; i++) {
       const u = uvs.getX(i);
       const v = uvs.getY(i);
-      // Only flip U (horizontal), keep V as-is (vertical orientation correct)
       uvs.setXY(i, 1 - u, v);
     }
     uvs.needsUpdate = true;
 
     return geo;
-  }, [mugHeight, bottomRadius, topRadius, geometryKey]);
+  }, [mugHeight, bottomRadius, topRadius]);
 
   if (!texture) return null;
 
   return (
     <mesh ref={meshRef} geometry={geometry} position={[0, 0.04, 0]}>
       <meshBasicMaterial
+        ref={materialRef}
         map={texture}
         side={THREE.FrontSide}
         toneMapped={false}
         polygonOffset
-        polygonOffsetFactor={-3}
-        polygonOffsetUnits={-3}
+        polygonOffsetFactor={-4}
+        polygonOffsetUnits={-4}
       />
     </mesh>
   );
