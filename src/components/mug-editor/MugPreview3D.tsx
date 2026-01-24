@@ -72,59 +72,50 @@ interface PrintWrapProps {
 
 const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const textureRef = useRef<THREE.Texture | null>(null);
-  const [textureLoaded, setTextureLoaded] = useState(false);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
-  // Load texture from data URL using TextureLoader
+  // Load texture from data URL using Image element (more reliable for data URLs)
   useEffect(() => {
     if (!textureUrl) {
-      if (textureRef.current) {
-        textureRef.current.dispose();
-        textureRef.current = null;
-        setTextureLoaded(false);
-      }
+      setTexture(null);
       return;
     }
 
     console.log('PrintWrap: Loading texture, URL length:', textureUrl.length);
     
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      textureUrl,
-      (loadedTexture) => {
-        console.log('PrintWrap: Texture loaded successfully');
-        // Dispose old texture
-        if (textureRef.current) {
-          textureRef.current.dispose();
-        }
-        
-        loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
-        loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
-        loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.flipY = true;
-        loadedTexture.minFilter = THREE.LinearFilter;
-        loadedTexture.magFilter = THREE.LinearFilter;
-        loadedTexture.generateMipmaps = false;
-        loadedTexture.needsUpdate = true;
-        
-        textureRef.current = loadedTexture;
-        setTextureLoaded(true);
-      },
-      undefined,
-      (error) => {
-        console.error('PrintWrap: Error loading texture:', error);
-      }
-    );
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      console.log('PrintWrap: Image loaded, creating texture');
+      const newTexture = new THREE.Texture(img);
+      newTexture.wrapS = THREE.ClampToEdgeWrapping;
+      newTexture.wrapT = THREE.ClampToEdgeWrapping;
+      newTexture.colorSpace = THREE.SRGBColorSpace;
+      newTexture.flipY = true;
+      newTexture.minFilter = THREE.LinearFilter;
+      newTexture.magFilter = THREE.LinearFilter;
+      newTexture.generateMipmaps = false;
+      newTexture.needsUpdate = true;
+      
+      // Dispose old texture before setting new one
+      setTexture(prev => {
+        if (prev) prev.dispose();
+        return newTexture;
+      });
+      console.log('PrintWrap: Texture created and set');
+    };
+    
+    img.onerror = (error) => {
+      console.error('PrintWrap: Error loading image:', error);
+    };
+    
+    img.src = textureUrl;
 
     return () => {
-      if (textureRef.current) {
-        textureRef.current.dispose();
-        textureRef.current = null;
-      }
+      // Cleanup handled by the state setter
     };
   }, [textureUrl]);
-
-  const texture = textureRef.current;
 
   // Create geometry with proper UV mapping
   const geometry = useMemo(() => {
@@ -181,15 +172,17 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
 
   // Calculate Y position for the print wrap
   const yPosition = useMemo(() => {
-    // The mug body is positioned at y = -mugHeight/2
-    // The lathe geometry starts at y=0 and goes up
-    // So actual mug spans from -mugHeight/2 to +mugHeight/2 + 0.08
-    // Center the print wrap at y=0 (middle of the mug)
     return 0;
   }, []);
 
-  if (!texture) return null;
+  // Don't render if no texture
+  if (!texture) {
+    console.log('PrintWrap: No texture yet, not rendering mesh');
+    return null;
+  }
 
+  console.log('PrintWrap: Rendering mesh with texture');
+  
   return (
     <mesh ref={meshRef} position={[0, yPosition, 0]}>
       <primitive object={geometry} attach="geometry" />
