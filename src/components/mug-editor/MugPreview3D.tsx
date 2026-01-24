@@ -72,7 +72,6 @@ interface PrintWrapProps {
 
 const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
   // Load texture
@@ -84,25 +83,14 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
 
     const img = new Image();
     img.onload = () => {
-      // Create canvas to flip image manually
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Flip vertically by drawing upside down
-        ctx.translate(0, img.height);
-        ctx.scale(1, -1);
-        ctx.drawImage(img, 0, 0);
-      }
-      
-      const tex = new THREE.CanvasTexture(canvas);
+      const tex = new THREE.Texture(img);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.wrapS = THREE.ClampToEdgeWrapping;
       tex.wrapT = THREE.ClampToEdgeWrapping;
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
+      tex.flipY = true; // Standard WebGL flip
       tex.needsUpdate = true;
       
       setTexture(prev => {
@@ -120,7 +108,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     const startAngle = Math.PI + handleGapAngle / 2;
     
     const actualPrintHeight = mugHeight * 0.7;
-    const radiusOffset = 0.03;
+    const radiusOffset = 0.035;
     
     const geo = new THREE.CylinderGeometry(
       topRadius + radiusOffset,
@@ -133,12 +121,15 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       printArcAngle
     );
 
-    // Flip U to correct horizontal orientation
+    // Adjust UVs: flip both U and V
+    // U flip = horizontal mirror (so text reads correctly)
+    // V flip = vertical flip (to correct upside-down)
     const uvs = geo.attributes.uv;
     for (let i = 0; i < uvs.count; i++) {
       const u = uvs.getX(i);
       const v = uvs.getY(i);
-      uvs.setXY(i, 1 - u, v);
+      // Keep U, flip V to fix upside down (since flipY=true already applied)
+      uvs.setXY(i, u, 1 - v);
     }
     uvs.needsUpdate = true;
 
@@ -150,13 +141,12 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
   return (
     <mesh ref={meshRef} geometry={geometry} position={[0, 0.04, 0]}>
       <meshBasicMaterial
-        ref={materialRef}
         map={texture}
         side={THREE.FrontSide}
         toneMapped={false}
         polygonOffset
-        polygonOffsetFactor={-4}
-        polygonOffsetUnits={-4}
+        polygonOffsetFactor={-5}
+        polygonOffsetUnits={-5}
       />
     </mesh>
   );
