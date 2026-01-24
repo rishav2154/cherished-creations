@@ -73,6 +73,7 @@ interface PrintWrapProps {
 const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [geometryKey, setGeometryKey] = useState(0);
 
   // Load texture
   useEffect(() => {
@@ -90,13 +91,14 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
-      tex.flipY = true; // Standard WebGL texture flip
+      tex.flipY = false; // Don't flip in texture - we'll handle in UVs
       tex.needsUpdate = true;
       
       setTexture(prev => {
         if (prev) prev.dispose();
         return tex;
       });
+      setGeometryKey(k => k + 1);
     };
     img.src = textureUrl;
   }, [textureUrl]);
@@ -108,7 +110,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     const startAngle = Math.PI + handleGapAngle / 2;
     
     const actualPrintHeight = mugHeight * 0.7;
-    const radiusOffset = 0.02;
+    const radiusOffset = 0.025;
     
     const geo = new THREE.CylinderGeometry(
       topRadius + radiusOffset,
@@ -121,17 +123,21 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       printArcAngle
     );
 
-    // Remap UVs: flip U for horizontal mirror, keep V as-is for correct vertical orientation
+    // Fix UV mapping for correct image orientation
+    // CylinderGeometry UV: U goes around circumference, V goes along height
+    // Default: V=0 at bottom, V=1 at top (which is correct for images)
+    // We only need to flip U to mirror the image correctly
     const uvs = geo.attributes.uv;
     for (let i = 0; i < uvs.count; i++) {
       const u = uvs.getX(i);
       const v = uvs.getY(i);
-      uvs.setXY(i, 1 - u, 1 - v); // Flip both for correct orientation with flipY=true
+      // Only flip U (horizontal), keep V as-is (vertical orientation correct)
+      uvs.setXY(i, 1 - u, v);
     }
     uvs.needsUpdate = true;
 
     return geo;
-  }, [mugHeight, bottomRadius, topRadius]);
+  }, [mugHeight, bottomRadius, topRadius, geometryKey]);
 
   if (!texture) return null;
 
@@ -142,8 +148,8 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
         side={THREE.FrontSide}
         toneMapped={false}
         polygonOffset
-        polygonOffsetFactor={-2}
-        polygonOffsetUnits={-2}
+        polygonOffsetFactor={-3}
+        polygonOffsetUnits={-3}
       />
     </mesh>
   );
