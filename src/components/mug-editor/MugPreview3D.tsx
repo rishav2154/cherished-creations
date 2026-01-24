@@ -61,45 +61,33 @@ const LoadingSpinner = () => (
   </Html>
 );
 
-// Print wrap component - uses useLoader pattern for reliable texture loading
-interface PrintWrapProps {
-  textureUrl: string;
+// Print wrap mesh component - handles the actual 3D rendering
+interface PrintWrapMeshProps {
+  texture: THREE.Texture;
   variant: MugVariant;
   mugHeight: number;
   bottomRadius: number;
   topRadius: number;
 }
 
-const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }: { 
-  texture: THREE.Texture;
-  variant: MugVariant;
-  mugHeight: number;
-  bottomRadius: number;
-  topRadius: number;
-}) => {
+const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }: PrintWrapMeshProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
 
   // Create geometry with proper UV mapping
   const geometry = useMemo(() => {
-    const handleGapAngle = Math.PI * 0.3; // Gap for handle
+    const handleGapAngle = Math.PI * 0.35; // Gap for handle
     const printArcAngle = Math.PI * 2 - handleGapAngle;
-    const startAngle = handleGapAngle / 2;
+    const startAngle = Math.PI + handleGapAngle / 2; // Start opposite to handle
 
-    // Calculate print height to preserve aspect ratio
-    const printAspectRatio = variant.printArea.width / variant.printArea.height;
-    const avgRadius = (bottomRadius + topRadius) / 2;
-    const arcLength = printArcAngle * avgRadius;
-    const idealPrintHeight = arcLength / printAspectRatio;
-    const actualPrintHeight = Math.min(idealPrintHeight, mugHeight * 0.85);
+    // Print area height - 80% of mug height
+    const actualPrintHeight = mugHeight * 0.8;
 
-    // Calculate radii at print boundaries
-    const verticalMargin = (mugHeight - actualPrintHeight) / 2;
-    const bottomT = verticalMargin / mugHeight;
-    const topT = 1 - bottomT;
-    const printBottomRadius = bottomRadius + (topRadius - bottomRadius) * bottomT + 0.008;
-    const printTopRadius = bottomRadius + (topRadius - bottomRadius) * topT + 0.008;
+    // Add small offset to radius to prevent z-fighting
+    const radiusOffset = 0.012;
+    const printBottomRadius = bottomRadius + radiusOffset;
+    const printTopRadius = topRadius + radiusOffset;
 
-    const radialSegments = 128;
+    const radialSegments = 64;
     const heightSegments = 1;
 
     const geo = new THREE.CylinderGeometry(
@@ -108,23 +96,20 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
       actualPrintHeight,
       radialSegments,
       heightSegments,
-      true,
+      true, // open-ended
       startAngle,
       printArcAngle
     );
 
-    // Fix UV mapping - map U from 0-1 across the arc
+    // Correct UV mapping
     const uvs = geo.attributes.uv;
-    const positions = geo.attributes.position;
     const vertsPerRing = radialSegments + 1;
 
     for (let ring = 0; ring <= heightSegments; ring++) {
       for (let seg = 0; seg <= radialSegments; seg++) {
         const idx = ring * vertsPerRing + seg;
         if (idx < uvs.count) {
-          // U goes from 0 to 1 across the arc
-          const u = seg / radialSegments;
-          // V goes from 0 (bottom) to 1 (top)
+          const u = 1 - (seg / radialSegments); // Flip U for correct orientation
           const v = ring / heightSegments;
           uvs.setXY(idx, u, v);
         }
@@ -135,80 +120,91 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
     return geo;
   }, [variant, bottomRadius, topRadius, mugHeight]);
 
-  // Position to align with mug body (mug body center is at y=0 after offset)
-  // The lathe geometry goes from y=0 to y=mugHeight, positioned at -mugHeight/2
-  // So the mug center is at y = mugHeight/2 - mugHeight/2 = 0
-  const yPosition = mugHeight * 0.08 / 2; // Small offset for the base
+  // The mug body lathe geometry goes from y=0 to y=(mugHeight+0.13)
+  // The mug body mesh is positioned at y = -mugHeight/2
+  // So the actual mug body spans from y = -mugHeight/2 to y = mugHeight/2 + 0.13
+  // Center of the mug body is approximately at y = 0.065
+  // Position print wrap to align with the center of the visible mug surface
+  const yPosition = 0.04; // Slight offset to center on the curved surface
 
   return (
     <mesh ref={meshRef} position={[0, yPosition, 0]}>
       <primitive object={geometry} attach="geometry" />
-      <meshStandardMaterial
+      <meshBasicMaterial
         map={texture}
-        transparent={false}
-        roughness={0.2}
-        metalness={0}
         side={THREE.FrontSide}
-        depthWrite={true}
-        toneMapped={true}
+        transparent={false}
+        toneMapped={false}
       />
     </mesh>
   );
 };
 
-const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  const [key, setKey] = useState(0);
+// Print wrap component - handles texture loading
+interface PrintWrapProps {
+  textureUrl: string;
+  variant: MugVariant;
+  mugHeight: number;
+  bottomRadius: number;
+  topRadius: number;
+}
 
-  // Load texture from data URL
+const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
+  const [textureState, setTextureState] = useState<{ texture: THREE.Texture; id: number } | null>(null);
+
   useEffect(() => {
     if (!textureUrl) {
-      setTexture(null);
+      setTextureState(null);
       return;
     }
 
-    console.log('PrintWrap: Loading texture...');
+    console.log('PrintWrap: Loading texture from data URL...');
     
     const img = new Image();
     
     img.onload = () => {
-      console.log('PrintWrap: Image loaded successfully, dimensions:', img.width, 'x', img.height);
+      console.log('PrintWrap: Image loaded, size:', img.width, 'x', img.height);
       
-      // Dispose old texture
-      if (texture) {
-        texture.dispose();
-      }
+      const tex = new THREE.Texture(img);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      tex.flipY = true;
+      tex.needsUpdate = true;
       
-      const newTexture = new THREE.Texture(img);
-      newTexture.colorSpace = THREE.SRGBColorSpace;
-      newTexture.wrapS = THREE.ClampToEdgeWrapping;
-      newTexture.wrapT = THREE.ClampToEdgeWrapping;
-      newTexture.minFilter = THREE.LinearFilter;
-      newTexture.magFilter = THREE.LinearFilter;
-      newTexture.generateMipmaps = false;
-      newTexture.flipY = true;
-      newTexture.needsUpdate = true;
+      setTextureState(prev => {
+        // Dispose previous texture
+        if (prev?.texture) {
+          prev.texture.dispose();
+        }
+        return { texture: tex, id: Date.now() };
+      });
       
-      setTexture(newTexture);
-      setKey(k => k + 1); // Force re-render of mesh
-      console.log('PrintWrap: Texture created successfully');
+      console.log('PrintWrap: Texture ready for rendering');
     };
     
-    img.onerror = (err) => {
-      console.error('PrintWrap: Failed to load image', err);
+    img.onerror = (e) => {
+      console.error('PrintWrap: Image load failed', e);
     };
     
     img.src = textureUrl;
+
+    return () => {
+      // Cleanup on unmount
+    };
   }, [textureUrl]);
 
-  if (!texture) {
+  if (!textureState) {
     return null;
   }
 
   return (
     <PrintWrapMesh
-      key={key}
-      texture={texture}
+      key={textureState.id}
+      texture={textureState.texture}
       variant={variant}
       mugHeight={mugHeight}
       bottomRadius={bottomRadius}
