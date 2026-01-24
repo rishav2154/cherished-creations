@@ -61,7 +61,7 @@ const LoadingSpinner = () => (
   </Html>
 );
 
-// Print wrap component - separate for cleaner texture handling
+// Print wrap component - uses useLoader pattern for reliable texture loading
 interface PrintWrapProps {
   textureUrl: string;
   variant: MugVariant;
@@ -70,52 +70,14 @@ interface PrintWrapProps {
   topRadius: number;
 }
 
-const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
+const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }: { 
+  texture: THREE.Texture;
+  variant: MugVariant;
+  mugHeight: number;
+  bottomRadius: number;
+  topRadius: number;
+}) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
-
-  // Load texture from data URL using Image element (more reliable for data URLs)
-  useEffect(() => {
-    if (!textureUrl) {
-      setTexture(null);
-      return;
-    }
-
-    console.log('PrintWrap: Loading texture, URL length:', textureUrl.length);
-    
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      console.log('PrintWrap: Image loaded, creating texture');
-      const newTexture = new THREE.Texture(img);
-      newTexture.wrapS = THREE.ClampToEdgeWrapping;
-      newTexture.wrapT = THREE.ClampToEdgeWrapping;
-      newTexture.colorSpace = THREE.SRGBColorSpace;
-      newTexture.flipY = true;
-      newTexture.minFilter = THREE.LinearFilter;
-      newTexture.magFilter = THREE.LinearFilter;
-      newTexture.generateMipmaps = false;
-      newTexture.needsUpdate = true;
-      
-      // Dispose old texture before setting new one
-      setTexture(prev => {
-        if (prev) prev.dispose();
-        return newTexture;
-      });
-      console.log('PrintWrap: Texture created and set');
-    };
-    
-    img.onerror = (error) => {
-      console.error('PrintWrap: Error loading image:', error);
-    };
-    
-    img.src = textureUrl;
-
-    return () => {
-      // Cleanup handled by the state setter
-    };
-  }, [textureUrl]);
 
   // Create geometry with proper UV mapping
   const geometry = useMemo(() => {
@@ -134,8 +96,8 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     const verticalMargin = (mugHeight - actualPrintHeight) / 2;
     const bottomT = verticalMargin / mugHeight;
     const topT = 1 - bottomT;
-    const printBottomRadius = bottomRadius + (topRadius - bottomRadius) * bottomT + 0.006;
-    const printTopRadius = bottomRadius + (topRadius - bottomRadius) * topT + 0.006;
+    const printBottomRadius = bottomRadius + (topRadius - bottomRadius) * bottomT + 0.008;
+    const printTopRadius = bottomRadius + (topRadius - bottomRadius) * topT + 0.008;
 
     const radialSegments = 128;
     const heightSegments = 1;
@@ -151,15 +113,18 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       printArcAngle
     );
 
-    // Fix UV mapping
+    // Fix UV mapping - map U from 0-1 across the arc
     const uvs = geo.attributes.uv;
+    const positions = geo.attributes.position;
     const vertsPerRing = radialSegments + 1;
 
     for (let ring = 0; ring <= heightSegments; ring++) {
       for (let seg = 0; seg <= radialSegments; seg++) {
         const idx = ring * vertsPerRing + seg;
         if (idx < uvs.count) {
+          // U goes from 0 to 1 across the arc
           const u = seg / radialSegments;
+          // V goes from 0 (bottom) to 1 (top)
           const v = ring / heightSegments;
           uvs.setXY(idx, u, v);
         }
@@ -170,31 +135,85 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     return geo;
   }, [variant, bottomRadius, topRadius, mugHeight]);
 
-  // Calculate Y position for the print wrap
-  const yPosition = useMemo(() => {
-    return 0;
-  }, []);
+  // Position to align with mug body (mug body center is at y=0 after offset)
+  // The lathe geometry goes from y=0 to y=mugHeight, positioned at -mugHeight/2
+  // So the mug center is at y = mugHeight/2 - mugHeight/2 = 0
+  const yPosition = mugHeight * 0.08 / 2; // Small offset for the base
 
-  // Don't render if no texture
-  if (!texture) {
-    console.log('PrintWrap: No texture yet, not rendering mesh');
-    return null;
-  }
-
-  console.log('PrintWrap: Rendering mesh with texture');
-  
   return (
     <mesh ref={meshRef} position={[0, yPosition, 0]}>
       <primitive object={geometry} attach="geometry" />
       <meshStandardMaterial
         map={texture}
-        transparent
-        opacity={0.98}
-        roughness={0.15}
+        transparent={false}
+        roughness={0.2}
+        metalness={0}
         side={THREE.FrontSide}
         depthWrite={true}
+        toneMapped={true}
       />
     </mesh>
+  );
+};
+
+const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+  const [key, setKey] = useState(0);
+
+  // Load texture from data URL
+  useEffect(() => {
+    if (!textureUrl) {
+      setTexture(null);
+      return;
+    }
+
+    console.log('PrintWrap: Loading texture...');
+    
+    const img = new Image();
+    
+    img.onload = () => {
+      console.log('PrintWrap: Image loaded successfully, dimensions:', img.width, 'x', img.height);
+      
+      // Dispose old texture
+      if (texture) {
+        texture.dispose();
+      }
+      
+      const newTexture = new THREE.Texture(img);
+      newTexture.colorSpace = THREE.SRGBColorSpace;
+      newTexture.wrapS = THREE.ClampToEdgeWrapping;
+      newTexture.wrapT = THREE.ClampToEdgeWrapping;
+      newTexture.minFilter = THREE.LinearFilter;
+      newTexture.magFilter = THREE.LinearFilter;
+      newTexture.generateMipmaps = false;
+      newTexture.flipY = true;
+      newTexture.needsUpdate = true;
+      
+      setTexture(newTexture);
+      setKey(k => k + 1); // Force re-render of mesh
+      console.log('PrintWrap: Texture created successfully');
+    };
+    
+    img.onerror = (err) => {
+      console.error('PrintWrap: Failed to load image', err);
+    };
+    
+    img.src = textureUrl;
+  }, [textureUrl]);
+
+  if (!texture) {
+    return null;
+  }
+
+  return (
+    <PrintWrapMesh
+      key={key}
+      texture={texture}
+      variant={variant}
+      mugHeight={mugHeight}
+      bottomRadius={bottomRadius}
+      topRadius={topRadius}
+    />
   );
 };
 
