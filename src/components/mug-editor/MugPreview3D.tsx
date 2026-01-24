@@ -75,15 +75,15 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
 
   // Create geometry with proper UV mapping
   const geometry = useMemo(() => {
-    const handleGapAngle = Math.PI * 0.4; // Gap for handle (wider for safety)
+    const handleGapAngle = Math.PI * 0.4; // Gap for handle
     const printArcAngle = Math.PI * 2 - handleGapAngle;
     const startAngle = Math.PI + handleGapAngle / 2; // Start opposite to handle
 
-    // Print area height - 75% of mug height
-    const actualPrintHeight = mugHeight * 0.75;
+    // Print area height - 70% of mug height
+    const actualPrintHeight = mugHeight * 0.7;
 
-    // LARGER offset to prevent z-fighting - this is the key fix
-    const radiusOffset = 0.025;
+    // MUCH LARGER offset to fully prevent z-fighting
+    const radiusOffset = 0.05;
     const printBottomRadius = bottomRadius + radiusOffset;
     const printTopRadius = topRadius + radiusOffset;
 
@@ -109,7 +109,7 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
       for (let seg = 0; seg <= radialSegments; seg++) {
         const idx = ring * vertsPerRing + seg;
         if (idx < uvs.count) {
-          const u = 1 - (seg / radialSegments); // Flip U for correct orientation
+          const u = 1 - (seg / radialSegments);
           const v = ring / heightSegments;
           uvs.setXY(idx, u, v);
         }
@@ -120,19 +120,17 @@ const PrintWrapMesh = ({ texture, variant, mugHeight, bottomRadius, topRadius }:
     return geo;
   }, [variant, bottomRadius, topRadius, mugHeight]);
 
-  // Position print wrap at center of mug
   const yPosition = 0.05;
 
   return (
-    <mesh ref={meshRef} position={[0, yPosition, 0]} renderOrder={1}>
+    <mesh ref={meshRef} position={[0, yPosition, 0]} renderOrder={10}>
       <primitive object={geometry} attach="geometry" />
       <meshBasicMaterial
         map={texture}
         side={THREE.DoubleSide}
         transparent={false}
         toneMapped={false}
-        depthTest={true}
-        depthWrite={true}
+        depthTest={false}
       />
     </mesh>
   );
