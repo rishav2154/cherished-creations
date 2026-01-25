@@ -107,10 +107,10 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     const handleGapAngle = Math.PI * 0.45; // Gap for handle area
     const printArcAngle = Math.PI * 2 - handleGapAngle; // Printable area
     
-    // Start the print AFTER the gap - gap is centered at 0 (positive X, opposite to handle)
-    // Since handle is at π, we want the IMAGE to be centered at 0 (opposite side)
-    // So the gap (no image) is centered at π where the handle is
-    const startAngle = -printArcAngle / 2; // Center the print at angle 0 (opposite handle)
+    // Start the print just AFTER the gap ends
+    // Gap is centered at π (handle position), so it spans from (π - gap/2) to (π + gap/2)
+    // Print should start at (π + gap/2) = π + handleGapAngle/2
+    const startAngle = Math.PI + handleGapAngle / 2;
     
     const actualPrintHeight = mugHeight * 0.7;
     const radiusOffset = 0.035;
