@@ -143,20 +143,13 @@ export const HeroSection = () => {
         {/* Premium Badge */}
         
 
-        <motion.p initial={{
-        opacity: 0,
-        y: 30
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} transition={{
-        duration: 0.8,
-        delay: 0.2
-      }} className="text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed font-serif text-primary-foreground px-[30px] md:text-3xl text-center my-[150px] py-[5px] pb-[4px]">
-          
-
-
-Transform Your Precious Moments Into Timeless Art.
+        <motion.p 
+          initial={{ opacity: 0, y: 30 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.8, delay: 0.2 }} 
+          className="text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed font-serif text-primary-foreground px-[30px] md:text-3xl text-center my-[150px] py-[5px] pb-[4px]"
+        >
+          Transform Your Precious Moments Into Timeless Art.
         </motion.p>
 
         <motion.div initial={{
