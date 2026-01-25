@@ -133,12 +133,12 @@ export function MugCustomizer({ onAddToCart }: MugCustomizerProps) {
         </div>
 
         {/* Right: 3D Preview */}
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Coffee className="w-4 h-4" />
             3D Live Preview
           </div>
-          <div className="glass-card p-4 rounded-2xl">
+          <div className="glass-card p-4 rounded-2xl flex-1">
             <MugPreview3D
               canvasTexture={canvasTexture}
               variant={selectedVariant}
