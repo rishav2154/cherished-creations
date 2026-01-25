@@ -224,9 +224,9 @@ const RealisticMug = ({ textureUrl, color, variant }: RealisticMugProps) => {
         </mesh>
 
         {/* Handle - positioned at center of unprinted gap */}
-        <group position={[-(topRadius - 0.02), 0, -1.5]} rotation={[0, 0, Math.PI / 2]}>
+        <group position={[-(topRadius + 0.08), 0, 0]} rotation={[0, 0, Math.PI / 2]}>
           <mesh castShadow>
-            <torusGeometry args={[handleRadius, 0.09, 16, 32, Math.PI * 0.92]} />
+            <torusGeometry args={[handleRadius, 0.1, 16, 32, Math.PI * 0.85]} />
             <meshStandardMaterial color={color} roughness={0.12} metalness={0.01} envMapIntensity={0.9} />
           </mesh>
         </group>
