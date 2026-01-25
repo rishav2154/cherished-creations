@@ -90,7 +90,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
-      tex.flipY = true; // Standard WebGL flip
+      tex.flipY = false; // Canvas data is already in correct orientation
       tex.needsUpdate = true;
       
       setTexture(prev => {
@@ -121,15 +121,13 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
       printArcAngle
     );
 
-    // Adjust UVs: flip both U and V
-    // U flip = horizontal mirror (so text reads correctly)
-    // V flip = vertical flip (to correct upside-down)
+    // Adjust UVs for correct orientation on cylinder
     const uvs = geo.attributes.uv;
     for (let i = 0; i < uvs.count; i++) {
       const u = uvs.getX(i);
       const v = uvs.getY(i);
-      // Keep U, flip V to fix upside down (since flipY=true already applied)
-      uvs.setXY(i, u, 1 - v);
+      // Keep U as-is, keep V as-is (flipY=false handles orientation)
+      uvs.setXY(i, u, v);
     }
     uvs.needsUpdate = true;
 
