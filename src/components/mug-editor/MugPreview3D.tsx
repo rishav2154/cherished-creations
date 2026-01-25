@@ -112,7 +112,7 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     // Gap should span from (π - gap/2) to (π + gap/2)
     // So print starts at (π + gap/2) and covers printArcAngle
     // Added offset to shift image rightward
-    const startAngle = Math.PI + handleGapAngle / 2 + 0.3;
+    const startAngle = Math.PI + handleGapAngle / 2 + 0.6;
     
     const actualPrintHeight = mugHeight * 0.7;
     const radiusOffset = 0.035;
