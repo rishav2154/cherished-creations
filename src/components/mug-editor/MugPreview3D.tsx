@@ -126,8 +126,8 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     for (let i = 0; i < uvs.count; i++) {
       const u = uvs.getX(i);
       const v = uvs.getY(i);
-      // Flip U to mirror horizontally (fixes reversed image)
-      uvs.setXY(i, 1 - u, v);
+      // Flip both U (horizontal mirror) and V (vertical flip) to correct orientation
+      uvs.setXY(i, 1 - u, 1 - v);
     }
     uvs.needsUpdate = true;
 
