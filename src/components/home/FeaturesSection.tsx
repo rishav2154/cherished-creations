@@ -1,51 +1,37 @@
 import { motion } from 'framer-motion';
-import { Truck, ShieldCheck, Sparkles, Heart, Crown, Gift, Star, Gem } from 'lucide-react';
+import { Truck, ShieldCheck, Heart, Gem } from 'lucide-react';
 
 const features = [
   {
     icon: Truck,
     title: 'Express Delivery',
-    description: 'Complimentary premium shipping on orders over $50. Your treasures arrive in 3-5 business days.',
-    gradient: 'from-blue-500 to-cyan-400',
+    description: 'Free premium shipping on orders over $50. Your treasures arrive in 3-5 business days.',
   },
   {
     icon: ShieldCheck,
     title: 'Secure Payments',
-    description: 'Bank-level encryption protects every transaction. Multiple payment options for your convenience.',
-    gradient: 'from-emerald-500 to-teal-400',
+    description: 'Bank-level encryption protects every transaction. Multiple payment options available.',
   },
   {
     icon: Gem,
     title: 'Artisan Quality',
     description: 'Premium materials and cutting-edge printing technology ensure museum-quality results.',
-    gradient: 'from-violet-500 to-purple-400',
   },
   {
     icon: Heart,
     title: 'Crafted With Love',
-    description: 'Each piece receives meticulous attention to detail because your memories deserve perfection.',
-    gradient: 'from-rose-500 to-pink-400',
+    description: 'Each piece receives meticulous attention because your memories deserve perfection.',
   },
 ];
 
 export const FeaturesSection = () => {
   return (
-    <section className="py-32 relative overflow-hidden">
-      {/* Premium Background */}
-      <div className="absolute inset-0 bg-card" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/50" />
+    <section className="py-24 md:py-32 relative overflow-hidden bg-card">
+      {/* Grid pattern */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
       
-      {/* Decorative Elements */}
-      <motion.div 
-        animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.1, 0.05] }}
-        transition={{ duration: 8, repeat: Infinity }}
-        className="absolute top-1/4 -left-48 w-96 h-96 bg-gold rounded-full blur-3xl"
-      />
-      <motion.div 
-        animate={{ scale: [1, 1.3, 1], opacity: [0.05, 0.08, 0.05] }}
-        transition={{ duration: 10, repeat: Infinity, delay: 2 }}
-        className="absolute bottom-1/4 -right-48 w-96 h-96 bg-accent rounded-full blur-3xl"
-      />
+      {/* Top border */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Section Header */}
@@ -53,79 +39,44 @@ export const FeaturesSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-16"
         >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gold/10 border border-gold/20 mb-6"
-          >
-            <Crown className="w-4 h-4 text-gold" />
-            <span className="text-sm font-medium text-gold tracking-wider uppercase">
-              The Giftoria Promise
-            </span>
-          </motion.div>
-          <h2 className="text-4xl md:text-6xl font-bold mt-4">
-            <span className="text-foreground">Why Choose </span>
-            <span className="bg-gradient-to-r from-gold via-accent to-gold bg-clip-text text-transparent">
-              Excellence
-            </span>
+          <span className="text-xs font-medium tracking-[0.2em] uppercase text-accent mb-4 block">
+            Why Choose Us
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+            The Giftoria Promise
           </h2>
-          <p className="text-muted-foreground mt-6 max-w-2xl mx-auto text-lg leading-relaxed">
-            We're committed to delivering extraordinary personalized gifts that exceed your highest expectations.
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            We're committed to delivering extraordinary personalized gifts that exceed expectations.
           </p>
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
             >
               <motion.div
-                whileHover={{ y: -12, scale: 1.02 }}
-                className="relative h-full p-8 rounded-3xl bg-gradient-to-b from-muted/50 to-muted/20 border border-border/50 group overflow-hidden"
+                whileHover={{ y: -8 }}
+                className="group relative h-full p-8 rounded-2xl bg-background border border-border hover:border-accent/30 transition-all duration-300"
               >
-                {/* Hover Glow */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute inset-0 bg-gradient-to-b from-gold/5 to-transparent" />
-                </div>
-                
-                {/* Gold Border on Hover */}
-                <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-gold/30 transition-colors duration-500" />
-
                 {/* Icon */}
-                <motion.div
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className={`w-20 h-20 mb-8 rounded-2xl bg-gradient-to-br ${feature.gradient} p-0.5`}
-                >
-                  <div className="w-full h-full rounded-2xl bg-card flex items-center justify-center">
-                    <feature.icon className="w-10 h-10 text-foreground group-hover:text-gold transition-colors duration-300" />
-                  </div>
-                </motion.div>
+                <div className="w-14 h-14 mb-6 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                  <feature.icon className="w-7 h-7 text-accent" />
+                </div>
 
-                <h3 className="text-xl font-bold mb-4 group-hover:text-gold transition-colors duration-300">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
-
-                {/* Decorative Star */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                  className="absolute top-6 right-6"
-                >
-                  <Star className="w-5 h-5 text-gold/30 group-hover:text-gold/60 transition-colors duration-300" />
-                </motion.div>
               </motion.div>
             </motion.div>
           ))}
