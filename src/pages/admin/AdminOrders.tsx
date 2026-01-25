@@ -20,7 +20,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, Package, Download } from 'lucide-react';
+import { useInvoiceDownload } from '@/hooks/useInvoiceDownload';
+import { Loader2, Eye, Package, Download, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ const AdminOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const { toast } = useToast();
+  const { downloadInvoice, downloading } = useInvoiceDownload();
 
   const downloadImage = async (imageUrl: string, orderNumber: string, itemName: string) => {
     try {
@@ -196,13 +198,29 @@ const AdminOrders = () => {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => viewOrderDetails(order)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => viewOrderDetails(order)}
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => downloadInvoice(order.id)}
+                            disabled={downloading === order.id}
+                            title="Download Invoice"
+                          >
+                            {downloading === order.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <FileText className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -213,9 +231,27 @@ const AdminOrders = () => {
         </Card>
 
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Order Details - {selectedOrder?.order_number}</DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogTitle>Order Details - {selectedOrder?.order_number}</DialogTitle>
+                {selectedOrder && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadInvoice(selectedOrder.id)}
+                    disabled={downloading === selectedOrder?.id}
+                    className="gap-2"
+                  >
+                    {downloading === selectedOrder?.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileText className="w-4 h-4" />
+                    )}
+                    Invoice
+                  </Button>
+                )}
+              </div>
             </DialogHeader>
             {selectedOrder && (
               <div className="space-y-4">
