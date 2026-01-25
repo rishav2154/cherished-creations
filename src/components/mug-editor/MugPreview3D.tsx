@@ -111,7 +111,8 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
     // CylinderGeometry thetaStart is measured from +X axis, counterclockwise
     // Gap should span from (π - gap/2) to (π + gap/2)
     // So print starts at (π + gap/2) and covers printArcAngle
-    const startAngle = Math.PI + handleGapAngle / 2;
+    // Added offset to shift image rightward
+    const startAngle = Math.PI + handleGapAngle / 2 + 0.3;
     
     const actualPrintHeight = mugHeight * 0.7;
     const radiusOffset = 0.035;
