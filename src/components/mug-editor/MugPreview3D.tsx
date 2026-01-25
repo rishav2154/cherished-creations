@@ -103,13 +103,14 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
 
   // Create cylinder geometry wrapping around the mug
   const geometry = useMemo(() => {
-    // Handle is at angle π (-X direction), gap should be centered there
-    const handleGapAngle = Math.PI * 0.45; // Gap for handle area
-    const printArcAngle = Math.PI * 2 - handleGapAngle; // Printable area
+    // Handle is positioned at negative X (angle π in XZ plane)
+    // We need the gap (unprinted area) centered exactly at angle π
+    const handleGapAngle = Math.PI * 0.5; // ~90 degrees gap for handle area
+    const printArcAngle = Math.PI * 2 - handleGapAngle; // Printable arc
     
-    // Start the print just AFTER the gap ends
-    // Gap is centered at π (handle position), so it spans from (π - gap/2) to (π + gap/2)
-    // Print should start at (π + gap/2) = π + handleGapAngle/2
+    // CylinderGeometry thetaStart is measured from +X axis, counterclockwise
+    // Gap should span from (π - gap/2) to (π + gap/2)
+    // So print starts at (π + gap/2) and covers printArcAngle
     const startAngle = Math.PI + handleGapAngle / 2;
     
     const actualPrintHeight = mugHeight * 0.7;
