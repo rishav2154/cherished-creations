@@ -282,7 +282,7 @@ export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: M
   const controlsRef = useRef<any>(null);
 
   return (
-    <div className="relative w-full h-full min-h-[400px] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 via-background to-muted/20">
+    <div className="relative w-full h-full min-h-[500px] lg:min-h-[600px] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 via-background to-muted/20">
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
 
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
