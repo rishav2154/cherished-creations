@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Clock, CheckCircle2, Truck, ShoppingBag, ChevronDown, ChevronUp, Calendar, MapPin, CreditCard } from 'lucide-react';
+import { Package, Clock, CheckCircle2, Truck, ShoppingBag, ChevronDown, ChevronUp, Calendar, MapPin, CreditCard, FileText, Loader2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
@@ -8,7 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { useInvoiceDownload } from '@/hooks/useInvoiceDownload';
 
 interface OrderItem {
   id: string;
@@ -65,6 +67,7 @@ const OrdersHistory = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderTracking, setOrderTracking] = useState<Record<string, OrderTracking[]>>({});
   const navigate = useNavigate();
+  const { downloadInvoice, downloading } = useInvoiceDownload();
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -225,6 +228,23 @@ const OrdersHistory = () => {
                             {order.payment_status === 'paid' ? 'Paid' : 'Pending'}
                           </p>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadInvoice(order.id);
+                          }}
+                          disabled={downloading === order.id}
+                          title="Download Invoice"
+                          className="h-9 w-9"
+                        >
+                          {downloading === order.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4" />
+                          )}
+                        </Button>
                         {isExpanded ? (
                           <ChevronUp className="w-5 h-5 text-muted-foreground" />
                         ) : (
