@@ -2,7 +2,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { HeroSection } from '@/components/home/HeroSection';
-import { MarqueeBanner } from '@/components/home/MarqueeBanner';
 import { CategoriesSection } from '@/components/home/CategoriesSection';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
@@ -16,7 +15,6 @@ const Index = () => {
       <CartDrawer />
       <main>
         <HeroSection />
-        <MarqueeBanner />
         <CategoriesSection />
         <FeaturedProducts />
         <FeaturesSection />
