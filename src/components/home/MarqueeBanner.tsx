@@ -23,7 +23,7 @@ export const MarqueeBanner = () => {
       <motion.div
         className="flex gap-12 whitespace-nowrap"
         animate={{
-          x: ["0%", "-50%"],
+          x: ["-50%", "0%"],
         }}
         transition={{
           x: {
