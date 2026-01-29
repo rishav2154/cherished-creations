@@ -175,50 +175,21 @@ export function MugCustomizer({ onAddToCart }: MugCustomizerProps) {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Pricing Info */}
           <div className="glass-card p-4 rounded-2xl">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Price</p>
+                <p className="text-sm text-muted-foreground">Selected Variant</p>
                 <p className="text-2xl font-bold text-gradient-accent">
                   ₹{selectedVariant.price}
                 </p>
               </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Print Area</p>
+                <p className="text-sm font-medium">{selectedVariant.printArea.width}x{selectedVariant.printArea.height}px</p>
+                <p className="text-xs text-muted-foreground">300 DPI Ready</p>
+              </div>
             </div>
-            
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleAddToCart}
-              disabled={showSuccess || !canvasTexture}
-              className="w-full btn-luxury flex items-center justify-center gap-3 py-4 disabled:opacity-70"
-            >
-              <AnimatePresence mode="wait">
-                {showSuccess ? (
-                  <motion.div
-                    key="success"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="flex items-center gap-2"
-                  >
-                    <Check className="w-5 h-5" />
-                    Added to Cart!
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="add"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="flex items-center gap-2"
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    Add to Cart
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
           </div>
         </div>
       </div>
