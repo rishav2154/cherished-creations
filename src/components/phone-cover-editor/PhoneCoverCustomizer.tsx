@@ -334,9 +334,10 @@ export function PhoneCoverCustomizer() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute z-50 w-full mt-2 bg-popover border border-border rounded-xl shadow-xl overflow-hidden"
+                    className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-xl overflow-hidden"
+                    style={{ zIndex: 9999 }}
                   >
-                    <div className="p-2 border-b border-border">
+                    <div className="p-2 border-b border-border bg-background">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -347,7 +348,7 @@ export function PhoneCoverCustomizer() {
                         />
                       </div>
                     </div>
-                    <div className="max-h-60 overflow-y-auto">
+                    <div className="max-h-60 overflow-y-auto bg-background">
                       {filteredBrands.map((brand) => (
                         <button
                           key={brand.name}
@@ -399,9 +400,10 @@ export function PhoneCoverCustomizer() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute z-50 w-full mt-2 bg-popover border border-border rounded-xl shadow-xl overflow-hidden"
+                    className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-xl overflow-hidden"
+                    style={{ zIndex: 9999 }}
                   >
-                    <div className="p-2 border-b border-border">
+                    <div className="p-2 border-b border-border bg-background">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -412,7 +414,7 @@ export function PhoneCoverCustomizer() {
                         />
                       </div>
                     </div>
-                    <div className="max-h-60 overflow-y-auto">
+                    <div className="max-h-60 overflow-y-auto bg-background">
                       {filteredModels.map((model) => (
                         <button
                           key={model}
