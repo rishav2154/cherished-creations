@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import Customize from "./pages/Customize";
+import CustomizePhoneCover from "./pages/CustomizePhoneCover";
 import Cart from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
@@ -38,6 +39,7 @@ const AnimatedRoutes = () => {
         <Route path="/shop" element={<PageTransition><Shop /></PageTransition>} />
         <Route path="/product/:id" element={<PageTransition><ProductDetail /></PageTransition>} />
         <Route path="/customize" element={<PageTransition><Customize /></PageTransition>} />
+        <Route path="/customize-phone-cover" element={<PageTransition><CustomizePhoneCover /></PageTransition>} />
         <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
         <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
         <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />

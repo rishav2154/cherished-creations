@@ -14,6 +14,9 @@ export interface CartItem {
     color?: string;
     variant?: string;
     designUrl?: string;
+    brand?: string;
+    model?: string;
+    coverType?: string;
   };
 }
 

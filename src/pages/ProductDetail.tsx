@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -14,7 +14,8 @@ import {
   Upload,
   Type,
   Palette,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -24,6 +25,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductReviews } from '@/components/reviews/ProductReviews';
+import { Button } from '@/components/ui/button';
 
 import productTshirt from '@/assets/product-tshirt.jpg';
 import productMug from '@/assets/product-mug.jpg';
@@ -43,6 +45,7 @@ const categoryImages: Record<string, string> = {
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(id || '');
   const { data: allProducts = [] } = useProducts();
   const [quantity, setQuantity] = useState(1);
@@ -54,6 +57,10 @@ const ProductDetail = () => {
   const { isInWishlist, toggleItem } = useWishlistStore();
   
   const inWishlist = product ? isInWishlist(product.id) : false;
+  
+  // Check if this is the customizable phone cover product
+  const isCustomizablePhoneCover = product?.name?.toLowerCase().includes('customized phone cover') || 
+                                   product?.name?.toLowerCase().includes('customised phone cover');
 
   if (isLoading) {
     return (
@@ -282,15 +289,25 @@ const ProductDetail = () => {
 
               {/* Actions */}
               <div className="flex gap-4 mb-8">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleAddToCart}
-                  className="flex-1 btn-luxury flex items-center justify-center gap-2"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  Add to Cart
-                </motion.button>
+                {isCustomizablePhoneCover ? (
+                  <Button
+                    onClick={() => navigate('/customize-phone-cover')}
+                    className="flex-1 h-14 text-lg bg-accent-gradient hover:opacity-90"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Customize Now
+                  </Button>
+                ) : (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleAddToCart}
+                    className="flex-1 btn-luxury flex items-center justify-center gap-2"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Add to Cart
+                  </motion.button>
+                )}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
