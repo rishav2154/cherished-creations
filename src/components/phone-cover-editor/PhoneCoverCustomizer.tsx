@@ -334,10 +334,15 @@ export function PhoneCoverCustomizer() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-xl overflow-hidden"
-                    style={{ zIndex: 9999 }}
+                    className="absolute w-full mt-2 rounded-xl shadow-2xl overflow-hidden border border-border"
+                    style={{ 
+                      zIndex: 9999, 
+                      isolation: 'isolate',
+                      backgroundColor: 'hsl(240 10% 8%)',
+                      backdropFilter: 'none'
+                    }}
                   >
-                    <div className="p-2 border-b border-border bg-background">
+                    <div className="p-2 border-b border-border" style={{ backgroundColor: 'hsl(240 10% 8%)' }}>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -348,7 +353,7 @@ export function PhoneCoverCustomizer() {
                         />
                       </div>
                     </div>
-                    <div className="max-h-60 overflow-y-auto bg-background">
+                    <div className="max-h-60 overflow-y-auto" style={{ backgroundColor: 'hsl(240 10% 8%)' }}>
                       {filteredBrands.map((brand) => (
                         <button
                           key={brand.name}
@@ -358,7 +363,7 @@ export function PhoneCoverCustomizer() {
                             setShowBrandDropdown(false);
                             setBrandSearch('');
                           }}
-                          className={`w-full px-4 py-3 text-left hover:bg-muted transition-colors flex items-center justify-between ${
+                          className={`w-full px-4 py-3 text-left hover:bg-muted transition-colors flex items-center justify-between text-foreground ${
                             selectedBrand === brand.name ? 'bg-accent/10 text-accent' : ''
                           }`}
                         >
@@ -400,10 +405,15 @@ export function PhoneCoverCustomizer() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute w-full mt-2 bg-background border border-border rounded-xl shadow-xl overflow-hidden"
-                    style={{ zIndex: 9999 }}
+                    className="absolute w-full mt-2 rounded-xl shadow-2xl overflow-hidden border border-border"
+                    style={{ 
+                      zIndex: 9999, 
+                      isolation: 'isolate',
+                      backgroundColor: 'hsl(240 10% 8%)',
+                      backdropFilter: 'none'
+                    }}
                   >
-                    <div className="p-2 border-b border-border bg-background">
+                    <div className="p-2 border-b border-border" style={{ backgroundColor: 'hsl(240 10% 8%)' }}>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -414,7 +424,7 @@ export function PhoneCoverCustomizer() {
                         />
                       </div>
                     </div>
-                    <div className="max-h-60 overflow-y-auto bg-background">
+                    <div className="max-h-60 overflow-y-auto" style={{ backgroundColor: 'hsl(240 10% 8%)' }}>
                       {filteredModels.map((model) => (
                         <button
                           key={model}
@@ -423,7 +433,7 @@ export function PhoneCoverCustomizer() {
                             setShowModelDropdown(false);
                             setModelSearch('');
                           }}
-                          className={`w-full px-4 py-3 text-left hover:bg-muted transition-colors ${
+                          className={`w-full px-4 py-3 text-left hover:bg-muted transition-colors text-foreground ${
                             selectedModel === model ? 'bg-accent/10 text-accent' : ''
                           }`}
                         >
