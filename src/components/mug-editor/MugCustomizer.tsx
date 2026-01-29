@@ -1,11 +1,10 @@
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Coffee, Check, ShoppingBag, Palette, Download, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Coffee, Check, Palette, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Fabric2DEditor } from './Fabric2DEditor';
 import { MugPreview3D } from './MugPreview3D';
 import { MUG_VARIANTS, MugVariant } from './types';
-import { useCartStore } from '@/store/cartStore';
 import { useToast } from '@/hooks/use-toast';
 
 const MUG_COLORS = [
@@ -17,19 +16,11 @@ const MUG_COLORS = [
   { name: 'Purple', value: '#7c3aed' },
 ];
 
-interface MugCustomizerProps {
-  onAddToCart?: () => void;
-}
-
-export function MugCustomizer({ onAddToCart }: MugCustomizerProps) {
+export function MugCustomizer() {
   const [selectedVariant, setSelectedVariant] = useState<MugVariant>(MUG_VARIANTS[0]);
   const [canvasTexture, setCanvasTexture] = useState<string | null>(null);
   const [mugColor, setMugColor] = useState('#ffffff');
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [printReadyFile, setPrintReadyFile] = useState<string | null>(null);
   
-  const addItem = useCartStore((state) => state.addItem);
-  const openCart = useCartStore((state) => state.openCart);
   const { toast } = useToast();
 
   const handleCanvasUpdate = useCallback((dataUrl: string) => {
@@ -38,8 +29,6 @@ export function MugCustomizer({ onAddToCart }: MugCustomizerProps) {
   }, []);
 
   const handleExportReady = useCallback((dataUrl: string) => {
-    setPrintReadyFile(dataUrl);
-    
     // Create download link
     const link = document.createElement('a');
     link.download = `mug-design-${selectedVariant.id}-${Date.now()}.png`;
@@ -51,37 +40,6 @@ export function MugCustomizer({ onAddToCart }: MugCustomizerProps) {
       description: "Your print-ready file has been downloaded (300 DPI)"
     });
   }, [selectedVariant.id, toast]);
-
-  const handleAddToCart = useCallback(() => {
-    if (!canvasTexture) {
-      toast({
-        title: "No Design",
-        description: "Please upload an image to customize your mug",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    addItem({
-      productId: `custom-mug-${selectedVariant.id}-${Date.now()}`,
-      name: `Custom ${selectedVariant.name} Mug`,
-      price: selectedVariant.price,
-      quantity: 1,
-      image: canvasTexture,
-      customization: {
-        variant: selectedVariant.id,
-        color: mugColor,
-        designUrl: canvasTexture
-      }
-    });
-
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      openCart();
-      onAddToCart?.();
-    }, 1500);
-  }, [canvasTexture, selectedVariant, mugColor, addItem, openCart, onAddToCart, toast]);
 
   return (
     <div className="space-y-6">
