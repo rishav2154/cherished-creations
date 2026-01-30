@@ -222,7 +222,7 @@ export function PhoneCoverCustomizer() {
           animate={{ opacity: 1, x: 0 }}
           className="order-2 lg:order-1"
         >
-          <div className="glass-card p-6 rounded-3xl sticky top-24">
+          <div className="bg-card border border-border p-6 rounded-3xl sticky top-24">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <Smartphone className="w-5 h-5 text-accent" />
               Cover Preview
@@ -308,7 +308,7 @@ export function PhoneCoverCustomizer() {
           className="order-1 lg:order-2 space-y-6"
         >
           {/* Step 1: Select Brand */}
-          <div className="glass-card p-6 rounded-2xl" style={{ overflow: 'visible' }}>
+          <div className="bg-card border border-border p-6 rounded-2xl" style={{ overflow: 'visible' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-bold">1</div>
               <h3 className="font-semibold">Select Phone Brand</h3>
@@ -379,7 +379,7 @@ export function PhoneCoverCustomizer() {
           </div>
 
           {/* Step 2: Select Model */}
-          <div className={`glass-card p-6 rounded-2xl transition-opacity ${!selectedBrand ? 'opacity-50 pointer-events-none' : ''}`} style={{ overflow: 'visible' }}>
+          <div className={`bg-card border border-border p-6 rounded-2xl transition-opacity ${!selectedBrand ? 'opacity-50 pointer-events-none' : ''}`} style={{ overflow: 'visible' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-bold">2</div>
               <h3 className="font-semibold">Select Phone Model</h3>
@@ -448,7 +448,7 @@ export function PhoneCoverCustomizer() {
           </div>
 
           {/* Step 3: Select Cover Type */}
-          <div className={`glass-card p-6 rounded-2xl transition-opacity ${!selectedModel ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`bg-card border border-border p-6 rounded-2xl transition-opacity ${!selectedModel ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-bold">3</div>
               <h3 className="font-semibold">Select Cover Type</h3>
@@ -481,7 +481,7 @@ export function PhoneCoverCustomizer() {
           </div>
 
           {/* Step 4: Upload Image */}
-          <div className={`glass-card p-6 rounded-2xl transition-opacity ${!selectedModel ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`bg-card border border-border p-6 rounded-2xl transition-opacity ${!selectedModel ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-bold">4</div>
               <h3 className="font-semibold">Upload Your Photo</h3>
