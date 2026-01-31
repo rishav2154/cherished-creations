@@ -67,6 +67,11 @@ const slides: Slide[] = [
 export const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance to trigger slide change (in pixels)
+  const minSwipeDistance = 50;
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -79,8 +84,37 @@ export const HeroCarousel = () => {
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
     setIsAutoPlaying(false);
-    // Resume auto-play after 5 seconds
     setTimeout(() => setIsAutoPlaying(true), 5000);
+  };
+
+  const pauseAutoPlay = useCallback(() => {
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 5000);
+  }, []);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+      pauseAutoPlay();
+    } else if (isRightSwipe) {
+      prevSlide();
+      pauseAutoPlay();
+    }
   };
 
   useEffect(() => {
@@ -91,7 +125,12 @@ export const HeroCarousel = () => {
   }, [isAutoPlaying, nextSlide]);
 
   return (
-    <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden rounded-3xl">
+    <div 
+      className="relative w-full h-[500px] md:h-[600px] overflow-hidden rounded-3xl touch-pan-y"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
