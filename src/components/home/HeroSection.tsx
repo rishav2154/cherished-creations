@@ -1,41 +1,12 @@
 import { motion, useScroll, useTransform, AnimatePresence, PanInfo } from "framer-motion";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useRef, Suspense, useState, lazy, useEffect, useCallback } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SearchDialog } from "@/components/search/SearchDialog";
 
-// Animated gradient background component (replacement for Spline)
-const AnimatedBackground = () => (
-  <div className="absolute inset-0 bg-gradient-to-br from-background via-accent/5 to-background overflow-hidden">
-    {/* Animated gradient orbs */}
-    <motion.div
-      className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-accent/20 blur-3xl"
-      animate={{
-        x: [0, 50, 0],
-        y: [0, -30, 0],
-        scale: [1, 1.2, 1],
-      }}
-      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-    />
-    <motion.div
-      className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-primary/15 blur-3xl"
-      animate={{
-        x: [0, -40, 0],
-        y: [0, 40, 0],
-        scale: [1.1, 0.9, 1.1],
-      }}
-      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-    />
-    <motion.div
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gold/10 blur-3xl"
-      animate={{
-        scale: [1, 1.3, 1],
-        opacity: [0.3, 0.5, 0.3],
-      }}
-      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-    />
-    <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/80" />
-  </div>
-);
+// Lazy load Spline to prevent blocking page transitions
+const Spline = lazy(() => import("@splinetool/react-spline"));
 
 // Auto-typing keywords for search bar
 const searchKeywords = [
@@ -51,7 +22,7 @@ const searchKeywords = [
 const heroSlides = [
   {
     id: "default",
-    type: "animated" as const,
+    type: "spline" as const,
     title: "Transform Your Precious Moments Into Timeless Art.",
   },
   {
@@ -97,6 +68,46 @@ const heroSlides = [
     subtitle: "Transform your space with art",
   },
 ];
+
+// Skeleton loader component for Spline background
+const SplineLoader = () => (
+  <div className="absolute inset-0 bg-background">
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-primary/5 to-gold/10 animate-pulse" />
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 md:w-48 md:h-48">
+          <Skeleton className="w-full h-full rounded-full opacity-30" />
+        </div>
+        <div className="absolute bottom-1/3 right-1/4 w-24 h-24 md:w-36 md:h-36">
+          <Skeleton className="w-full h-full rounded-full opacity-20" />
+        </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 md:w-64 md:h-64">
+          <Skeleton className="w-full h-full rounded-full opacity-40" />
+        </div>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="w-2 h-2 rounded-full bg-accent"
+                animate={{
+                  opacity: [0.3, 1, 0.3],
+                  scale: [0.8, 1.2, 0.8],
+                }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                }}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">Loading 3D Experience...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 // Auto-typing search bar component
 interface AutoTypingSearchBarProps {
@@ -174,7 +185,7 @@ const AutoTypingSearchBar = ({ onOpenSearch }: AutoTypingSearchBarProps) => {
 
 export const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Removed isSplineLoaded state - no longer needed
+  const [isSplineLoaded, setIsSplineLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -249,16 +260,44 @@ export const HeroSection = () => {
       >
         {/* Slides Background */}
       <AnimatePresence mode="wait">
-        {currentSlideData.type === "animated" ? (
+        {currentSlideData.type === "spline" ? (
           <motion.div
-            key="animated"
+            key="spline"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
             className="absolute inset-0"
           >
-            <AnimatedBackground />
+            <AnimatePresence>
+              {!isSplineLoaded && (
+                <motion.div
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="absolute inset-0 z-10"
+                >
+                  <SplineLoader />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isSplineLoaded ? 1 : 0 }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="w-full h-full"
+            >
+              <Suspense fallback={null}>
+                <Spline
+                  scene="https://prod.spline.design/M4lt5v1zkLC9BNwq/scene.splinecode"
+                  className="w-full h-full"
+                  onLoad={() => setIsSplineLoaded(true)}
+                />
+              </Suspense>
+            </motion.div>
+
+            <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/80 pointer-events-none" />
           </motion.div>
         ) : (
           <motion.div
@@ -310,8 +349,8 @@ export const HeroSection = () => {
         ))}
       </div>
 
-      {/* Animated Gold Rings (only on animated slide) */}
-      {currentSlideData.type === "animated" && (
+      {/* Animated Gold Rings (only on spline slide) */}
+      {currentSlideData.type === "spline" && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <motion.div
             animate={{ rotate: 360, scale: [1, 1.05, 1] }}
