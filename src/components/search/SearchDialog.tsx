@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Search, X, ArrowRight, Sparkles } from 'lucide-react';
 import { products, categories } from '@/data/products';
 import {
@@ -59,7 +59,7 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Search Products</DialogTitle>
         
         {/* Search Input */}
@@ -85,140 +85,138 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
 
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto p-4">
-          <AnimatePresence mode="wait">
-            {!query.trim() ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
+          {!query.trim() ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <Search className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">Start typing to search...</p>
+              <div className="flex flex-wrap justify-center gap-2 mt-6">
+                {['T-Shirts', 'Mugs', 'Frames', 'Gift Combos'].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setQuery(suggestion)}
+                    className="px-3 py-1.5 text-sm rounded-full bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          ) : !hasResults ? (
+            <motion.div
+              key="no-results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <p className="text-muted-foreground">
+                No results found for "{query}"
+              </p>
+              <button
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate('/shop');
+                }}
+                className="mt-4 text-accent hover:underline inline-flex items-center gap-1"
               >
-                <Search className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">Start typing to search...</p>
-                <div className="flex flex-wrap justify-center gap-2 mt-6">
-                  {['T-Shirts', 'Mugs', 'Frames', 'Gift Combos'].map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      onClick={() => setQuery(suggestion)}
-                      className="px-3 py-1.5 text-sm rounded-full bg-muted hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            ) : !hasResults ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
-              >
-                <p className="text-muted-foreground">
-                  No results found for "{query}"
-                </p>
-                <button
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate('/shop');
-                  }}
-                  className="mt-4 text-accent hover:underline inline-flex items-center gap-1"
-                >
-                  Browse all products
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                {/* Categories */}
-                {searchResults.categories.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                      Categories
-                    </h3>
-                    <div className="space-y-1">
-                      {searchResults.categories.map((category) => (
-                        <button
-                          key={category.id}
-                          onClick={() => handleCategoryClick(category.id)}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                        >
-                          <span className="text-2xl">{category.icon}</span>
-                          <div className="flex-1">
-                            <p className="font-medium">{category.name}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {category.description}
-                            </p>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                      ))}
-                    </div>
+                Browse all products
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-6"
+            >
+              {/* Categories */}
+              {searchResults.categories.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                    Categories
+                  </h3>
+                  <div className="space-y-1">
+                    {searchResults.categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryClick(category.id)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                      >
+                        <span className="text-2xl">{category.icon}</span>
+                        <div className="flex-1">
+                          <p className="font-medium">{category.name}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-1">
+                            {category.description}
+                          </p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Products */}
-                {searchResults.products.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                      Products
-                    </h3>
-                    <div className="space-y-1">
-                      {searchResults.products.map((product) => (
-                        <button
-                          key={product.id}
-                          onClick={() => handleProductClick(product.id)}
-                          className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                        >
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium line-clamp-1">{product.name}</p>
-                              {product.isCustomizable && (
-                                <Sparkles className="w-3 h-3 text-accent flex-shrink-0" />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {product.description}
-                            </p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="font-bold">₹{product.price.toFixed(2)}</p>
-                            {product.originalPrice && (
-                              <p className="text-xs text-muted-foreground line-through">
-                                ₹{product.originalPrice.toFixed(2)}
-                              </p>
+              {/* Products */}
+              {searchResults.products.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                    Products
+                  </h3>
+                  <div className="space-y-1">
+                    {searchResults.products.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => handleProductClick(product.id)}
+                        className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                      >
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium line-clamp-1">{product.name}</p>
+                            {product.isCustomizable && (
+                              <Sparkles className="w-3 h-3 text-accent flex-shrink-0" />
                             )}
                           </div>
-                        </button>
-                      ))}
-                    </div>
+                          <p className="text-sm text-muted-foreground line-clamp-1">
+                            {product.description}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-bold">₹{product.price.toFixed(2)}</p>
+                          {product.originalPrice && (
+                            <p className="text-xs text-muted-foreground line-through">
+                              ₹{product.originalPrice.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* View All */}
-                <button
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(`/shop?search=${encodeURIComponent(query)}`);
-                  }}
-                  className="w-full py-3 text-center text-accent hover:underline flex items-center justify-center gap-2"
-                >
-                  View all results for "{query}"
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {/* View All */}
+              <button
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(`/shop?search=${encodeURIComponent(query)}`);
+                }}
+                className="w-full py-3 text-center text-accent hover:underline flex items-center justify-center gap-2"
+              >
+                View all results for "{query}"
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
