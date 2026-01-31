@@ -14,9 +14,9 @@ import {
   Upload,
   Type,
   Palette,
-  Loader2,
   Sparkles
 } from 'lucide-react';
+import { ProductDetailSkeleton } from '@/components/ui/product-skeleton';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
@@ -64,9 +64,11 @@ const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
+      <>
+        <Navbar />
+        <ProductDetailSkeleton />
+        <Footer />
+      </>
     );
   }
 

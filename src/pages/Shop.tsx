@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Grid3X3, Grid2X2, SlidersHorizontal, X, Search, Loader2 } from 'lucide-react';
+import { Filter, Grid3X3, Grid2X2, SlidersHorizontal, X, Search } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
@@ -9,6 +9,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { useProducts, categories } from '@/hooks/useProducts';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
+import { ProductGridSkeleton } from '@/components/ui/product-skeleton';
 
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -198,9 +199,7 @@ const Shop = () => {
 
               {/* Products Grid */}
               {isLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 animate-spin text-accent" />
-                </div>
+                <ProductGridSkeleton count={8} />
               ) : (
                 <>
                   <motion.div
