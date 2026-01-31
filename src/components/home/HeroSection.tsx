@@ -1,8 +1,9 @@
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence, PanInfo } from "framer-motion";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useRef, Suspense, useState, lazy, useEffect, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchDialog } from "@/components/search/SearchDialog";
 
 // Lazy load Spline to prevent blocking page transitions
 const Spline = lazy(() => import("@splinetool/react-spline"));
@@ -109,11 +110,14 @@ const SplineLoader = () => (
 );
 
 // Auto-typing search bar component
-const AutoTypingSearchBar = () => {
+interface AutoTypingSearchBarProps {
+  onOpenSearch: () => void;
+}
+
+const AutoTypingSearchBar = ({ onOpenSearch }: AutoTypingSearchBarProps) => {
   const [currentKeywordIndex, setCurrentKeywordIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const currentKeyword = searchKeywords[currentKeywordIndex];
@@ -142,10 +146,6 @@ const AutoTypingSearchBar = () => {
     return () => clearTimeout(timeout);
   }, [displayText, isDeleting, currentKeywordIndex]);
 
-  const handleSearchClick = () => {
-    navigate(`/shop?search=${encodeURIComponent(displayText || searchKeywords[currentKeywordIndex])}`);
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -154,7 +154,7 @@ const AutoTypingSearchBar = () => {
       className="w-full max-w-3xl mx-auto px-4"
     >
       <div
-        onClick={handleSearchClick}
+        onClick={onOpenSearch}
         className="relative flex items-center bg-card/90 backdrop-blur-xl border-2 border-accent/30 rounded-2xl shadow-2xl shadow-accent/10 cursor-pointer group hover:border-accent/50 transition-all duration-300"
       >
         <div className="flex items-center justify-center w-16 h-16 md:w-20 md:h-20">
@@ -188,6 +188,7 @@ export const HeroSection = () => {
   const [isSplineLoaded, setIsSplineLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -226,6 +227,19 @@ export const HeroSection = () => {
     setTimeout(() => setIsPaused(false), 10000);
   }, []);
 
+  // Swipe gesture handler for mobile
+  const handleDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const swipeThreshold = 50;
+      if (info.offset.x > swipeThreshold) {
+        goToPrevSlide();
+      } else if (info.offset.x < -swipeThreshold) {
+        goToNextSlide();
+      }
+    },
+    [goToPrevSlide, goToNextSlide]
+  );
+
   const currentSlideData = heroSlides[currentSlide];
 
   return (
@@ -233,7 +247,18 @@ export const HeroSection = () => {
       ref={containerRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
     >
-      {/* Slides Background */}
+      {/* Search Dialog */}
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
+      {/* Swipeable Slides Container */}
+      <motion.div
+        className="absolute inset-0"
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+      >
+        {/* Slides Background */}
       <AnimatePresence mode="wait">
         {currentSlideData.type === "spline" ? (
           <motion.div
@@ -292,6 +317,8 @@ export const HeroSection = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </motion.div>
+      {/* End Swipeable Container */}
 
       {/* Luxury Gold Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -376,7 +403,7 @@ export const HeroSection = () => {
         </AnimatePresence>
 
         {/* Auto-typing Search Bar */}
-        <AutoTypingSearchBar />
+        <AutoTypingSearchBar onOpenSearch={() => setSearchOpen(true)} />
 
         {/* Slide Navigation Arrows */}
         <div className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20">
