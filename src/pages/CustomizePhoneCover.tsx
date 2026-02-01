@@ -52,6 +52,18 @@ const CustomizePhoneCover = () => {
             </p>
           </motion.div>
 
+          {/* Special Instructions */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8 p-4 bg-accent/10 border border-accent/20 rounded-xl"
+          >
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-accent">📌 Special Instructions:</span> Upload a high-resolution image for best print quality. Ensure important elements are centered as edges may be slightly trimmed during production.
+            </p>
+          </motion.div>
+
           {/* Customizer */}
           <PhoneCoverCustomizer />
         </div>
