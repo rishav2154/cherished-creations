@@ -289,7 +289,17 @@ const AdminOrders = () => {
                   <p className="text-sm text-muted-foreground mb-2">Order Items</p>
                   <div className="space-y-4">
                     {orderItems.map((item) => {
-                      const customization = item.customization as { imageUrl?: string; text?: string; color?: string } | null;
+                      const customization = item.customization as { 
+                        imageUrl?: string; 
+                        text?: string; 
+                        color?: string;
+                        designUrl?: string;
+                        brand?: string;
+                        model?: string;
+                        coverType?: string;
+                        specialInstructions?: string;
+                      } | null;
+                      const imageToDownload = customization?.imageUrl || customization?.designUrl;
                       return (
                         <div
                           key={item.id}
@@ -317,18 +327,29 @@ const AdminOrders = () => {
                             <div className="border-t border-border pt-3">
                               <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Customer Customization</p>
                               <div className="flex flex-wrap gap-4">
-                                {customization.imageUrl && (
+                                {/* Phone Cover Details */}
+                                {(customization.brand || customization.model) && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Device</p>
+                                    <p className="text-sm font-medium bg-background px-3 py-2 rounded-md border border-border">
+                                      {customization.brand} {customization.model}
+                                      {customization.coverType && ` (${customization.coverType})`}
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {imageToDownload && (
                                   <div className="space-y-2">
-                                    <p className="text-xs text-muted-foreground">Uploaded Image</p>
+                                    <p className="text-xs text-muted-foreground">Uploaded Design</p>
                                     <div className="relative group">
                                       <a 
-                                        href={customization.imageUrl} 
+                                        href={imageToDownload} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="block"
                                       >
                                         <img
-                                          src={customization.imageUrl}
+                                          src={imageToDownload}
                                           alt="Customer uploaded"
                                           className="w-24 h-24 rounded-lg object-cover border border-border hover:border-accent transition-colors cursor-pointer"
                                         />
@@ -339,7 +360,7 @@ const AdminOrders = () => {
                                         className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-7 text-xs gap-1 shadow-md"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          downloadImage(customization.imageUrl!, selectedOrder.order_number, item.product_name);
+                                          downloadImage(imageToDownload, selectedOrder.order_number, item.product_name);
                                         }}
                                       >
                                         <Download className="w-3 h-3" />
@@ -369,6 +390,18 @@ const AdminOrders = () => {
                                   </div>
                                 )}
                               </div>
+                              
+                              {/* Special Instructions */}
+                              {customization.specialInstructions && (
+                                <div className="mt-3 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                                  <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1">
+                                    📝 Special Instructions
+                                  </p>
+                                  <p className="text-sm text-foreground">
+                                    {customization.specialInstructions}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
