@@ -2,10 +2,11 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Smartphone, Upload, ShoppingBag, Check, X, 
-  Search, ChevronDown, Sparkles 
+  Search, ChevronDown, Sparkles, FileText 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCartStore } from '@/store/cartStore';
@@ -127,6 +128,7 @@ export function PhoneCoverCustomizer() {
   const [brandSearch, setBrandSearch] = useState('');
   const [modelSearch, setModelSearch] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [specialInstructions, setSpecialInstructions] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addItem = useCartStore((state) => state.addItem);
@@ -200,7 +202,8 @@ export function PhoneCoverCustomizer() {
         brand: selectedBrand,
         model: selectedModel,
         coverType: selectedCoverType,
-        designUrl: uploadedImage
+        designUrl: uploadedImage,
+        specialInstructions: specialInstructions.trim() || undefined
       }
     });
 
@@ -536,6 +539,30 @@ export function PhoneCoverCustomizer() {
                 <Sparkles className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                 <span>For best results, use high-resolution images (at least 1200x1600 pixels). Your design will be printed edge-to-edge on the cover.</span>
               </p>
+            </div>
+          </div>
+
+          {/* Step 5: Special Instructions */}
+          <div className={`bg-card border border-border p-6 rounded-2xl transition-opacity ${!selectedModel ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-sm font-bold">5</div>
+              <h3 className="font-semibold">Special Instructions (Optional)</h3>
+            </div>
+            
+            <Textarea
+              placeholder="Add any special instructions for your order (e.g., specific placement, color adjustments, text to add...)"
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value.slice(0, 500))}
+              className="min-h-[100px] resize-none"
+              maxLength={500}
+            />
+            
+            <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+              <p className="flex items-center gap-1">
+                <FileText className="w-3 h-3" />
+                Tell us how you'd like your design customized
+              </p>
+              <span>{specialInstructions.length}/500</span>
             </div>
           </div>
         </motion.div>

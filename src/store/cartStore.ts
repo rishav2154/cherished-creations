@@ -17,6 +17,7 @@ export interface CartItem {
     brand?: string;
     model?: string;
     coverType?: string;
+    specialInstructions?: string;
   };
 }
 
