@@ -21,6 +21,9 @@ const navLinks = [{
 }, {
   name: 'About',
   path: '/about'
+}, {
+  name: 'Return Policy',
+  path: '/returns'
 }];
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
