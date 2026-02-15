@@ -19,6 +19,8 @@ import OrdersHistory from "./pages/OrdersHistory";
 import About from "./pages/About";
 import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
+import Contact from "./pages/Contact";
+import ReturnPolicy from "./pages/ReturnPolicy";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -47,6 +49,8 @@ const AnimatedRoutes = () => {
         <Route path="/orders" element={<PageTransition><OrdersHistory /></PageTransition>} />
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/wishlist" element={<PageTransition><Wishlist /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+        <Route path="/returns" element={<PageTransition><ReturnPolicy /></PageTransition>} />
         <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
         <Route path="/admin/reset-password" element={<PageTransition><AdminResetPassword /></PageTransition>} />
         <Route path="/admin" element={<AdminDashboard />} />
