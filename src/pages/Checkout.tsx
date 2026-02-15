@@ -142,68 +142,130 @@ const Checkout = () => {
     return true;
   };
 
+  const createOrder = async () => {
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert([{
+        user_id: user!.id,
+        order_number: `ORD-${Date.now()}`,
+        subtotal,
+        discount,
+        shipping,
+        tax,
+        total,
+        payment_method: paymentMethod,
+        payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
+        status: 'pending',
+        notes: appliedCoupon ? `Coupon: ${appliedCoupon.code}` : null,
+        shipping_address: {
+          full_name: address.fullName,
+          phone: address.phone,
+          address_line1: address.addressLine1,
+          address_line2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+        },
+      }])
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
+
+    const orderItems = items.map(item => ({
+      order_id: order.id,
+      product_name: item.name,
+      product_image: item.image,
+      quantity: item.quantity,
+      price: item.price,
+      customization: item.customization || null,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
+
+    if (itemsError) throw itemsError;
+
+    return order;
+  };
+
+  const handleRazorpayPayment = async (order: any) => {
+    const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+      body: { amount: total, orderId: order.id, receipt: order.order_number },
+    });
+
+    if (error || data?.error) throw new Error(data?.error || error?.message || 'Failed to create Razorpay order');
+
+    return new Promise<void>((resolve, reject) => {
+      const options = {
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Giftoria',
+        description: `Order ${order.order_number}`,
+        order_id: data.razorpayOrderId,
+        handler: async (response) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: order.id,
+              },
+            });
+
+            if (verifyError || verifyData?.error) {
+              reject(new Error(verifyData?.error || 'Payment verification failed'));
+              return;
+            }
+
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        },
+        prefill: {
+          name: address.fullName,
+          email: user?.email || '',
+          contact: address.phone,
+        },
+        theme: { color: '#667eea' },
+        modal: {
+          ondismiss: () => {
+            reject(new Error('Payment cancelled by user'));
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    });
+  };
+
   const handlePlaceOrder = async () => {
     if (!validateForm() || !user) return;
 
     setLoading(true);
     try {
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([{
-          user_id: user.id,
-          order_number: `ORD-${Date.now()}`,
-          subtotal,
-          discount,
-          shipping,
-          tax,
-          total,
-          payment_method: paymentMethod,
-          payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
-          status: 'pending',
-          notes: appliedCoupon ? `Coupon: ${appliedCoupon.code}` : null,
-          shipping_address: {
-            full_name: address.fullName,
-            phone: address.phone,
-            address_line1: address.addressLine1,
-            address_line2: address.addressLine2,
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
-          },
-        }])
-        .select()
-        .single();
+      const order = await createOrder();
 
-      if (orderError) throw orderError;
+      if (paymentMethod === 'online') {
+        await handleRazorpayPayment(order);
+      }
 
-      // Create order items
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_name: item.name,
-        product_image: item.image,
-        quantity: item.quantity,
-        price: item.price,
-        customization: item.customization || null,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // Clear cart and navigate to success
       clearCart();
       navigate(`/order-success/${order.id}`);
-
     } catch (error: any) {
       console.error('Order error:', error);
-      toast({
-        title: 'Order Failed',
-        description: error.message || 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      });
+      if (error.message !== 'Payment cancelled by user') {
+        toast({
+          title: 'Order Failed',
+          description: error.message || 'Something went wrong. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
