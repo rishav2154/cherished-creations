@@ -306,7 +306,7 @@ const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | nul
 
   return (
     <Float speed={0.35} rotationIntensity={0.008} floatIntensity={0.04}>
-      <group ref={groupRef} scale={1.1}>
+      <group ref={groupRef} scale={0.75}>
         {/* Outer body */}
         <mesh position={[0, -mugHeight / 2, 0]} castShadow receiveShadow>
           <latheGeometry args={[mugProfile, 128]} />
