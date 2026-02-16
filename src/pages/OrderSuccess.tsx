@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle, Package, Truck, Home, Loader2 } from 'lucide-react';
+import { CheckCircle, Package, Truck, Home, Loader2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Order {
@@ -15,6 +15,7 @@ interface Order {
   payment_status: string;
   total: number;
   created_at: string;
+  notes: string | null;
   shipping_address: {
     full_name: string;
     phone: string;
@@ -58,6 +59,7 @@ const OrderSuccess = () => {
         payment_status: data.payment_status,
         total: data.total,
         created_at: data.created_at || '',
+        notes: data.notes,
         shipping_address: data.shipping_address as Order['shipping_address'],
       });
       setLoading(false);
@@ -167,6 +169,24 @@ const OrderSuccess = () => {
               <p className="text-muted-foreground">Phone: {order.shipping_address.phone}</p>
             </div>
           </motion.div>
+
+          {/* Delivery Instructions */}
+          {order.notes && order.notes.includes('Delivery:') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="glass-card p-6 mb-6"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="w-5 h-5 text-accent" />
+                <h2 className="font-semibold">Delivery Instructions</h2>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {order.notes.split('Delivery:')[1]?.split('|')[0]?.trim()}
+              </p>
+            </motion.div>
+          )}
 
           {/* What's Next */}
           <motion.div
