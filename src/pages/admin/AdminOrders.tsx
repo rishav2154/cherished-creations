@@ -285,6 +285,18 @@ const AdminOrders = () => {
                   </div>
                 </div>
 
+                {/* Delivery Instructions from notes */}
+                {selectedOrder.notes && selectedOrder.notes.includes('Delivery:') && (
+                  <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                    <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1">
+                      📦 Delivery Instructions
+                    </p>
+                    <p className="text-sm text-foreground">
+                      {selectedOrder.notes.split('Delivery:')[1]?.split('|')[0]?.trim()}
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Order Items</p>
                   <div className="space-y-4">
