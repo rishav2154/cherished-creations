@@ -8,6 +8,7 @@ import { useCartStore } from '@/store/cartStore';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +19,8 @@ import {
   ShieldCheck, 
   Loader2,
   ArrowLeft,
-  Package
+  Package,
+  MessageSquare
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
@@ -47,6 +49,7 @@ const Checkout = () => {
   const [checkingAuth, setCheckingAuth] = useState(true);
   
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [address, setAddress] = useState({
     fullName: '',
     phone: '',
@@ -156,7 +159,7 @@ const Checkout = () => {
         payment_method: paymentMethod,
         payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
         status: 'pending',
-        notes: appliedCoupon ? `Coupon: ${appliedCoupon.code}` : null,
+        notes: [appliedCoupon ? `Coupon: ${appliedCoupon.code}` : '', deliveryInstructions ? `Delivery: ${deliveryInstructions}` : ''].filter(Boolean).join(' | ') || null,
         shipping_address: {
           full_name: address.fullName,
           phone: address.phone,
@@ -394,6 +397,27 @@ const Checkout = () => {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Delivery Instructions */}
+              <div className="glass-card p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Delivery Instructions</h2>
+                    <p className="text-sm text-muted-foreground">Optional special instructions for delivery</p>
+                  </div>
+                </div>
+                <Textarea
+                  value={deliveryInstructions}
+                  onChange={(e) => setDeliveryInstructions(e.target.value)}
+                  placeholder="e.g., Leave at the door, Ring the bell twice, Call before delivery..."
+                  className="min-h-[80px] resize-none"
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground mt-2 text-right">{deliveryInstructions.length}/200</p>
               </div>
 
               {/* Payment Method */}
