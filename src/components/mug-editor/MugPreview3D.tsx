@@ -290,16 +290,18 @@ const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | nul
 
   const ceramicMat = useMemo(() => ({
     color,
-    roughness: 0.06,
+    roughness: 0.04,
     metalness: 0.0,
-    envMapIntensity: 1.4,
+    envMapIntensity: 2.2,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.03,
+    clearcoatRoughness: 0.015,
     bumpMap,
-    bumpScale: 0.003,
-    sheen: 0.3,
-    sheenRoughness: 0.2,
-    sheenColor: new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.5),
+    bumpScale: 0.002,
+    sheen: 0.5,
+    sheenRoughness: 0.15,
+    sheenColor: new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.6),
+    reflectivity: 0.9,
+    ior: 1.5,
   }), [color, bumpMap]);
 
   return (
@@ -315,10 +317,11 @@ const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | nul
         <mesh position={[0, -mugHeight / 2, 0]}>
           <latheGeometry args={[innerProfile, 96]} />
           <meshPhysicalMaterial
-            color="#f2ece2"
-            roughness={0.12}
-            clearcoat={0.8}
-            clearcoatRoughness={0.08}
+            color="#f5efe5"
+            roughness={0.08}
+            clearcoat={1.0}
+            clearcoatRoughness={0.03}
+            envMapIntensity={1.5}
             side={THREE.BackSide}
           />
         </mesh>
@@ -388,16 +391,17 @@ const CoffeeSurface = ({ mugHeight, topRadius }: { mugHeight: number; topRadius:
 // ─── Reflective ground disc ───
 const GroundDisc = () => (
   <mesh position={[0, -2.32, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-    <circleGeometry args={[4, 64]} />
+    <circleGeometry args={[5, 128]} />
     <meshPhysicalMaterial
-      color="#f8f6f2"
-      roughness={0.15}
+      color="#faf8f5"
+      roughness={0.08}
       metalness={0.0}
-      clearcoat={0.6}
-      clearcoatRoughness={0.1}
-      envMapIntensity={0.4}
+      clearcoat={1.0}
+      clearcoatRoughness={0.04}
+      envMapIntensity={0.8}
       transparent
-      opacity={0.6}
+      opacity={0.7}
+      reflectivity={1.0}
     />
   </mesh>
 );
@@ -410,27 +414,38 @@ interface SceneProps extends MugPreview3DProps {
 
 const Scene = ({ canvasTexture, variant, mugColor, cameraRef, controlsRef }: SceneProps) => (
   <>
-    {/* Three-point lighting: Key, Fill, Rim */}
-    <spotLight position={[4, 9, 5]} angle={0.18} penumbra={1} intensity={2.2} castShadow shadow-mapSize={[4096, 4096]} shadow-bias={-0.00003} color="#fff6ee" />
-    <spotLight position={[-5, 4, -4]} angle={0.35} penumbra={1} intensity={0.55} color="#e0eaff" />
-    <spotLight position={[-2, 7, 6]} angle={0.22} penumbra={0.9} intensity={0.9} color="#ffeacc" />
-    {/* Accent lights */}
-    <pointLight position={[3, 1, -4]} intensity={0.2} color="#ffd8b8" />
-    <pointLight position={[0, -2, 3]} intensity={0.12} color="#fff0e0" />
-    <ambientLight intensity={0.2} color="#f0ebe5" />
+    {/* Key light - warm, strong */}
+    <spotLight position={[5, 10, 6]} angle={0.15} penumbra={1} intensity={3.0} castShadow shadow-mapSize={[4096, 4096]} shadow-bias={-0.00002} color="#fff8f0" />
+    {/* Fill light - cooler, softer */}
+    <spotLight position={[-6, 5, -3]} angle={0.4} penumbra={1} intensity={0.8} color="#dde8ff" />
+    {/* Rim/back light */}
+    <spotLight position={[-3, 8, 7]} angle={0.2} penumbra={0.9} intensity={1.2} color="#ffe8cc" />
+    {/* Accent kicker */}
+    <pointLight position={[4, 0, -5]} intensity={0.35} color="#ffd0a8" />
+    <pointLight position={[-2, -1, 4]} intensity={0.2} color="#e8f0ff" />
+    {/* Subtle ambient fill */}
+    <ambientLight intensity={0.15} color="#f5f0ea" />
 
     <CameraController ref={cameraRef} controlsRef={controlsRef} />
 
     <Suspense fallback={<LoadingSpinner />}>
       <RealisticMug textureUrl={canvasTexture} color={mugColor || '#ffffff'} variant={variant} />
       <GroundDisc />
-      <ContactShadows position={[0, -2.3, 0]} opacity={0.5} scale={12} blur={2.5} far={6} color="#18100a" frames={1} />
-      <Environment resolution={512} environmentIntensity={0.75}>
-        {/* Custom HDR-like lightformers for richer reflections */}
-        <Lightformer form="ring" intensity={1.5} position={[0, 5, -5]} scale={4} color="#fff" />
-        <Lightformer form="rect" intensity={0.6} position={[-5, 3, 0]} scale={6} color="#e8f0ff" />
-        <Lightformer form="rect" intensity={0.4} position={[5, 2, 2]} scale={4} color="#fff5e6" />
-        <Lightformer form="circle" intensity={0.3} position={[0, -4, 0]} scale={8} color="#f5ede5" />
+      <ContactShadows position={[0, -2.3, 0]} opacity={0.6} scale={14} blur={2.0} far={6} color="#0a0806" frames={1} />
+      <Environment resolution={1024} environmentIntensity={1.0}>
+        {/* Large soft overhead panel */}
+        <Lightformer form="rect" intensity={2.0} position={[0, 8, 0]} scale={[12, 4, 1]} color="#ffffff" />
+        {/* Warm key side */}
+        <Lightformer form="rect" intensity={1.2} position={[6, 3, 2]} scale={[4, 8, 1]} color="#fff0dd" rotation-y={-Math.PI / 3} />
+        {/* Cool fill side */}
+        <Lightformer form="rect" intensity={0.8} position={[-6, 3, -1]} scale={[4, 8, 1]} color="#dde5ff" rotation-y={Math.PI / 4} />
+        {/* Back rim panel */}
+        <Lightformer form="rect" intensity={0.6} position={[0, 4, -8]} scale={[10, 3, 1]} color="#ffe8d0" />
+        {/* Small specular highlights */}
+        <Lightformer form="ring" intensity={3.0} position={[2, 5, 4]} scale={1.5} color="#ffffff" />
+        <Lightformer form="ring" intensity={1.5} position={[-3, 6, 3]} scale={1} color="#f0f4ff" />
+        {/* Ground bounce */}
+        <Lightformer form="rect" intensity={0.3} position={[0, -5, 0]} scale={[15, 15, 1]} color="#f5ede5" rotation-x={Math.PI / 2} />
       </Environment>
     </Suspense>
 
@@ -462,7 +477,7 @@ export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: M
       <Canvas
         camera={{ position: [0, 0.5, 6], fov: 36 }}
         dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.25 }}
         shadows="soft"
       >
         <Scene canvasTexture={canvasTexture} variant={variant} mugColor={mugColor} cameraRef={cameraRef} controlsRef={controlsRef} />
