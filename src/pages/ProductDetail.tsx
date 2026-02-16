@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { format, addDays } from 'date-fns';
 import { 
   ArrowLeft, 
   Heart, 
@@ -14,7 +15,10 @@ import {
   Upload,
   Type,
   Palette,
-  Sparkles
+  Sparkles,
+  CalendarIcon,
+  MessageSquare,
+  Package
 } from 'lucide-react';
 import { ProductDetailSkeleton } from '@/components/ui/product-skeleton';
 import { Navbar } from '@/components/layout/Navbar';
@@ -26,6 +30,7 @@ import { useWishlistStore } from '@/store/wishlistStore';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductReviews } from '@/components/reviews/ProductReviews';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 import productTshirt from '@/assets/product-tshirt.jpg';
 import productMug from '@/assets/product-mug.jpg';
@@ -51,6 +56,13 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState('');
   const [customText, setCustomText] = useState('');
+  const [deliveryInstructions, setDeliveryInstructions] = useState('');
+
+  const estimatedDelivery = useMemo(() => {
+    const min = addDays(new Date(), 5);
+    const max = addDays(new Date(), 7);
+    return { min, max };
+  }, []);
   
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -94,7 +106,11 @@ const ProductDetail = () => {
       price: product.price,
       quantity,
       image: productImage,
-      customization: customText ? { text: customText, color: selectedColor } : undefined,
+      customization: customText || deliveryInstructions ? { 
+        text: customText, 
+        color: selectedColor,
+        ...(deliveryInstructions && { deliveryInstructions })
+      } : undefined,
     });
     openCart();
   };
@@ -286,6 +302,50 @@ const ProductDetail = () => {
                   >
                     <Plus className="w-4 h-4" />
                   </button>
+                </div>
+              </div>
+
+              {/* Delivery Information */}
+              <div className="mb-8 p-5 glass-card rounded-2xl space-y-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-accent" />
+                  Delivery Information
+                </h3>
+
+                {/* Estimated Delivery */}
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30">
+                  <CalendarIcon className="w-5 h-5 text-accent mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Estimated Delivery</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(estimatedDelivery.min, 'MMM d')} – {format(estimatedDelivery.max, 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Free Shipping Info */}
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30">
+                  <Package className="w-5 h-5 text-accent mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Free Shipping</p>
+                    <p className="text-sm text-muted-foreground">On orders above ₹500</p>
+                  </div>
+                </div>
+
+                {/* Delivery Instructions */}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Delivery Instructions (Optional)
+                  </label>
+                  <Textarea
+                    value={deliveryInstructions}
+                    onChange={(e) => setDeliveryInstructions(e.target.value)}
+                    placeholder="e.g., Leave at door, Call before delivery, Gift wrap needed..."
+                    className="mt-1 min-h-[70px] resize-none"
+                    maxLength={150}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1 text-right">{deliveryInstructions.length}/150</p>
                 </div>
               </div>
 
