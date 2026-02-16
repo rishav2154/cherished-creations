@@ -1,14 +1,11 @@
 import { Suspense, useRef, useMemo, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { 
   OrbitControls, 
   Environment, 
   ContactShadows, 
   Html,
-  Float,
-  Lightformer,
-  AccumulativeShadows,
-  RandomizedLight
+  Lightformer
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { MugVariant } from './types';
@@ -28,7 +25,7 @@ const CameraController = forwardRef<
 >(({ controlsRef }, ref) => {
   const { camera } = useThree();
   useImperativeHandle(ref, () => ({
-    reset: () => { camera.position.set(0, 0.5, 6); camera.lookAt(0, 0, 0); controlsRef.current?.reset(); },
+    reset: () => { camera.position.set(2.5, 1.8, 4.5); camera.lookAt(0, 0.3, 0); controlsRef.current?.reset(); },
     zoomIn: () => { const d = new THREE.Vector3(); camera.getWorldDirection(d); camera.position.addScaledVector(d, 0.5); },
     zoomOut: () => { const d = new THREE.Vector3(); camera.getWorldDirection(d); camera.position.addScaledVector(d, -0.5); },
   }));
@@ -48,89 +45,59 @@ const LoadingSpinner = () => (
   </Html>
 );
 
-// ─── Steam particles with wispy behavior ───
+// ─── Gentle steam wisps ───
 const SteamParticles = ({ mugHeight, topRadius }: { mugHeight: number; topRadius: number }) => {
-  const particlesRef = useRef<THREE.Points>(null);
-  const count = 80;
-
+  const ref = useRef<THREE.Points>(null);
+  const count = 50;
   const { positions, seeds } = useMemo(() => {
     const pos = new Float32Array(count * 3);
-    const s = new Float32Array(count * 4); // seed data: phase, speed, drift, life
+    const s = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const r = Math.random() * (topRadius - 0.25);
-      pos[i * 3] = Math.cos(angle) * r;
-      pos[i * 3 + 1] = mugHeight * 0.45;
-      pos[i * 3 + 2] = Math.sin(angle) * r;
-      s[i * 4] = Math.random() * Math.PI * 2; // phase
-      s[i * 4 + 1] = 0.003 + Math.random() * 0.007; // rise speed
-      s[i * 4 + 2] = 0.3 + Math.random() * 0.7; // drift intensity
-      s[i * 4 + 3] = Math.random(); // life offset
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * (topRadius * 0.5);
+      pos[i * 3] = Math.cos(a) * r;
+      pos[i * 3 + 1] = mugHeight * 0.5 + Math.random() * 1.0;
+      pos[i * 3 + 2] = Math.sin(a) * r;
+      s[i * 3] = Math.random() * Math.PI * 2;
+      s[i * 3 + 1] = 0.002 + Math.random() * 0.004;
+      s[i * 3 + 2] = 0.2 + Math.random() * 0.6;
     }
     return { positions: pos, seeds: s };
   }, [count, topRadius, mugHeight]);
 
-  const sizesAttr = useMemo(() => {
-    const sizes = new Float32Array(count);
-    for (let i = 0; i < count; i++) sizes[i] = 0.03 + Math.random() * 0.05;
-    return sizes;
-  }, [count]);
-
   useFrame((state) => {
-    if (!particlesRef.current) return;
-    const posAttr = particlesRef.current.geometry.attributes.position;
-    const arr = posAttr.array as Float32Array;
+    if (!ref.current) return;
+    const arr = ref.current.geometry.attributes.position.array as Float32Array;
     const t = state.clock.elapsedTime;
-
     for (let i = 0; i < count; i++) {
-      const phase = seeds[i * 4];
-      const speed = seeds[i * 4 + 1];
-      const drift = seeds[i * 4 + 2];
-
-      arr[i * 3] += Math.sin(t * 0.8 + phase) * 0.0015 * drift;
-      arr[i * 3 + 1] += speed;
-      arr[i * 3 + 2] += Math.cos(t * 0.6 + phase * 1.3) * 0.0012 * drift;
-
-      if (arr[i * 3 + 1] > mugHeight * 0.45 + 2.8) {
-        const angle = Math.random() * Math.PI * 2;
-        const r = Math.random() * (topRadius - 0.25);
-        arr[i * 3] = Math.cos(angle) * r;
-        arr[i * 3 + 1] = mugHeight * 0.45;
-        arr[i * 3 + 2] = Math.sin(angle) * r;
+      arr[i * 3] += Math.sin(t * 0.5 + seeds[i * 3]) * 0.001 * seeds[i * 3 + 2];
+      arr[i * 3 + 1] += seeds[i * 3 + 1];
+      arr[i * 3 + 2] += Math.cos(t * 0.4 + seeds[i * 3] * 1.3) * 0.0008 * seeds[i * 3 + 2];
+      if (arr[i * 3 + 1] > mugHeight * 0.5 + 2.0) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * (topRadius * 0.5);
+        arr[i * 3] = Math.cos(a) * r;
+        arr[i * 3 + 1] = mugHeight * 0.5;
+        arr[i * 3 + 2] = Math.sin(a) * r;
       }
     }
-    posAttr.needsUpdate = true;
+    ref.current.geometry.attributes.position.needsUpdate = true;
   });
 
   return (
-    <points ref={particlesRef}>
+    <points ref={ref}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} count={count} />
-        <bufferAttribute attach="attributes-size" args={[sizesAttr, 1]} count={count} />
       </bufferGeometry>
-      <pointsMaterial
-        color="#ffffff"
-        size={0.07}
-        transparent
-        opacity={0.1}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        sizeAttenuation
-      />
+      <pointsMaterial color="#ffffff" size={0.05} transparent opacity={0.08} depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
     </points>
   );
 };
 
 // ─── Print wrap ───
-interface PrintWrapProps {
-  textureUrl: string;
-  variant: MugVariant;
-  mugHeight: number;
-  bottomRadius: number;
-  topRadius: number;
-}
-
-const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: PrintWrapProps) => {
+const PrintWrap = ({ textureUrl, mugHeight, bottomRadius, topRadius }: {
+  textureUrl: string; variant: MugVariant; mugHeight: number; bottomRadius: number; topRadius: number;
+}) => {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
@@ -152,16 +119,14 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
   }, [textureUrl]);
 
   const geometry = useMemo(() => {
-    const handleGapAngle = Math.PI * 0.5;
-    const printArcAngle = Math.PI * 2 - handleGapAngle;
-    const startAngle = Math.PI + handleGapAngle / 2 + 1.5;
-    const actualPrintHeight = mugHeight * 0.7;
-    const radiusOffset = 0.038;
-    const geo = new THREE.CylinderGeometry(topRadius + radiusOffset, bottomRadius + radiusOffset, actualPrintHeight, 128, 1, true, startAngle, printArcAngle);
+    const gap = Math.PI * 0.5;
+    const arc = Math.PI * 2 - gap;
+    const start = Math.PI + gap / 2 + 1.5;
+    const h = mugHeight * 0.7;
+    const off = 0.04;
+    const geo = new THREE.CylinderGeometry(topRadius + off, bottomRadius + off, h, 128, 1, true, start, arc);
     const uvs = geo.attributes.uv;
-    for (let i = 0; i < uvs.count; i++) {
-      uvs.setXY(i, uvs.getX(i), 1 - uvs.getY(i));
-    }
+    for (let i = 0; i < uvs.count; i++) uvs.setXY(i, uvs.getX(i), 1 - uvs.getY(i));
     uvs.needsUpdate = true;
     return geo;
   }, [mugHeight, bottomRadius, topRadius]);
@@ -169,238 +134,195 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
   if (!texture) return null;
   return (
     <mesh geometry={geometry} position={[0, 0.04, 0]}>
-      <meshStandardMaterial map={texture} side={THREE.FrontSide} toneMapped={false} roughness={0.3} metalness={0.0} polygonOffset polygonOffsetFactor={-5} polygonOffsetUnits={-5} />
+      <meshStandardMaterial map={texture} side={THREE.FrontSide} toneMapped={false} roughness={0.28} metalness={0.0} polygonOffset polygonOffsetFactor={-5} polygonOffsetUnits={-5} />
     </mesh>
   );
 };
 
-// ─── Procedural bump map for ceramic micro-texture ───
-const useCeramicBumpMap = () => {
-  return useMemo(() => {
-    const size = 256;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-
-    // Very subtle noise for ceramic grain
-    const imageData = ctx.createImageData(size, size);
-    for (let i = 0; i < imageData.data.length; i += 4) {
-      const v = 128 + (Math.random() - 0.5) * 12;
-      imageData.data[i] = v;
-      imageData.data[i + 1] = v;
-      imageData.data[i + 2] = v;
-      imageData.data[i + 3] = 255;
-    }
-    ctx.putImageData(imageData, 0, 0);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(4, 4);
-    return tex;
-  }, []);
-};
-
-// ─── The mug ───
+// ─── The Mug ───
 const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | null; color: string; variant: MugVariant }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const bumpMap = useCeramicBumpMap();
 
+  // Slow gentle rotation
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.1;
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.08;
     }
   });
 
   const isLarge = variant.id === '15oz';
-  const mugHeight = isLarge ? 2.6 : 2.3;
-  const bottomRadius = isLarge ? 0.85 : 0.75;
-  const topRadius = isLarge ? 1.0 : 0.88;
+  const H = isLarge ? 2.6 : 2.3;    // height
+  const Rb = isLarge ? 0.82 : 0.72;  // bottom radius
+  const Rt = isLarge ? 0.95 : 0.84;  // top radius
 
-  // Outer body profile with micro-detail
-  const mugProfile = useMemo(() => {
+  // Realistic mug silhouette - based on actual ceramic mug proportions
+  const outerProfile = useMemo(() => {
     const pts: THREE.Vector2[] = [];
+    // Flat bottom
     pts.push(new THREE.Vector2(0, 0));
-    pts.push(new THREE.Vector2(bottomRadius * 0.85, 0));
-    pts.push(new THREE.Vector2(bottomRadius * 0.93, 0.02));
-    pts.push(new THREE.Vector2(bottomRadius * 0.98, 0.055));
-    pts.push(new THREE.Vector2(bottomRadius, 0.08));
-    // Foot ring indent
-    pts.push(new THREE.Vector2(bottomRadius - 0.012, 0.12));
-    pts.push(new THREE.Vector2(bottomRadius + 0.005, 0.19));
-
-    for (let i = 0; i <= 48; i++) {
-      const t = i / 48;
-      const belly = Math.sin(t * Math.PI) * 0.025;
-      const r = bottomRadius + (topRadius - bottomRadius) * t + belly;
-      pts.push(new THREE.Vector2(r, 0.19 + t * (mugHeight - 0.19)));
+    pts.push(new THREE.Vector2(Rb * 0.88, 0));
+    // Bottom edge with foot ring
+    pts.push(new THREE.Vector2(Rb * 0.94, 0.015));
+    pts.push(new THREE.Vector2(Rb, 0.06));
+    // Foot ring indent  
+    pts.push(new THREE.Vector2(Rb - 0.008, 0.10));
+    pts.push(new THREE.Vector2(Rb + 0.003, 0.16));
+    
+    // Main body - very subtle taper with micro belly
+    const segments = 60;
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      // Subtle outward belly in lower third
+      const belly = Math.sin(t * Math.PI) * 0.015;
+      // Slight concave near top (like real mugs)
+      const concave = t > 0.7 ? Math.sin((t - 0.7) / 0.3 * Math.PI) * -0.008 : 0;
+      const r = Rb + (Rt - Rb) * t + belly + concave;
+      pts.push(new THREE.Vector2(r, 0.16 + t * (H - 0.16)));
     }
-
-    // Rolled rim
-    const rimBase = mugHeight + 0.02;
-    pts.push(new THREE.Vector2(topRadius + 0.05, rimBase));
-    pts.push(new THREE.Vector2(topRadius + 0.065, rimBase + 0.03));
-    pts.push(new THREE.Vector2(topRadius + 0.06, rimBase + 0.06));
-    pts.push(new THREE.Vector2(topRadius + 0.04, rimBase + 0.08));
-    pts.push(new THREE.Vector2(topRadius + 0.01, rimBase + 0.075));
-    pts.push(new THREE.Vector2(topRadius - 0.02, rimBase + 0.05));
-    pts.push(new THREE.Vector2(topRadius - 0.03, rimBase + 0.02));
+    
+    // Rolled rim - key detail for realism
+    pts.push(new THREE.Vector2(Rt + 0.035, H + 0.01));
+    pts.push(new THREE.Vector2(Rt + 0.048, H + 0.035));
+    pts.push(new THREE.Vector2(Rt + 0.045, H + 0.055));
+    pts.push(new THREE.Vector2(Rt + 0.025, H + 0.065));
+    pts.push(new THREE.Vector2(Rt + 0.005, H + 0.06));
+    pts.push(new THREE.Vector2(Rt - 0.015, H + 0.04));
     return pts;
-  }, [bottomRadius, topRadius, mugHeight]);
+  }, [Rb, Rt, H]);
 
-  // Inner wall
+  // Inner cavity
   const innerProfile = useMemo(() => {
     const pts: THREE.Vector2[] = [];
-    const wt = 0.065;
-    const ib = bottomRadius - wt;
-    const it = topRadius - wt;
-    const rimTop = mugHeight + 0.08;
-    pts.push(new THREE.Vector2(ib * 0.15, 0.14));
+    const w = 0.06; // wall thickness
+    const ib = Rb - w;
+    const it = Rt - w;
+    // Inner bottom (flat with slight radius)
+    pts.push(new THREE.Vector2(0, 0.12));
+    pts.push(new THREE.Vector2(ib * 0.3, 0.12));
     pts.push(new THREE.Vector2(ib, 0.14));
-    for (let i = 0; i <= 32; i++) {
-      const t = i / 32;
-      pts.push(new THREE.Vector2(ib + (it - ib) * t, 0.14 + t * (rimTop - 0.17)));
+    // Inner wall
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      pts.push(new THREE.Vector2(ib + (it - ib) * t, 0.14 + t * (H + 0.03)));
     }
-    pts.push(new THREE.Vector2(topRadius - 0.03, rimTop + 0.02));
+    // Connect to rim
+    pts.push(new THREE.Vector2(Rt - 0.015, H + 0.04));
     return pts;
-  }, [bottomRadius, topRadius, mugHeight]);
+  }, [Rb, Rt, H]);
 
-  // Handle shape
+  // Handle - realistic C-shape path
+  const handleCurve = useMemo(() => {
+    return new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-(Rt + 0.005), H * 0.72, 0),
+      new THREE.Vector3(-(Rt + 0.18), H * 0.72, 0),
+      new THREE.Vector3(-(Rt + 0.32), H * 0.60, 0),
+      new THREE.Vector3(-(Rt + 0.38), H * 0.45, 0),
+      new THREE.Vector3(-(Rt + 0.34), H * 0.28, 0),
+      new THREE.Vector3(-(Rt + 0.18), H * 0.15, 0),
+      new THREE.Vector3(-(Rt + 0.005), H * 0.13, 0),
+    ], false, 'catmullrom', 0.5);
+  }, [Rt, H]);
+
+  // Handle cross-section (slightly flat D-shape like real handles)
   const handleShape = useMemo(() => {
     const s = new THREE.Shape();
-    s.moveTo(0, -0.085);
-    s.bezierCurveTo(0.055, -0.085, 0.085, -0.045, 0.085, 0);
-    s.bezierCurveTo(0.085, 0.045, 0.055, 0.085, 0, 0.085);
-    s.bezierCurveTo(-0.028, 0.085, -0.048, 0.045, -0.048, 0);
-    s.bezierCurveTo(-0.048, -0.045, -0.028, -0.085, 0, -0.085);
+    const w = 0.065, h = 0.09;
+    s.moveTo(0, -h);
+    s.bezierCurveTo(w, -h, w * 1.3, -h * 0.4, w * 1.3, 0);
+    s.bezierCurveTo(w * 1.3, h * 0.4, w, h, 0, h);
+    s.bezierCurveTo(-w * 0.5, h, -w * 0.6, h * 0.3, -w * 0.6, 0);
+    s.bezierCurveTo(-w * 0.6, -h * 0.3, -w * 0.5, -h, 0, -h);
     return s;
   }, []);
 
-  // Handle path
-  const handleCurve = useMemo(() => {
-    return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-(topRadius + 0.01), mugHeight * 0.78, 0),
-      new THREE.Vector3(-(topRadius + 0.34), mugHeight * 0.68, 0),
-      new THREE.Vector3(-(topRadius + 0.46), mugHeight * 0.42, 0),
-      new THREE.Vector3(-(topRadius + 0.34), mugHeight * 0.16, 0),
-      new THREE.Vector3(-(topRadius + 0.01), mugHeight * 0.08, 0),
-    ]);
-  }, [topRadius, mugHeight]);
-
-  const ceramicMat = useMemo(() => ({
-    color,
-    roughness: 0.06,
-    metalness: 0.0,
-    envMapIntensity: 1.4,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.03,
-    bumpMap,
-    bumpScale: 0.003,
-    sheen: 0.3,
-    sheenRoughness: 0.2,
-    sheenColor: new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.5),
-  }), [color, bumpMap]);
+  // Ceramic material - the key to realism
+  const isWhite = color === '#ffffff' || color === '#fff';
+  const ceramicColor = isWhite ? '#faf8f5' : color; // Real white ceramic is slightly warm
 
   return (
-    <Float speed={0.35} rotationIntensity={0.008} floatIntensity={0.04}>
-      <group ref={groupRef} scale={1.1}>
-        {/* Outer body */}
-        <mesh position={[0, -mugHeight / 2, 0]} castShadow receiveShadow>
-          <latheGeometry args={[mugProfile, 128]} />
-          <meshPhysicalMaterial {...ceramicMat} />
-        </mesh>
+    <group ref={groupRef} scale={1.15} position={[0, -1.1, 0]}>
+      {/* Outer body */}
+      <mesh castShadow receiveShadow>
+        <latheGeometry args={[outerProfile, 128]} />
+        <meshPhysicalMaterial
+          color={ceramicColor}
+          roughness={0.08}
+          metalness={0.0}
+          clearcoat={0.85}
+          clearcoatRoughness={0.04}
+          envMapIntensity={1.6}
+          sheen={0.15}
+          sheenRoughness={0.25}
+          sheenColor={new THREE.Color(ceramicColor).lerp(new THREE.Color('#ffffff'), 0.6)}
+        />
+      </mesh>
 
-        {/* Inner wall - glazed */}
-        <mesh position={[0, -mugHeight / 2, 0]}>
-          <latheGeometry args={[innerProfile, 96]} />
-          <meshPhysicalMaterial
-            color="#f2ece2"
-            roughness={0.12}
-            clearcoat={0.8}
-            clearcoatRoughness={0.08}
-            side={THREE.BackSide}
-          />
-        </mesh>
+      {/* Inner wall - slightly different glaze tone */}
+      <mesh>
+        <latheGeometry args={[innerProfile, 96]} />
+        <meshPhysicalMaterial
+          color={isWhite ? '#f0ece4' : new THREE.Color(ceramicColor).lerp(new THREE.Color('#f0ece4'), 0.3)}
+          roughness={0.15}
+          clearcoat={0.6}
+          clearcoatRoughness={0.1}
+          side={THREE.BackSide}
+          envMapIntensity={0.8}
+        />
+      </mesh>
 
-        {/* Coffee surface */}
-        <CoffeeSurface mugHeight={mugHeight} topRadius={topRadius} />
+      {/* Coffee liquid */}
+      <CoffeeSurface H={H} Rt={Rt} />
 
-        {/* Handle */}
-        <mesh castShadow position={[0, -mugHeight / 2, 0]}>
-          <extrudeGeometry args={[handleShape, { steps: 80, extrudePath: handleCurve }]} />
-          <meshPhysicalMaterial {...ceramicMat} />
-        </mesh>
+      {/* Handle */}
+      <mesh castShadow>
+        <extrudeGeometry args={[handleShape, { steps: 80, extrudePath: handleCurve }]} />
+        <meshPhysicalMaterial
+          color={ceramicColor}
+          roughness={0.08}
+          metalness={0.0}
+          clearcoat={0.85}
+          clearcoatRoughness={0.04}
+          envMapIntensity={1.6}
+        />
+      </mesh>
 
-        {/* Bottom ring detail */}
-        <mesh position={[0, -mugHeight / 2 - 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[bottomRadius * 0.35, bottomRadius * 0.55, 64]} />
-          <meshPhysicalMaterial color={color} roughness={0.25} clearcoat={0.4} />
-        </mesh>
+      {/* Bottom ring stamp */}
+      <mesh position={[0, -0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[Rb * 0.3, Rb * 0.55, 64]} />
+        <meshPhysicalMaterial color={ceramicColor} roughness={0.35} clearcoat={0.3} />
+      </mesh>
 
-        {/* Rim highlight - subtle emissive ring at very top */}
-        <mesh position={[0, mugHeight / 2 + 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[topRadius - 0.03, topRadius + 0.04, 128]} />
-          <meshPhysicalMaterial
-            color={color}
-            roughness={0.04}
-            clearcoat={1.0}
-            clearcoatRoughness={0.01}
-            envMapIntensity={2.0}
-          />
-        </mesh>
+      {/* Subtle steam */}
+      <SteamParticles mugHeight={H} topRadius={Rt} />
 
-        {/* Steam */}
-        <SteamParticles mugHeight={mugHeight} topRadius={topRadius} />
-
-        {/* Print */}
-        {textureUrl && (
-          <PrintWrap textureUrl={textureUrl} variant={variant} mugHeight={mugHeight} bottomRadius={bottomRadius} topRadius={topRadius} />
-        )}
-      </group>
-    </Float>
+      {/* Print wrap */}
+      {textureUrl && (
+        <PrintWrap textureUrl={textureUrl} variant={variant} mugHeight={H} bottomRadius={Rb} topRadius={Rt} />
+      )}
+    </group>
   );
 };
 
-// Coffee with animated subtle ripple & Fresnel-like sheen
-const CoffeeSurface = ({ mugHeight, topRadius }: { mugHeight: number; topRadius: number }) => {
+// Coffee with glossy wet look
+const CoffeeSurface = ({ H, Rt }: { H: number; Rt: number }) => {
   const ref = useRef<THREE.Mesh>(null);
   useFrame((s) => {
-    if (ref.current) ref.current.position.y = mugHeight * 0.4 + Math.sin(s.clock.elapsedTime * 0.4) * 0.004;
+    if (ref.current) ref.current.position.y = H * 0.85 + Math.sin(s.clock.elapsedTime * 0.3) * 0.003;
   });
   return (
-    <mesh ref={ref} position={[0, mugHeight * 0.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <circleGeometry args={[topRadius - 0.11, 64]} />
+    <mesh ref={ref} position={[0, H * 0.85, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <circleGeometry args={[Rt - 0.1, 64]} />
       <meshPhysicalMaterial
-        color="#321a0a"
-        roughness={0.05}
-        metalness={0.08}
+        color="#2c150a"
+        roughness={0.02}
+        metalness={0.1}
         clearcoat={1.0}
-        clearcoatRoughness={0.01}
-        transmission={0.03}
-        thickness={1.0}
-        ior={1.33}
+        clearcoatRoughness={0.005}
+        envMapIntensity={1.2}
       />
     </mesh>
   );
 };
-
-// ─── Reflective ground disc ───
-const GroundDisc = () => (
-  <mesh position={[0, -2.32, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-    <circleGeometry args={[4, 64]} />
-    <meshPhysicalMaterial
-      color="#f8f6f2"
-      roughness={0.15}
-      metalness={0.0}
-      clearcoat={0.6}
-      clearcoatRoughness={0.1}
-      envMapIntensity={0.4}
-      transparent
-      opacity={0.6}
-    />
-  </mesh>
-);
 
 // ─── Scene ───
 interface SceneProps extends MugPreview3DProps {
@@ -410,38 +332,53 @@ interface SceneProps extends MugPreview3DProps {
 
 const Scene = ({ canvasTexture, variant, mugColor, cameraRef, controlsRef }: SceneProps) => (
   <>
-    {/* Three-point lighting: Key, Fill, Rim */}
-    <spotLight position={[4, 9, 5]} angle={0.18} penumbra={1} intensity={2.2} castShadow shadow-mapSize={[4096, 4096]} shadow-bias={-0.00003} color="#fff6ee" />
-    <spotLight position={[-5, 4, -4]} angle={0.35} penumbra={1} intensity={0.55} color="#e0eaff" />
-    <spotLight position={[-2, 7, 6]} angle={0.22} penumbra={0.9} intensity={0.9} color="#ffeacc" />
-    {/* Accent lights */}
-    <pointLight position={[3, 1, -4]} intensity={0.2} color="#ffd8b8" />
-    <pointLight position={[0, -2, 3]} intensity={0.12} color="#fff0e0" />
-    <ambientLight intensity={0.2} color="#f0ebe5" />
+    {/* Natural studio lighting - warm key, cool fill */}
+    <directionalLight
+      position={[4, 8, 6]}
+      intensity={1.8}
+      castShadow
+      shadow-mapSize={[2048, 2048]}
+      shadow-bias={-0.0001}
+      color="#fff5eb"
+    />
+    <directionalLight position={[-3, 5, -2]} intensity={0.4} color="#e4ecff" />
+    <spotLight position={[-2, 6, 5]} angle={0.2} penumbra={1} intensity={0.7} color="#ffe8d0" />
+    <ambientLight intensity={0.35} color="#f5f0ea" />
+    {/* Under-fill to prevent pitch-black bottom */}
+    <hemisphereLight args={['#ffeedd', '#8899aa', 0.25]} />
 
     <CameraController ref={cameraRef} controlsRef={controlsRef} />
 
     <Suspense fallback={<LoadingSpinner />}>
       <RealisticMug textureUrl={canvasTexture} color={mugColor || '#ffffff'} variant={variant} />
-      <GroundDisc />
-      <ContactShadows position={[0, -2.3, 0]} opacity={0.5} scale={12} blur={2.5} far={6} color="#18100a" frames={1} />
-      <Environment resolution={512} environmentIntensity={0.75}>
-        {/* Custom HDR-like lightformers for richer reflections */}
-        <Lightformer form="ring" intensity={1.5} position={[0, 5, -5]} scale={4} color="#fff" />
-        <Lightformer form="rect" intensity={0.6} position={[-5, 3, 0]} scale={6} color="#e8f0ff" />
-        <Lightformer form="rect" intensity={0.4} position={[5, 2, 2]} scale={4} color="#fff5e6" />
-        <Lightformer form="circle" intensity={0.3} position={[0, -4, 0]} scale={8} color="#f5ede5" />
+      
+      {/* Ground shadow */}
+      <ContactShadows
+        position={[0, -1.12, 0]}
+        opacity={0.4}
+        scale={8}
+        blur={2.2}
+        far={4}
+        color="#1a0e05"
+      />
+      
+      {/* Environment with custom lightformers for rich reflections */}
+      <Environment resolution={256} environmentIntensity={0.85}>
+        <Lightformer form="ring" intensity={2.0} position={[0, 6, -4]} scale={5} color="#ffffff" />
+        <Lightformer form="rect" intensity={0.8} position={[-6, 3, 0]} scale={8} color="#f0f4ff" />
+        <Lightformer form="rect" intensity={0.5} position={[6, 2, 3]} scale={6} color="#fff8f0" />
+        <Lightformer form="circle" intensity={0.3} position={[0, -3, 0]} scale={10} color="#f5ede5" />
       </Environment>
     </Suspense>
 
     <OrbitControls
       ref={controlsRef}
       enableZoom enablePan={false}
-      minDistance={3} maxDistance={12}
-      minPolarAngle={Math.PI / 6}
-      maxPolarAngle={Math.PI / 1.6}
-      autoRotate={false}
-      enableDamping dampingFactor={0.04}
+      minDistance={3} maxDistance={10}
+      minPolarAngle={Math.PI / 5}
+      maxPolarAngle={Math.PI / 1.8}
+      target={[0, 0.2, 0]}
+      enableDamping dampingFactor={0.05}
       makeDefault
     />
   </>
@@ -453,17 +390,16 @@ export function MugPreview3D({ canvasTexture, variant, mugColor = '#ffffff' }: M
 
   return (
     <div className="relative w-full h-full min-h-[500px] lg:min-h-[600px] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 via-background to-muted/20">
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
         <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm" onClick={() => cameraRef.current?.zoomIn()}><ZoomIn className="h-4 w-4" /></Button>
         <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm" onClick={() => cameraRef.current?.zoomOut()}><ZoomOut className="h-4 w-4" /></Button>
         <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/90 backdrop-blur shadow-sm" onClick={() => cameraRef.current?.reset()}><RotateCcw className="h-4 w-4" /></Button>
       </div>
       <Canvas
-        camera={{ position: [0, 0.5, 6], fov: 36 }}
+        camera={{ position: [2.5, 1.8, 4.5], fov: 32 }}
         dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }}
-        shadows="soft"
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
+        shadows
       >
         <Scene canvasTexture={canvasTexture} variant={variant} mugColor={mugColor} cameraRef={cameraRef} controlsRef={controlsRef} />
       </Canvas>
