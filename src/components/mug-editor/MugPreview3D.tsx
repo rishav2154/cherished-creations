@@ -177,27 +177,32 @@ const PrintWrap = ({ textureUrl, variant, mugHeight, bottomRadius, topRadius }: 
 // ─── Procedural bump map for ceramic micro-texture ───
 const useCeramicBumpMap = () => {
   return useMemo(() => {
-    const size = 256;
+    const size = 512;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d')!;
 
-    // Very subtle noise for ceramic grain
+    // Multi-octave noise for realistic ceramic grain
     const imageData = ctx.createImageData(size, size);
-    for (let i = 0; i < imageData.data.length; i += 4) {
-      const v = 128 + (Math.random() - 0.5) * 12;
-      imageData.data[i] = v;
-      imageData.data[i + 1] = v;
-      imageData.data[i + 2] = v;
-      imageData.data[i + 3] = 255;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const fine = (Math.random() - 0.5) * 8;
+        const coarse = Math.sin(x * 0.05) * Math.cos(y * 0.05) * 3;
+        const v = 128 + fine + coarse;
+        imageData.data[i] = v;
+        imageData.data[i + 1] = v;
+        imageData.data[i + 2] = v;
+        imageData.data[i + 3] = 255;
+      }
     }
     ctx.putImageData(imageData, 0, 0);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(4, 4);
+    tex.repeat.set(6, 6);
     return tex;
   }, []);
 };
@@ -209,7 +214,7 @@ const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | nul
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.1;
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.08;
     }
   });
 
@@ -217,111 +222,121 @@ const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | nul
   const mugHeight = isLarge ? 2.6 : 2.3;
   const bottomRadius = isLarge ? 0.85 : 0.75;
   const topRadius = isLarge ? 1.0 : 0.88;
+  const wallThickness = 0.055;
 
-  // Outer body profile with micro-detail
+  // Outer body — smooth tapered cylinder with foot ring and rolled rim
   const mugProfile = useMemo(() => {
     const pts: THREE.Vector2[] = [];
+    // Flat bottom disc
     pts.push(new THREE.Vector2(0, 0));
-    pts.push(new THREE.Vector2(bottomRadius * 0.85, 0));
-    pts.push(new THREE.Vector2(bottomRadius * 0.93, 0.02));
-    pts.push(new THREE.Vector2(bottomRadius * 0.98, 0.055));
-    pts.push(new THREE.Vector2(bottomRadius, 0.08));
+    pts.push(new THREE.Vector2(bottomRadius * 0.82, 0));
+    // Bottom edge bevel
+    pts.push(new THREE.Vector2(bottomRadius * 0.90, 0.015));
+    pts.push(new THREE.Vector2(bottomRadius * 0.96, 0.04));
+    pts.push(new THREE.Vector2(bottomRadius, 0.07));
     // Foot ring indent
-    pts.push(new THREE.Vector2(bottomRadius - 0.012, 0.12));
-    pts.push(new THREE.Vector2(bottomRadius + 0.005, 0.19));
+    pts.push(new THREE.Vector2(bottomRadius - 0.008, 0.10));
+    pts.push(new THREE.Vector2(bottomRadius + 0.003, 0.16));
 
-    for (let i = 0; i <= 48; i++) {
-      const t = i / 48;
-      const belly = Math.sin(t * Math.PI) * 0.025;
-      const r = bottomRadius + (topRadius - bottomRadius) * t + belly;
-      pts.push(new THREE.Vector2(r, 0.19 + t * (mugHeight - 0.19)));
+    // Main body — 64 subdivision points for ultra smooth taper with subtle belly
+    for (let i = 0; i <= 64; i++) {
+      const t = i / 64;
+      const belly = Math.sin(t * Math.PI) * 0.018;
+      const taper = bottomRadius + (topRadius - bottomRadius) * Math.pow(t, 0.92);
+      pts.push(new THREE.Vector2(taper + belly, 0.16 + t * (mugHeight - 0.16)));
     }
 
-    // Rolled rim
-    const rimBase = mugHeight + 0.02;
-    pts.push(new THREE.Vector2(topRadius + 0.05, rimBase));
-    pts.push(new THREE.Vector2(topRadius + 0.065, rimBase + 0.03));
-    pts.push(new THREE.Vector2(topRadius + 0.06, rimBase + 0.06));
-    pts.push(new THREE.Vector2(topRadius + 0.04, rimBase + 0.08));
-    pts.push(new THREE.Vector2(topRadius + 0.01, rimBase + 0.075));
-    pts.push(new THREE.Vector2(topRadius - 0.02, rimBase + 0.05));
-    pts.push(new THREE.Vector2(topRadius - 0.03, rimBase + 0.02));
+    // Rolled rim — smooth lip
+    const rimBase = mugHeight + 0.015;
+    pts.push(new THREE.Vector2(topRadius + 0.04, rimBase));
+    pts.push(new THREE.Vector2(topRadius + 0.055, rimBase + 0.025));
+    pts.push(new THREE.Vector2(topRadius + 0.05, rimBase + 0.05));
+    pts.push(new THREE.Vector2(topRadius + 0.035, rimBase + 0.065));
+    pts.push(new THREE.Vector2(topRadius + 0.01, rimBase + 0.06));
+    pts.push(new THREE.Vector2(topRadius - 0.015, rimBase + 0.04));
+    pts.push(new THREE.Vector2(topRadius - 0.025, rimBase + 0.015));
     return pts;
   }, [bottomRadius, topRadius, mugHeight]);
 
-  // Inner wall
+  // Inner wall — concave interior
   const innerProfile = useMemo(() => {
     const pts: THREE.Vector2[] = [];
-    const wt = 0.065;
-    const ib = bottomRadius - wt;
-    const it = topRadius - wt;
-    const rimTop = mugHeight + 0.08;
-    pts.push(new THREE.Vector2(ib * 0.15, 0.14));
-    pts.push(new THREE.Vector2(ib, 0.14));
-    for (let i = 0; i <= 32; i++) {
-      const t = i / 32;
-      pts.push(new THREE.Vector2(ib + (it - ib) * t, 0.14 + t * (rimTop - 0.17)));
+    const ib = bottomRadius - wallThickness;
+    const it = topRadius - wallThickness;
+    const rimTop = mugHeight + 0.065;
+    // Inner bottom — slight concave
+    pts.push(new THREE.Vector2(0, 0.12));
+    pts.push(new THREE.Vector2(ib * 0.3, 0.115));
+    pts.push(new THREE.Vector2(ib * 0.7, 0.12));
+    pts.push(new THREE.Vector2(ib, 0.13));
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      pts.push(new THREE.Vector2(ib + (it - ib) * t, 0.13 + t * (rimTop - 0.16)));
     }
-    pts.push(new THREE.Vector2(topRadius - 0.03, rimTop + 0.02));
+    pts.push(new THREE.Vector2(topRadius - 0.025, rimTop + 0.015));
     return pts;
-  }, [bottomRadius, topRadius, mugHeight]);
+  }, [bottomRadius, topRadius, mugHeight, wallThickness]);
 
-  // Handle shape
+  // Handle cross-section — D-shape
   const handleShape = useMemo(() => {
     const s = new THREE.Shape();
-    s.moveTo(0, -0.085);
-    s.bezierCurveTo(0.055, -0.085, 0.085, -0.045, 0.085, 0);
-    s.bezierCurveTo(0.085, 0.045, 0.055, 0.085, 0, 0.085);
-    s.bezierCurveTo(-0.028, 0.085, -0.048, 0.045, -0.048, 0);
-    s.bezierCurveTo(-0.048, -0.045, -0.028, -0.085, 0, -0.085);
+    s.moveTo(0, -0.075);
+    s.bezierCurveTo(0.048, -0.075, 0.075, -0.04, 0.075, 0);
+    s.bezierCurveTo(0.075, 0.04, 0.048, 0.075, 0, 0.075);
+    s.bezierCurveTo(-0.022, 0.075, -0.04, 0.04, -0.04, 0);
+    s.bezierCurveTo(-0.04, -0.04, -0.022, -0.075, 0, -0.075);
     return s;
   }, []);
 
-  // Handle path
+  // Handle path — ergonomic curve
   const handleCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-(topRadius + 0.01), mugHeight * 0.78, 0),
-      new THREE.Vector3(-(topRadius + 0.34), mugHeight * 0.68, 0),
-      new THREE.Vector3(-(topRadius + 0.46), mugHeight * 0.42, 0),
-      new THREE.Vector3(-(topRadius + 0.34), mugHeight * 0.16, 0),
-      new THREE.Vector3(-(topRadius + 0.01), mugHeight * 0.08, 0),
+      new THREE.Vector3(-(topRadius + 0.005), mugHeight * 0.80, 0),
+      new THREE.Vector3(-(topRadius + 0.28), mugHeight * 0.72, 0),
+      new THREE.Vector3(-(topRadius + 0.40), mugHeight * 0.50, 0),
+      new THREE.Vector3(-(topRadius + 0.38), mugHeight * 0.28, 0),
+      new THREE.Vector3(-(topRadius + 0.22), mugHeight * 0.12, 0),
+      new THREE.Vector3(-(topRadius + 0.005), mugHeight * 0.07, 0),
     ]);
   }, [topRadius, mugHeight]);
 
+  const ceramicColor = new THREE.Color(color);
+  const sheenCol = ceramicColor.clone().lerp(new THREE.Color('#ffffff'), 0.65);
+
   const ceramicMat = useMemo(() => ({
     color,
-    roughness: 0.04,
+    roughness: 0.035,
     metalness: 0.0,
-    envMapIntensity: 2.2,
+    envMapIntensity: 2.5,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.015,
+    clearcoatRoughness: 0.012,
     bumpMap,
-    bumpScale: 0.002,
-    sheen: 0.5,
-    sheenRoughness: 0.15,
-    sheenColor: new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.6),
-    reflectivity: 0.9,
-    ior: 1.5,
-  }), [color, bumpMap]);
+    bumpScale: 0.0015,
+    sheen: 0.6,
+    sheenRoughness: 0.12,
+    sheenColor: sheenCol,
+    reflectivity: 0.95,
+    ior: 1.52,
+  }), [color, bumpMap, sheenCol]);
 
   return (
-    <Float speed={0.35} rotationIntensity={0.008} floatIntensity={0.04}>
+    <Float speed={0.25} rotationIntensity={0.005} floatIntensity={0.025}>
       <group ref={groupRef} scale={0.55}>
         {/* Outer body */}
         <mesh position={[0, -mugHeight / 2, 0]} castShadow receiveShadow>
-          <latheGeometry args={[mugProfile, 128]} />
+          <latheGeometry args={[mugProfile, 160]} />
           <meshPhysicalMaterial {...ceramicMat} />
         </mesh>
 
-        {/* Inner wall - glazed */}
+        {/* Inner wall — glazed white */}
         <mesh position={[0, -mugHeight / 2, 0]}>
-          <latheGeometry args={[innerProfile, 96]} />
+          <latheGeometry args={[innerProfile, 128]} />
           <meshPhysicalMaterial
-            color="#f5efe5"
-            roughness={0.08}
+            color="#f8f4ee"
+            roughness={0.06}
             clearcoat={1.0}
-            clearcoatRoughness={0.03}
-            envMapIntensity={1.5}
+            clearcoatRoughness={0.025}
+            envMapIntensity={1.8}
             side={THREE.BackSide}
           />
         </mesh>
@@ -331,25 +346,25 @@ const RealisticMug = ({ textureUrl, color, variant }: { textureUrl: string | nul
 
         {/* Handle */}
         <mesh castShadow position={[0, -mugHeight / 2, 0]}>
-          <extrudeGeometry args={[handleShape, { steps: 80, extrudePath: handleCurve }]} />
+          <extrudeGeometry args={[handleShape, { steps: 100, extrudePath: handleCurve }]} />
           <meshPhysicalMaterial {...ceramicMat} />
         </mesh>
 
-        {/* Bottom ring detail */}
-        <mesh position={[0, -mugHeight / 2 - 0.003, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        {/* Bottom unglazed ring */}
+        <mesh position={[0, -mugHeight / 2 - 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[bottomRadius * 0.35, bottomRadius * 0.55, 64]} />
-          <meshPhysicalMaterial color={color} roughness={0.25} clearcoat={0.4} />
+          <meshPhysicalMaterial color="#e8ddd0" roughness={0.45} clearcoat={0.15} />
         </mesh>
 
-        {/* Rim highlight - subtle emissive ring at very top */}
-        <mesh position={[0, mugHeight / 2 + 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[topRadius - 0.03, topRadius + 0.04, 128]} />
+        {/* Rim highlight ring */}
+        <mesh position={[0, mugHeight / 2 + 0.065, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[topRadius - 0.025, topRadius + 0.035, 160]} />
           <meshPhysicalMaterial
             color={color}
-            roughness={0.04}
+            roughness={0.03}
             clearcoat={1.0}
-            clearcoatRoughness={0.01}
-            envMapIntensity={2.0}
+            clearcoatRoughness={0.008}
+            envMapIntensity={2.8}
           />
         </mesh>
 
