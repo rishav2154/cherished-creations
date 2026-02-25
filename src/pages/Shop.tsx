@@ -47,23 +47,23 @@ const Shop = () => {
       <Navbar />
       <CartDrawer />
 
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4 lg:px-8">
+      <main className="pt-20 sm:pt-24 pb-12 sm:pb-16">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-8">
           {/* Page Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            className="text-center mb-6 sm:mb-12"
           >
-            <span className="text-accent font-medium text-sm tracking-wider uppercase">
+            <span className="text-accent font-medium text-xs sm:text-sm tracking-wider uppercase">
               Shop Our Collection
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold mt-4">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mt-2 sm:mt-4">
               {selectedCategory
                 ? categories.find((c) => c.id === selectedCategory)?.name || 'All Products'
                 : 'All Products'}
             </h1>
-            <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
+            <p className="text-muted-foreground mt-2 sm:mt-4 max-w-xl mx-auto text-sm sm:text-base">
               Explore our curated selection of premium personalized gifts
             </p>
           </motion.div>
@@ -160,18 +160,18 @@ const Shop = () => {
             {/* Main Content */}
             <div className="flex-1">
               {/* Toolbar */}
-              <div className="flex items-center justify-between mb-6 p-4 glass-card">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-4 glass-card">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Showing <span className="font-medium text-foreground">{filteredProducts.length}</span> products
                 </p>
 
-                <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                   {/* Mobile Filter Toggle */}
                   <button
                     onClick={() => setShowFilters(true)}
-                    className="lg:hidden flex items-center gap-2 text-sm font-medium"
+                    className="lg:hidden flex items-center gap-1.5 text-xs sm:text-sm font-medium"
                   >
-                    <Filter className="w-4 h-4" />
+                    <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Filters
                   </button>
 
@@ -204,10 +204,10 @@ const Shop = () => {
                 <>
                   <motion.div
                     layout
-                    className={`grid gap-6 ${
+                    className={`grid gap-3 sm:gap-6 ${
                       gridCols === 3
-                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                        ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                        : 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
                     }`}
                   >
                     <AnimatePresence mode="popLayout">

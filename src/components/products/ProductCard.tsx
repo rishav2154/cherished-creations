@@ -68,15 +68,15 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
               {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4 flex flex-col gap-1 sm:gap-2">
                 {product.isCustomizable && (
-                  <span className="px-3 py-1 text-xs font-medium bg-accent-gradient text-accent-foreground rounded-full flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
+                  <span className="px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-accent-gradient text-accent-foreground rounded-full flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     Customizable
                   </span>
                 )}
                 {product.originalPrice && (
-                  <span className="px-3 py-1 text-xs font-medium bg-destructive text-destructive-foreground rounded-full">
+                  <span className="px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium bg-destructive text-destructive-foreground rounded-full">
                     Sale
                   </span>
                 )}
@@ -87,13 +87,13 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleToggleWishlist}
-                className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={`absolute top-2 sm:top-4 right-2 sm:right-4 w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                   inWishlist
                     ? 'bg-accent text-accent-foreground'
                     : 'bg-background/50 backdrop-blur-sm text-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
-                <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
+                <Heart className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${inWishlist ? 'fill-current' : ''}`} />
               </motion.button>
 
               {/* Quick Add Button */}
@@ -110,31 +110,31 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
             </div>
 
             {/* Content */}
-            <div className="p-5">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-medium text-sm line-clamp-1 group-hover:text-accent transition-colors">
+            <div className="p-3 sm:p-5">
+              <div className="flex items-start justify-between gap-1 sm:gap-2">
+                <div className="min-w-0">
+                  <h3 className="font-medium text-xs sm:text-sm line-clamp-1 group-hover:text-accent transition-colors">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                     {product.description}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-bold">₹{product.price.toFixed(2)}</span>
+              <div className="flex items-center justify-between mt-2 sm:mt-4">
+                <div className="flex items-baseline gap-1 sm:gap-2">
+                  <span className="text-sm sm:text-lg font-bold">₹{product.price.toFixed(2)}</span>
                   {product.originalPrice && (
-                    <span className="text-sm text-muted-foreground line-through">
+                    <span className="text-[10px] sm:text-sm text-muted-foreground line-through">
                       ₹{product.originalPrice.toFixed(2)}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-accent">★</span>
-                  <span className="text-sm font-medium">{product.rating}</span>
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <span className="text-accent text-xs sm:text-base">★</span>
+                  <span className="text-[10px] sm:text-sm font-medium">{product.rating}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
                     ({product.reviewCount})
                   </span>
                 </div>
