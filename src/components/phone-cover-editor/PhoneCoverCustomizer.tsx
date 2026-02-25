@@ -218,21 +218,46 @@ export function PhoneCoverCustomizer() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="grid lg:grid-cols-2 gap-8">
+      {/* Mobile: Fixed bottom bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border p-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs text-muted-foreground">Total Price</p>
+          <p className="text-xl font-bold">₹{selectedCoverData?.price || 299}</p>
+        </div>
+        <Button
+          onClick={handleAddToCart}
+          disabled={!isComplete}
+          className="h-12 px-6 text-base bg-accent-gradient hover:opacity-90"
+        >
+          {showSuccess ? (
+            <>
+              <Check className="w-5 h-5 mr-2" />
+              Added!
+            </>
+          ) : (
+            <>
+              <ShoppingBag className="w-5 h-5 mr-2" />
+              Add to Cart
+            </>
+          )}
+        </Button>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-8 pb-24 lg:pb-0">
         {/* Left: Preview */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="order-2 lg:order-1"
         >
-          <div className="bg-card border border-border p-6 rounded-3xl sticky top-24">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-card border border-border p-4 md:p-6 rounded-3xl lg:sticky lg:top-24">
+            <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2">
               <Smartphone className="w-5 h-5 text-accent" />
               Cover Preview
             </h3>
             
-            {/* Phone Cover Preview */}
-            <div className="aspect-[3/4] bg-gradient-to-br from-muted to-muted/50 rounded-3xl overflow-hidden relative flex items-center justify-center">
+            {/* Phone Cover Preview - compact on mobile */}
+            <div className="aspect-[3/4] max-h-[300px] md:max-h-none bg-gradient-to-br from-muted to-muted/50 rounded-3xl overflow-hidden relative flex items-center justify-center mx-auto" style={{ maxWidth: '280px' }}>
               {uploadedImage ? (
                 <div className="w-full h-full relative">
                   <img 
@@ -240,21 +265,20 @@ export function PhoneCoverCustomizer() {
                     alt="Cover design" 
                     className="w-full h-full object-cover"
                   />
-                  {/* Phone frame overlay */}
                   <div className="absolute inset-0 border-[12px] border-black/20 rounded-3xl pointer-events-none" />
                   <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-black/30 rounded-full" />
                 </div>
               ) : (
-                <div className="text-center p-8">
-                  <Smartphone className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground">Upload an image to see preview</p>
+                <div className="text-center p-6">
+                  <Smartphone className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">Upload an image to see preview</p>
                 </div>
               )}
             </div>
 
             {/* Selection Summary */}
             {(selectedBrand || selectedModel) && (
-              <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-2">
+              <div className="mt-3 md:mt-4 p-3 md:p-4 bg-muted/30 rounded-xl space-y-1.5 md:space-y-2">
                 {selectedBrand && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Brand:</span>
@@ -276,8 +300,8 @@ export function PhoneCoverCustomizer() {
               </div>
             )}
 
-            {/* Price & Add to Cart */}
-            <div className="mt-6 space-y-4">
+            {/* Price & Add to Cart - desktop only */}
+            <div className="mt-6 space-y-4 hidden lg:block">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Price</span>
                 <span className="text-3xl font-bold">₹{selectedCoverData?.price || 299}</span>
