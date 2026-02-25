@@ -8,7 +8,7 @@ export const FeaturedProducts = () => {
   const { data: featuredProducts = [], isLoading } = useFeaturedProducts();
 
   return (
-    <section className="py-24 bg-card relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-card relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Section Header */}
         <motion.div
@@ -21,7 +21,7 @@ export const FeaturedProducts = () => {
             <span className="text-accent font-medium text-sm tracking-wider uppercase">
               Best Sellers
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold mt-4">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mt-4">
               Featured Products
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl">
@@ -50,7 +50,7 @@ export const FeaturedProducts = () => {
             <p className="text-muted-foreground">No featured products available.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {featuredProducts.map((product, index) => (
               <ProductCard key={product.id} product={product} index={index} />
             ))}

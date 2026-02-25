@@ -30,7 +30,7 @@ const features = [
 
 export const FeaturesSection = () => {
   return (
-    <section className="py-32 relative overflow-hidden">
+    <section className="py-16 sm:py-32 relative overflow-hidden">
       {/* Premium Background */}
       <div className="absolute inset-0 bg-card" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/50" />
@@ -53,7 +53,7 @@ export const FeaturesSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-10 sm:mb-20"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -66,7 +66,7 @@ export const FeaturesSection = () => {
               The Giftoria Promise
             </span>
           </motion.div>
-          <h2 className="text-4xl md:text-6xl font-bold mt-4">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mt-4">
             <span className="text-foreground">Why Choose </span>
             <span className="bg-gradient-to-r from-gold via-accent to-gold bg-clip-text text-transparent">
               Excellence
@@ -78,7 +78,7 @@ export const FeaturesSection = () => {
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export const CTASection = () => {
   return (
-    <section className="py-32 relative overflow-hidden">
+    <section className="py-16 sm:py-32 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -42,7 +42,7 @@ export const CTASection = () => {
           <div className="absolute inset-0 rounded-[2.5rem] border-2 border-gold/20" />
 
           {/* Content */}
-          <div className="relative p-12 md:p-24 text-center">
+          <div className="relative p-8 sm:p-12 md:p-24 text-center">
             {/* Premium Icon */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -79,7 +79,7 @@ export const CTASection = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-6xl font-bold mb-8"
+              className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 sm:mb-8"
             >
               <span className="text-foreground">Ready to Create </span>
               <br className="hidden md:block" />
@@ -94,7 +94,7 @@ export const CTASection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-xl text-foreground/70 max-w-3xl mx-auto mb-12 leading-relaxed"
+              className="text-base sm:text-xl text-foreground/70 max-w-3xl mx-auto mb-8 sm:mb-12 leading-relaxed"
             >
               Begin crafting your personalized masterpiece today. Upload your cherished photos, 
               add your unique touch, and create a gift that will be treasured for generations.
@@ -111,7 +111,7 @@ export const CTASection = () => {
                 <motion.span
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group relative inline-flex items-center gap-3 px-12 py-5 rounded-2xl font-semibold text-lg overflow-hidden"
+                  className="group relative inline-flex items-center gap-2 sm:gap-3 px-8 py-4 sm:px-12 sm:py-5 rounded-2xl font-semibold text-base sm:text-lg overflow-hidden"
                   style={{
                     background: 'linear-gradient(135deg, hsl(43 74% 49%) 0%, hsl(339 78% 53%) 50%, hsl(14 100% 59%) 100%)',
                     boxShadow: '0 20px 60px hsl(43 74% 49% / 0.4), 0 0 80px hsl(339 78% 53% / 0.2)',
@@ -131,7 +131,7 @@ export const CTASection = () => {
                 <motion.span
                   whileHover={{ scale: 1.05, borderColor: 'hsl(43 74% 49%)' }}
                   whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center gap-3 px-12 py-5 rounded-2xl font-semibold text-lg border-2 border-gold/30 text-foreground hover:text-gold hover:border-gold transition-all duration-300"
+                  className="inline-flex items-center gap-2 sm:gap-3 px-8 py-4 sm:px-12 sm:py-5 rounded-2xl font-semibold text-base sm:text-lg border-2 border-gold/30 text-foreground hover:text-gold hover:border-gold transition-all duration-300"
                 >
                   Explore Collection
                 </motion.span>

@@ -157,24 +157,24 @@ const AutoTypingSearchBar = ({ onOpenSearch }: AutoTypingSearchBarProps) => {
         onClick={onOpenSearch}
         className="relative flex items-center bg-card/90 backdrop-blur-xl border-2 border-accent/30 rounded-2xl shadow-2xl shadow-accent/10 cursor-pointer group hover:border-accent/50 transition-all duration-300"
       >
-        <div className="flex items-center justify-center w-16 h-16 md:w-20 md:h-20">
-          <Search className="w-6 h-6 md:w-8 md:h-8 text-accent" />
+        <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 shrink-0">
+          <Search className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-accent" />
         </div>
-        <div className="flex-1 py-5 md:py-6 pr-6">
-          <span className="text-lg md:text-2xl text-muted-foreground">
+        <div className="flex-1 py-3 sm:py-5 md:py-6 pr-2 sm:pr-6 min-w-0">
+          <span className="text-sm sm:text-lg md:text-2xl text-muted-foreground truncate block">
             Search for{" "}
             <span className="text-foreground font-medium">
               {displayText}
               <motion.span
                 animate={{ opacity: [1, 0] }}
                 transition={{ duration: 0.5, repeat: Infinity }}
-                className="inline-block w-0.5 h-6 md:h-7 bg-accent ml-1 align-middle"
+                className="inline-block w-0.5 h-4 sm:h-6 md:h-7 bg-accent ml-1 align-middle"
               />
             </span>
           </span>
         </div>
-        <div className="pr-4">
-          <div className="px-4 py-2 md:px-6 md:py-3 bg-accent text-accent-foreground rounded-xl font-medium text-sm md:text-base group-hover:bg-accent/90 transition-colors">
+        <div className="pr-2 sm:pr-4 shrink-0">
+          <div className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-6 md:py-3 bg-accent text-accent-foreground rounded-xl font-medium text-xs sm:text-sm md:text-base group-hover:bg-accent/90 transition-colors">
             Search
           </div>
         </div>
@@ -245,7 +245,7 @@ export const HeroSection = () => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
+      className="relative min-h-[85vh] sm:min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20"
     >
       {/* Search Dialog */}
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
@@ -385,7 +385,7 @@ export const HeroSection = () => {
             className="mb-12"
           >
             <motion.h1
-              className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold max-w-4xl mx-auto mb-4 leading-tight"
+              className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-bold max-w-4xl mx-auto mb-4 leading-tight px-2 sm:px-0"
             >
               {currentSlideData.title}
             </motion.h1>
@@ -428,7 +428,7 @@ export const HeroSection = () => {
         </div>
 
         {/* Slide Indicators */}
-        <div className="flex items-center justify-center gap-2 mt-12">
+        <div className="flex items-center justify-center gap-2 mt-6 sm:mt-12">
           {heroSlides.map((slide, index) => (
             <button
               key={slide.id}
@@ -456,7 +456,7 @@ export const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="flex flex-wrap justify-center gap-8 md:gap-16 mt-12"
+          className="flex flex-wrap justify-center gap-4 sm:gap-8 md:gap-16 mt-6 sm:mt-12"
         >
           {[
             { value: "50K+", label: "Happy Customers", icon: "✨" },
@@ -468,7 +468,7 @@ export const HeroSection = () => {
               className="text-center group"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-gradient-accent mb-2">
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold text-gradient-accent mb-1 sm:mb-2">
                 {stat.value}
               </div>
               <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
