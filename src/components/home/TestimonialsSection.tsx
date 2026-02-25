@@ -48,7 +48,7 @@ export const TestimonialsSection = () => {
   }, []);
 
   return (
-    <section className="py-32 relative overflow-hidden">
+    <section className="py-16 sm:py-32 relative overflow-hidden">
       {/* Premium Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background" />
       
@@ -69,7 +69,7 @@ export const TestimonialsSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-10 sm:mb-20"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -82,7 +82,7 @@ export const TestimonialsSection = () => {
               Customer Stories
             </span>
           </motion.div>
-          <h2 className="text-4xl md:text-6xl font-bold mt-4">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mt-4">
             <span className="text-foreground">Voices of </span>
             <span className="bg-gradient-to-r from-gold via-accent to-gold bg-clip-text text-transparent">
               Delight
@@ -106,7 +106,7 @@ export const TestimonialsSection = () => {
                   display: currentIndex === index ? 'block' : 'none',
                 }}
                 transition={{ duration: 0.6 }}
-                className="relative p-10 md:p-14 rounded-3xl bg-gradient-to-b from-muted/50 to-muted/20 border border-gold/20"
+                className="relative p-6 sm:p-10 md:p-14 rounded-3xl bg-gradient-to-b from-muted/50 to-muted/20 border border-gold/20"
               >
                 {/* Premium Corner Accents */}
                 <div className="absolute top-4 left-4 w-12 h-12 border-l-2 border-t-2 border-gold/30 rounded-tl-2xl" />
@@ -118,7 +118,7 @@ export const TestimonialsSection = () => {
                 <Quote className="w-16 h-16 text-gold/20 mb-8" />
 
                 {/* Content */}
-                <p className="text-xl md:text-2xl text-foreground/90 leading-relaxed mb-10 font-light italic">
+                <p className="text-base sm:text-xl md:text-2xl text-foreground/90 leading-relaxed mb-6 sm:mb-10 font-light italic">
                   "{testimonial.content}"
                 </p>
 

@@ -42,10 +42,10 @@ export const Footer = () => {
       <div className="h-1 bg-accent-gradient" />
 
       <div className="bg-card">
-        <div className="container mx-auto px-4 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
+        <div className="container mx-auto px-4 lg:px-8 py-10 sm:py-16">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-8 sm:gap-12">
             {/* Brand Column */}
-            <div className="lg:col-span-2">
+            <div className="col-span-2 lg:col-span-2">
               <Link to="/" className="inline-block">
                 <span className="text-3xl font-bold text-gradient-accent">Giftoria</span>
               </Link>
@@ -55,7 +55,7 @@ export const Footer = () => {
               </p>
 
               {/* Newsletter */}
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                 <h4 className="text-sm font-semibold mb-3">Subscribe to our newsletter</h4>
                 <div className="flex gap-2">
                   <input
@@ -177,8 +177,8 @@ export const Footer = () => {
           </div>
 
           {/* Bottom Bar */}
-          <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               © {new Date().getFullYear()} Giftoria. All rights reserved.
             </p>
             <div className="flex gap-6">
