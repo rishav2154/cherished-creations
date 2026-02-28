@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { api, getToken } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export function useInvoiceDownload() {
@@ -10,28 +10,19 @@ export function useInvoiceDownload() {
     setDownloading(orderId);
     
     try {
-      const { data, error } = await supabase.functions.invoke('generate-invoice', {
-        body: { orderId },
-      });
+      const html = await api<string>(`/api/orders/${orderId}/invoice`, { auth: true });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to generate invoice');
-      }
-
-      if (!data?.html) {
+      if (!html) {
         throw new Error('No invoice data received');
       }
 
-      // Create a blob from the HTML content
-      const blob = new Blob([data.html], { type: 'text/html' });
+      const blob = new Blob([html], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       
-      // Open in new window for printing/saving as PDF
       const printWindow = window.open(url, '_blank');
       
       if (printWindow) {
         printWindow.onload = () => {
-          // Clean up the URL after the window loads
           setTimeout(() => {
             window.URL.revokeObjectURL(url);
           }, 1000);
@@ -42,10 +33,9 @@ export function useInvoiceDownload() {
           description: 'Use Ctrl+P (or Cmd+P) to save as PDF or print',
         });
       } else {
-        // Fallback: download as HTML file
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Invoice-${data.orderNumber}.html`;
+        link.download = `Invoice-${orderId.slice(0, 8)}.html`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
