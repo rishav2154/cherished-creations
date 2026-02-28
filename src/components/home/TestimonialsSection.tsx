@@ -41,7 +41,9 @@ const testimonials = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-5 sm:py-8 bg-card">
+    <section className="py-5 sm:py-8 bg-card relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -53,8 +55,8 @@ export const TestimonialsSection = () => {
               <p className="text-[10px] sm:text-xs text-muted-foreground">Based on 2,500+ reviews</p>
             </div>
           </div>
-          <div className="flex flex-col items-center px-4 py-2 bg-accent/10 rounded-xl border border-accent/20">
-            <span className="text-lg sm:text-xl font-bold text-accent">4.9</span>
+          <div className="flex flex-col items-center px-4 py-2 bg-accent/10 rounded-xl border border-accent/20 animate-pulse-glow">
+            <span className="text-lg sm:text-xl font-bold text-shimmer">4.9</span>
             <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-2.5 h-2.5 fill-accent text-accent" />
@@ -67,7 +69,7 @@ export const TestimonialsSection = () => {
           {testimonials.map((t) => (
             <div
               key={t.id}
-              className="p-4 sm:p-5 rounded-2xl bg-background border border-border/40 hover:border-accent/20 transition-all hover:shadow-md group"
+              className="p-4 sm:p-5 rounded-2xl bg-background border border-border/40 hover:border-accent/20 transition-all hover:shadow-lg hover:shadow-accent/5 group hover:-translate-y-1 duration-300 spotlight"
             >
               <div className="flex items-center gap-3 mb-3">
                 <img

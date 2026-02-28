@@ -119,16 +119,16 @@ export const HeroSection = () => {
                   transition={{ delay: 0.15, duration: 0.4 }}
                   className="max-w-lg"
                 >
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 sm:mb-3 text-[10px] sm:text-xs font-semibold bg-accent/15 text-accent rounded-full border border-accent/25 backdrop-blur-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 sm:mb-3 text-[10px] sm:text-xs font-semibold bg-accent/15 text-accent rounded-full border border-accent/25 backdrop-blur-sm animate-bounce-in">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ring-pulse" />
                     {slide.subtitle}
                   </span>
-                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-3 sm:mb-5 leading-[1.1] tracking-tight">
+                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-3 sm:mb-5 leading-[1.1] tracking-tight text-shimmer">
                     {slide.title}
                   </h2>
                   <Link
                     to={slide.link}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3.5 bg-accent text-accent-foreground font-semibold text-xs sm:text-sm rounded-xl hover:brightness-110 transition-all shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:translate-y-[-1px]"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3.5 bg-accent text-accent-foreground font-semibold text-xs sm:text-sm rounded-xl hover:brightness-110 transition-all shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:translate-y-[-2px] hover:scale-105 animate-pulse-glow"
                   >
                     {slide.cta}
                     <ChevronRight className="w-4 h-4" />
@@ -177,11 +177,11 @@ export const HeroSection = () => {
       <div className="container mx-auto px-3 sm:px-4 -mt-6 sm:-mt-7 relative z-10">
         <div
           onClick={() => setSearchOpen(true)}
-          className="flex items-center bg-card/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-xl shadow-background/30 px-4 py-3 sm:py-4 cursor-pointer hover:border-accent/40 transition-all group max-w-2xl mx-auto hover:shadow-accent/5"
+          className="flex items-center bg-card/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-xl shadow-background/30 px-4 py-3 sm:py-4 cursor-pointer hover:border-accent/40 transition-all group max-w-2xl mx-auto hover:shadow-accent/10 shimmer-border"
         >
           <Search className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
           <span className="ml-3 text-sm text-muted-foreground flex-1">Search for products, gifts, and more...</span>
-          <span className="ml-auto px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hidden sm:block">
+          <span className="ml-auto px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hidden sm:block animate-pulse-glow">
             Search
           </span>
         </div>

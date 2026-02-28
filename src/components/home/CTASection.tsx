@@ -5,7 +5,7 @@ export const CTASection = () => {
   return (
     <section className="py-5 sm:py-8 pb-20 sm:pb-8 bg-background">
       <div className="container mx-auto px-2 sm:px-4">
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-accent via-accent/85 to-accent/70 p-6 sm:p-10 md:p-16">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-accent via-accent/85 to-accent/70 p-6 sm:p-10 md:p-16 shimmer-border">
           {/* Decorative */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-accent-foreground/5 rounded-full -translate-y-1/3 translate-x-1/3" />
           <div className="absolute bottom-0 left-0 w-36 h-36 bg-accent-foreground/5 rounded-full translate-y-1/3 -translate-x-1/3" />
