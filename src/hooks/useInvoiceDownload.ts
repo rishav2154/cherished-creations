@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, getToken } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export function useInvoiceDownload() {
@@ -10,7 +10,7 @@ export function useInvoiceDownload() {
     setDownloading(orderId);
     
     try {
-      const html = await api<string>(`/api/orders/${orderId}/invoice`, { auth: true });
+      const html = await apiFetch<string>(`/orders/${orderId}/invoice`);
 
       if (!html) {
         throw new Error('No invoice data received');

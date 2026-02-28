@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { api } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,9 +55,9 @@ const AdminResetPassword = () => {
 
     try {
       const token = searchParams.get('token');
-      await api('/api/admin/reset-password', {
+      await apiFetch('/admin/reset-password', {
         method: 'POST',
-        body: { token, password },
+        body: JSON.stringify({ token, password }),
       });
 
       setSuccess(true);
