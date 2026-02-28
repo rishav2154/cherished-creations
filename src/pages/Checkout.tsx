@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
@@ -15,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MapPin, CreditCard, Truck, ShieldCheck, Loader2,
-  ArrowLeft, Package, MessageSquare
+  ArrowLeft, Package, MessageSquare, CheckCircle2, Phone
 } from 'lucide-react';
 
 import productTshirt from '@/assets/product-tshirt.jpg';
@@ -24,6 +24,8 @@ import productFrame from '@/assets/product-frame.jpg';
 import productPhone from '@/assets/product-phone.jpg';
 import productPoster from '@/assets/product-poster.jpg';
 import productCombo from '@/assets/product-combo.jpg';
+
+// Razorpay type is declared elsewhere or loaded dynamically
 
 const categoryImages: Record<string, string> = {
   tshirts: productTshirt,
@@ -43,6 +45,13 @@ const Checkout = () => {
   
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
+
+  // OTP states
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+
   const [address, setAddress] = useState({
     fullName: user?.name || '',
     phone: '',
@@ -59,6 +68,13 @@ const Checkout = () => {
   const shipping = appliedCoupon?.discountType === 'free_shipping' ? 0 : (subtotal > 500 ? 0 : 50);
   const tax = discountedSubtotal * 0.08;
   const total = discountedSubtotal + shipping + tax;
+
+  // Reset OTP state when phone changes
+  useEffect(() => {
+    setOtpSent(false);
+    setOtp('');
+    setPhoneVerified(false);
+  }, [address.phone]);
 
   if (!authLoading && !user) {
     navigate('/auth');
@@ -95,32 +111,134 @@ const Checkout = () => {
     return true;
   };
 
-  const handleRazorpayPayment = async (razorpayOrderData: any) => {
-    return new Promise<{ razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }>((resolve, reject) => {
+  /* ======= OTP ======= */
+
+  const handleSendOtp = async () => {
+    if (!address.phone || !/^\d{10}$/.test(address.phone)) {
+      return toast({ title: 'Enter valid 10-digit phone number', variant: 'destructive' });
+    }
+    setOtpLoading(true);
+    try {
+      await apiPost('/api/send-otp', { phone: address.phone }, true);
+      setOtpSent(true);
+      toast({ title: 'OTP sent successfully' });
+    } catch (err: any) {
+      toast({ title: 'Failed to send OTP', description: err.message, variant: 'destructive' });
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) return toast({ title: 'Enter OTP', variant: 'destructive' });
+    setOtpLoading(true);
+    try {
+      await apiPost('/api/verify-otp', { phone: address.phone, otp }, true);
+      setPhoneVerified(true);
+      toast({ title: 'Phone verified successfully ✅' });
+    } catch (err: any) {
+      toast({ title: 'OTP verification failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  /* ======= Razorpay ======= */
+
+  const loadRazorpay = () => {
+    return new Promise<boolean>((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleOnlinePayment = async () => {
+    const loaded = await loadRazorpay();
+    if (!loaded) {
+      toast({ title: 'Razorpay failed to load', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const razorpayOrder = await apiPost<any>('/api/create-razorpay-order', { amount: total }, true);
+
       const options = {
-        key: razorpayOrderData.key_id || razorpayOrderData.keyId,
-        amount: razorpayOrderData.amount,
-        currency: razorpayOrderData.currency || 'INR',
+        key: razorpayOrder.key_id || razorpayOrder.keyId,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency || 'INR',
         name: 'The Design Hive',
         description: 'Order Payment',
-        order_id: razorpayOrderData.id || razorpayOrderData.razorpayOrderId,
-        handler: (response: any) => resolve(response),
+        order_id: razorpayOrder.id || razorpayOrder.razorpayOrderId,
         prefill: {
           name: address.fullName,
           email: user?.email || '',
           contact: address.phone,
         },
         theme: { color: '#667eea' },
-        modal: { ondismiss: () => reject(new Error('Payment cancelled by user')) },
+        handler: async (response: any) => {
+          try {
+            await apiPost('/api/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }, true);
+
+            const result = await apiPost<any>('/api/checkout', {
+              items: items.map(item => ({
+                productId: item.productId,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                customization: item.customization || {},
+              })),
+              shipping_address: {
+                full_name: address.fullName,
+                phone: address.phone,
+                address_line1: address.addressLine1,
+                address_line2: address.addressLine2,
+                city: address.city,
+                state: address.state,
+                pincode: address.pincode,
+              },
+              coupon: appliedCoupon?.code || null,
+              payment_method: 'online',
+              payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            }, true);
+
+            clearCart();
+            navigate(`/order-success/${result.order_id}`);
+          } catch (err: any) {
+            toast({ title: 'Payment verification failed', description: err.message, variant: 'destructive' });
+          }
+        },
+        modal: { ondismiss: () => {} },
       };
-      const rzp = new (window as any).Razorpay(options);
+
+      const rzp = new window.Razorpay(options);
       rzp.open();
-    });
+    } catch (err: any) {
+      toast({ title: 'Payment failed', description: err.message, variant: 'destructive' });
+    }
   };
+
+  /* ======= Place Order ======= */
 
   const handlePlaceOrder = async () => {
     if (!validateForm() || !user) return;
 
+    if (!phoneVerified) {
+      return toast({ title: 'Phone Not Verified', description: 'Please verify your phone number with OTP before placing the order.', variant: 'destructive' });
+    }
+
+    if (paymentMethod === 'online') return handleOnlinePayment();
+
+    // COD flow
     setLoading(true);
     try {
       const orderItems = items.map(item => ({
@@ -131,65 +249,25 @@ const Checkout = () => {
         customization: item.customization || {},
       }));
 
-      if (paymentMethod === 'online') {
-        // Step 1: Create Razorpay order
-        const razorpayOrder = await apiPost<any>('/api/create-razorpay-order', { amount: total }, true);
-        
-        // Step 2: Open Razorpay modal
-        const paymentResponse = await handleRazorpayPayment(razorpayOrder);
-        
-        // Step 3: Verify payment
-        await apiPost('/api/verify-payment', {
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-        });
+      const result = await apiPost<any>('/api/checkout', {
+        items: orderItems,
+        shipping_address: {
+          full_name: address.fullName,
+          phone: address.phone,
+          address_line1: address.addressLine1,
+          address_line2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+        },
+        coupon: appliedCoupon?.code || null,
+        payment_method: 'cod',
+      }, true);
 
-        // Step 4: Place order with payment details
-        const result = await apiPost<any>('/api/checkout', {
-          items: orderItems,
-          shipping_address: {
-            full_name: address.fullName,
-            phone: address.phone,
-            address_line1: address.addressLine1,
-            address_line2: address.addressLine2,
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
-          },
-          coupon: appliedCoupon?.code || null,
-          payment_method: 'online',
-          payment_id: paymentResponse.razorpay_payment_id,
-          razorpay_order_id: paymentResponse.razorpay_order_id,
-          razorpay_signature: paymentResponse.razorpay_signature,
-        }, true);
-
-        clearCart();
-        navigate(`/order-success/${result.order_id}`);
-      } else {
-        // COD
-        const result = await apiPost<any>('/api/checkout', {
-          items: orderItems,
-          shipping_address: {
-            full_name: address.fullName,
-            phone: address.phone,
-            address_line1: address.addressLine1,
-            address_line2: address.addressLine2,
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
-          },
-          coupon: appliedCoupon?.code || null,
-          payment_method: 'cod',
-        }, true);
-
-        clearCart();
-        navigate(`/order-success/${result.order_id}`);
-      }
+      clearCart();
+      navigate(`/order-success/${result.order_id}`);
     } catch (error: any) {
-      if (error.message !== 'Payment cancelled by user') {
-        toast({ title: 'Order Failed', description: error.message || 'Something went wrong.', variant: 'destructive' });
-      }
+      toast({ title: 'Order Failed', description: error.message || 'Something went wrong.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -234,10 +312,55 @@ const Checkout = () => {
                     <Label htmlFor="fullName">Full Name *</Label>
                     <Input id="fullName" value={address.fullName} onChange={(e) => setAddress({ ...address, fullName: e.target.value })} placeholder="Enter your full name" className="mt-1" />
                   </div>
+                  
+                  {/* Phone + OTP */}
                   <div>
                     <Label htmlFor="phone">Phone Number *</Label>
-                    <Input id="phone" value={address.phone} onChange={(e) => setAddress({ ...address, phone: e.target.value })} placeholder="10-digit phone number" className="mt-1" maxLength={10} />
+                    <div className="flex gap-2 mt-1">
+                      <Input 
+                        id="phone" 
+                        value={address.phone} 
+                        onChange={(e) => setAddress({ ...address, phone: e.target.value })} 
+                        placeholder="10-digit phone number" 
+                        maxLength={10}
+                        disabled={phoneVerified}
+                      />
+                      {!phoneVerified && (
+                        <Button 
+                          type="button" 
+                          variant="secondary" 
+                          onClick={handleSendOtp} 
+                          disabled={otpLoading || !address.phone}
+                          className="shrink-0"
+                        >
+                          {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send OTP'}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* OTP Input */}
+                    {otpSent && !phoneVerified && (
+                      <div className="flex gap-2 mt-2">
+                        <Input 
+                          placeholder="Enter OTP" 
+                          value={otp} 
+                          onChange={(e) => setOtp(e.target.value)} 
+                          maxLength={6}
+                        />
+                        <Button onClick={handleVerifyOtp} disabled={otpLoading} className="shrink-0">
+                          {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Verified badge */}
+                    {phoneVerified && (
+                      <p className="flex items-center gap-1 text-green-500 text-sm mt-2 font-medium">
+                        <CheckCircle2 className="w-4 h-4" /> Phone verified
+                      </p>
+                    )}
                   </div>
+
                   <div className="md:col-span-2">
                     <Label htmlFor="addressLine1">Address Line 1 *</Label>
                     <Input id="addressLine1" value={address.addressLine1} onChange={(e) => setAddress({ ...address, addressLine1: e.target.value })} placeholder="House no., Building, Street" className="mt-1" />
@@ -339,7 +462,12 @@ const Checkout = () => {
                 <Button onClick={handlePlaceOrder} disabled={loading} className="w-full mt-6 h-12 btn-luxury">
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : paymentMethod === 'cod' ? 'Place Order (COD)' : 'Proceed to Pay'}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center mt-4">By placing this order, you agree to our Terms & Conditions</p>
+                {!phoneVerified && (
+                  <p className="text-xs text-amber-500 text-center mt-2 flex items-center justify-center gap-1">
+                    <Phone className="w-3 h-3" /> Verify your phone number to place order
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground text-center mt-2">By placing this order, you agree to our Terms & Conditions</p>
               </div>
             </motion.div>
           </div>
