@@ -1,46 +1,30 @@
 
-# Fix Light Mode Theme
 
-## Problems Identified
+## Fix Shop.tsx UI
 
-1. **Hero banner text invisible** -- The gradient overlay uses `from-background via-background/60` which is near-white in light mode, making the white hero text unreadable against a washed-out background.
-2. **Missing light-mode CSS custom properties** -- Variables like `--glass-bg`, `--glass-border`, `--glass-shadow`, `--luxury-deep-*`, `--accent-warm`, `--accent-pink`, `--gold` have no `.light` overrides, so they use dark-theme values in light mode.
-3. **Sidebar variables missing in light mode** -- `--sidebar-*` variables are not defined in `.light`, causing dark backgrounds in sidebar components.
-4. **Low-contrast sections** -- `bg-card/60` and `bg-card/30` classes result in barely visible section separators in light mode.
+The code you pasted had all JSX/HTML tags stripped out (angle brackets were removed), leaving broken template markup. I'll reconstruct the full working Shop.tsx with proper JSX, preserving all the logic and content you intended.
 
-## Changes
+### What's being fixed
+- All JSX elements (`div`, `motion.div`, `button`, `Input`, `Slider`, `Link`, etc.) need their tags restored
+- The entire component template needs to be rebuilt as valid JSX
 
-### 1. Update `src/index.css` -- Add complete light-mode variable overrides
+### What's being preserved (no content changes)
+- All imports, hooks, state, and logic (debounced URL params, `finalProducts`, `handleCategoryChange`, etc.)
+- All text content, class names, and styling exactly as you specified
+- The layout structure: page header, prominent search bar, desktop sidebar, mobile filter panel, grid controls (2/3/4 cols), product grid with custom product handling, empty state
 
-Add the following inside the `.light` block:
-- `--glass-bg`, `--glass-border`, `--glass-shadow` tuned for light backgrounds (white glass with subtle borders)
-- `--luxury-deep-*`, `--accent-warm`, `--accent-pink`, `--gold`, `--gold-muted` values adjusted for light theme readability
-- `--sidebar-*` variables for light mode (light background, dark foreground)
-- Gradient variables adjusted for light theme
+### Key UI features in the reconstructed code
+- Prominent full-width search bar below the header
+- Desktop sidebar with category cards, price slider, and clear filters
+- Mobile: inline collapsible filter panel (not a drawer) with category grid
+- Grid toggle for 2, 3, or 4 columns on desktop
+- Custom product (phone cover) gets a special "Customize Now" wrapper with Link
+- Empty state with search icon and clear filters button
 
-### 2. Update `src/components/home/HeroSection.tsx` -- Fix hero text contrast
+### Technical details
+- **File changed**: `src/pages/Shop.tsx` (full rewrite to fix broken JSX)
+- No other files are modified
+- The `Button` component from `@/components/ui/button` is used (already exists)
+- `Link` from `react-router-dom` is used for the custom product wrapper
+- TypeScript generics like `Record<string, string | null>` and `useRef<NodeJS.Timeout>` will be properly typed
 
-- Change the gradient overlay from `from-background via-background/60` to a dark overlay that works in both themes: use a class like `from-black/70 via-black/40 to-transparent` so the hero text is always readable against the banner image regardless of theme.
-- Ensure the slide title and subtitle text uses white (`text-white`) on the hero since the overlay is always dark.
-- Update the search bar below to keep using theme-aware tokens (`bg-card`, `border-border`).
-
-### 3. Update `src/components/home/CategoriesSection.tsx` -- Fix section background
-
-- Change `bg-card/30` to `bg-muted/50` for better contrast in light mode.
-
-### 4. Update `src/components/home/MarqueeBanner.tsx` -- Fix banner background
-
-- Change `bg-card/60` to `bg-muted/40` for visible separation in light mode.
-
-### 5. Update `src/components/home/FeaturedProducts.tsx` -- Fix offer banner overlays
-
-- Change offer banner gradient overlays from `from-background/95 via-background/70 to-background/30` to a dark overlay (`from-black/70 via-black/50 to-transparent`) so banner text is always readable.
-- Use `text-white` for banner text labels instead of `text-foreground` since overlay is always dark.
-
-### 6. Update `src/components/layout/Navbar.tsx` -- Ensure consistent light-mode nav
-
-- The navbar already uses `bg-background/95` which should work fine with proper variable overrides. No changes needed.
-
-## Summary
-
-The root cause is that the theme was designed dark-first, and light mode only defines basic token overrides but misses custom properties and uses theme-relative overlays on images where a fixed dark overlay is needed. The fix adds comprehensive light-mode variables and switches image overlays to fixed dark gradients with white text for universal readability.
