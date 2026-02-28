@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { apiGet, apiPatch } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Shield, ShieldOff } from 'lucide-react';
+import { Loader2, Users, Shield, ShieldOff, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -37,37 +39,80 @@ const AdminUsers = () => {
     return email?.charAt(0).toUpperCase() || 'U';
   };
 
+  const filteredUsers = users.filter(u =>
+    !searchQuery.trim() ||
+    (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold">Users</h1><p className="text-muted-foreground">Manage user accounts and roles</p></div>
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />All Users ({users.length})</CardTitle></CardHeader>
-          <CardContent>
-            {loading ? <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin" /></div> : users.length === 0 ? <p className="text-center py-8 text-muted-foreground">No users</p> : (
-              <Table>
-                <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Email</TableHead><TableHead>Joined</TableHead><TableHead>Role</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {users.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10"><AvatarImage src={u.avatar_url || undefined} /><AvatarFallback>{getInitials(u.name, u.email)}</AvatarFallback></Avatar>
-                          <span className="font-medium">{u.name || 'No name'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{u.email}</TableCell>
-                      <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</TableCell>
-                      <TableCell><Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={u.role === 'admin' ? 'bg-primary' : ''}>{u.role}</Badge></TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleToggleAdmin(u.id)} className={u.role === 'admin' ? 'text-destructive' : ''}>
-                          {u.role === 'admin' ? <><ShieldOff className="w-4 h-4 mr-1" />Remove Admin</> : <><Shield className="w-4 h-4 mr-1" />Make Admin</>}
-                        </Button>
-                      </TableCell>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Users</h1>
+            <p className="text-muted-foreground text-sm mt-1">Manage user accounts and roles ({users.length} total)</p>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search users..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
+          </div>
+        </div>
+
+        <Card className="shadow-sm">
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="text-center py-16">
+                <Users className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">{searchQuery ? 'No users match your search' : 'No users'}</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-semibold">User</TableHead>
+                      <TableHead className="font-semibold">Email</TableHead>
+                      <TableHead className="font-semibold">Joined</TableHead>
+                      <TableHead className="font-semibold">Role</TableHead>
+                      <TableHead className="font-semibold text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((u) => (
+                      <TableRow key={u.id} className="hover:bg-muted/20">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-9 h-9">
+                              <AvatarImage src={u.avatar_url || undefined} />
+                              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">{getInitials(u.name, u.email)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium text-sm">{u.name || 'No name'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={`text-[10px] ${u.role === 'admin' ? 'bg-primary' : ''}`}>
+                            {u.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            <Button variant="ghost" size="sm" onClick={() => handleToggleAdmin(u.id)} className={`text-xs h-8 ${u.role === 'admin' ? 'text-destructive hover:text-destructive' : ''}`}>
+                              {u.role === 'admin' ? <><ShieldOff className="w-3.5 h-3.5 mr-1.5" />Remove Admin</> : <><Shield className="w-3.5 h-3.5 mr-1.5" />Make Admin</>}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
