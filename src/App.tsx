@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { FloatingOffer } from "@/components/conversion/FloatingOffer";
@@ -80,7 +81,9 @@ function App() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AnimatedRoutes />
+            <AuthProvider>
+              <AnimatedRoutes />
+            </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>

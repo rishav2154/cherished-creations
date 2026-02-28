@@ -1,100 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { Mail, Lock, Eye, EyeOff, Loader2, Shield, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, Shield } from 'lucide-react';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resetMode, setResetMode] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, loading: authLoading } = useAdminAuth();
+  const { adminLogin, user, isAdmin, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    if (!authLoading && user && isAdmin) {
-      navigate('/admin');
-    }
-  }, [user, isAdmin, authLoading, navigate]);
+  // Redirect if already admin
+  if (!authLoading && user && isAdmin) {
+    navigate('/admin');
+    return null;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      await adminLogin(email, password);
+      toast({
+        title: 'Welcome Admin!',
+        description: 'You have successfully logged in.',
       });
-
-      if (error) throw error;
-
-      // Check if user is admin after login
-      const { data: { user: loggedInUser } } = await supabase.auth.getUser();
-      if (loggedInUser) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', loggedInUser.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        if (!roleData) {
-          await supabase.auth.signOut();
-          toast({
-            title: 'Access Denied',
-            description: 'You do not have admin privileges.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        toast({
-          title: 'Welcome Admin!',
-          description: 'You have successfully logged in.',
-        });
-        navigate('/admin');
-      }
+      navigate('/admin');
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/admin/reset-password`,
-      });
-
-      if (error) throw error;
-
-      setResetSent(true);
-      toast({
-        title: 'Reset Email Sent',
-        description: 'Check your email for the password reset link.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
+        description: error.message || 'Login failed',
         variant: 'destructive',
       });
     } finally {
@@ -122,145 +65,68 @@ const AdminLogin = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Shield className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold">
-              {resetMode ? 'Reset Password' : 'Admin Panel'}
-            </h1>
+            <h1 className="text-2xl font-bold">Admin Panel</h1>
             <p className="text-muted-foreground mt-2">
-              {resetMode
-                ? resetSent
-                  ? 'Check your email for the reset link'
-                  : 'Enter your email to receive a reset link'
-                : 'Sign in to access the admin dashboard'}
+              Sign in to access the admin dashboard
             </p>
           </div>
 
-          {resetMode ? (
-            resetSent ? (
-              <div className="text-center space-y-4">
-                <div className="p-4 bg-primary/10 rounded-lg">
-                  <Mail className="w-12 h-12 text-primary mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    We've sent a password reset link to <strong>{email}</strong>
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setResetMode(false);
-                    setResetSent(false);
-                    setEmail('');
-                  }}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Login
-                </Button>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <div className="relative mt-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 h-12"
+                  required
+                />
               </div>
-            ) : (
-              <form onSubmit={handlePasswordReset} className="space-y-4">
-                <div>
-                  <Label htmlFor="reset-email">Email</Label>
-                  <div className="relative mt-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="admin@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12"
-                      required
-                    />
-                  </div>
-                </div>
+            </div>
 
-                <Button type="submit" className="w-full h-12 btn-luxury" disabled={loading}>
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    'Send Reset Link'
-                  )}
-                </Button>
-
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <div className="relative mt-1">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 h-12"
+                  required
+                  minLength={6}
+                />
                 <button
                   type="button"
-                  onClick={() => setResetMode(false)}
-                  className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <ArrowLeft className="w-4 h-4 inline mr-1" />
-                  Back to Login
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
-              </form>
-            )
-          ) : (
-            <>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative mt-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="admin@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-12"
-                      required
-                    />
-                  </div>
-                </div>
+              </div>
+            </div>
 
-                <div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <button
-                      type="button"
-                      onClick={() => setResetMode(true)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <div className="relative mt-1">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-12"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
+            <Button type="submit" className="w-full h-12 btn-luxury" disabled={loading}>
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                'Sign In as Admin'
+              )}
+            </Button>
+          </form>
 
-                <Button type="submit" className="w-full h-12 btn-luxury" disabled={loading}>
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    'Sign In as Admin'
-                  )}
-                </Button>
-              </form>
-
-              <button
-                onClick={() => navigate('/')}
-                className="w-full mt-4 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                ← Back to Store
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => navigate('/')}
+            className="w-full mt-4 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ← Back to Store
+          </button>
         </div>
       </motion.div>
     </div>
