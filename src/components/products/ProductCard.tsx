@@ -56,7 +56,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
         transition={{ delay: index * 0.04, duration: 0.3 }}
       >
         <Link to={`/product/${product.id}`}>
-          <div className="group cursor-pointer bg-card rounded-2xl border border-border/40 overflow-hidden hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 transition-all duration-300 hover:-translate-y-1">
+          <div className="group cursor-pointer bg-card rounded-2xl border border-border/50 overflow-hidden hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 transition-all duration-300 hover:-translate-y-1 shadow-sm">
             {/* Image */}
             <div className="relative aspect-square overflow-hidden bg-muted/20">
               <img

@@ -41,7 +41,7 @@ export const Footer = () => {
       {/* Gradient Top Border */}
       <div className="h-1 bg-accent-gradient" />
 
-      <div className="bg-card">
+      <div className="bg-muted/40">
         <div className="container mx-auto px-4 lg:px-8 py-10 sm:py-16">
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-8 sm:gap-12">
             {/* Brand Column */}
