@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiGet } from '@/lib/api';
 
 export interface Product {
   id: string;
@@ -18,26 +18,28 @@ export interface Product {
   customizationOptions?: {
     allowText?: boolean;
     allowImage?: boolean;
+    canAddText?: boolean;
+    canAddImage?: boolean;
     maxTextLength?: number;
   };
 }
 
-const mapDbProductToProduct = (dbProduct: any): Product => {
-  const customizationOptions = dbProduct.customization_options || {};
+const mapApiProduct = (p: any): Product => {
+  const co = p.customization_options || p.customizationOptions || {};
   return {
-    id: dbProduct.id,
-    name: dbProduct.name,
-    description: dbProduct.description || '',
-    price: dbProduct.price,
-    originalPrice: dbProduct.original_price || undefined,
-    category: dbProduct.category,
-    images: dbProduct.images?.length > 0 ? dbProduct.images : [dbProduct.image_url || '/placeholder.svg'],
-    rating: 4.5, // Default rating, can be calculated from reviews later
-    reviewCount: 0, // Default, can be fetched from reviews table
-    isCustomizable: customizationOptions.allowText || customizationOptions.allowImage || false,
-    tags: dbProduct.tags || [],
-    stock: dbProduct.stock || 0,
-    customizationOptions,
+    id: p.id,
+    name: p.name,
+    description: p.description || '',
+    price: Number(p.price),
+    originalPrice: p.original_price ? Number(p.original_price) : undefined,
+    category: p.category,
+    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [p.image_url || '/placeholder.svg'],
+    rating: 4.5,
+    reviewCount: 0,
+    isCustomizable: co.allowText || co.allowImage || co.canAddText || co.canAddImage || false,
+    tags: Array.isArray(p.tags) ? p.tags : [],
+    stock: p.stock || 0,
+    customizationOptions: co,
   };
 };
 
@@ -45,21 +47,12 @@ export const useProducts = (category?: string) => {
   return useQuery({
     queryKey: ['products', category],
     queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
+      const data = await apiGet<any[]>('/api/products');
+      let products = (data || []).map(mapApiProduct);
       if (category) {
-        query = query.eq('category', category);
+        products = products.filter(p => p.category === category);
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      return (data || []).map(mapDbProductToProduct);
+      return products;
     },
   });
 };
@@ -68,28 +61,10 @@ export const useFeaturedProducts = () => {
   return useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .contains('tags', ['bestseller'])
-        .limit(4);
-
-      if (error) throw error;
-
-      // If no bestsellers, get any 4 products
-      if (!data || data.length === 0) {
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('is_active', true)
-          .limit(4);
-
-        if (fallbackError) throw fallbackError;
-        return (fallbackData || []).map(mapDbProductToProduct);
-      }
-
-      return data.map(mapDbProductToProduct);
+      const data = await apiGet<any[]>('/api/products');
+      const products = (data || []).map(mapApiProduct);
+      const bestsellers = products.filter(p => p.tags.includes('bestseller')).slice(0, 4);
+      return bestsellers.length > 0 ? bestsellers : products.slice(0, 4);
     },
   });
 };
@@ -98,16 +73,9 @@ export const useProduct = (id: string) => {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await apiGet<any>(`/api/products/${id}`);
       if (!data) return null;
-
-      return mapDbProductToProduct(data);
+      return mapApiProduct(data);
     },
     enabled: !!id,
   });

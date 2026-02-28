@@ -1,207 +1,71 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiGet, apiPatch } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Users, Shield, ShieldOff } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-interface Profile {
-  id: string;
-  user_id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-  avatar_url: string | null;
-  created_at: string | null;
-}
-
-interface UserRole {
-  user_id: string;
-  role: string;
-}
-
 const AdminUsers = () => {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchData = async () => {
+  const fetchUsers = async () => {
     try {
-      const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('user_id, role'),
-      ]);
-
-      if (profilesRes.error) throw profilesRes.error;
-      if (rolesRes.error) throw rolesRes.error;
-
-      setProfiles(profilesRes.data || []);
-      setUserRoles(rolesRes.data || []);
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+      const data = await apiGet<any[]>('/api/admin/users', true);
+      setUsers(data || []);
+    } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
-  const getUserRole = (userId: string) => {
-    const role = userRoles.find((r) => r.user_id === userId);
-    return role?.role || 'user';
-  };
-
-  const handleToggleAdmin = async (userId: string, currentRole: string) => {
+  const handleToggleAdmin = async (userId: string) => {
     try {
-      if (currentRole === 'admin') {
-        // Remove admin role
-        const { error } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', userId)
-          .eq('role', 'admin');
-
-        if (error) throw error;
-        toast({ title: 'Admin role removed' });
-      } else {
-        // Add admin role
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role: 'admin' });
-
-        if (error) throw error;
-        toast({ title: 'Admin role granted' });
-      }
-
-      fetchData();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
+      await apiPatch(`/api/admin/users/${userId}/toggle-admin`, {}, true);
+      toast({ title: 'Role updated' });
+      fetchUsers();
+    } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
   };
 
   const getInitials = (name: string | null, email: string | null) => {
-    if (name) {
-      return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
-    }
+    if (name) return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
     return email?.charAt(0).toUpperCase() || 'U';
   };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground">Manage user accounts and roles</p>
-        </div>
-
+        <div><h1 className="text-3xl font-bold">Users</h1><p className="text-muted-foreground">Manage user accounts and roles</p></div>
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              All Users ({profiles.length})
-            </CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />All Users ({users.length})</CardTitle></CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin" />
-              </div>
-            ) : profiles.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">No users found</p>
-            ) : (
+            {loading ? <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin" /></div> : users.length === 0 ? <p className="text-center py-8 text-muted-foreground">No users</p> : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Email</TableHead><TableHead>Joined</TableHead><TableHead>Role</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                 <TableBody>
-                  {profiles.map((profile) => {
-                    const role = getUserRole(profile.user_id);
-                    return (
-                      <TableRow key={profile.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={profile.avatar_url || undefined} />
-                              <AvatarFallback>
-                                {getInitials(profile.full_name, profile.email)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">
-                              {profile.full_name || 'No name'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{profile.email || 'N/A'}</TableCell>
-                        <TableCell>{profile.phone || 'N/A'}</TableCell>
-                        <TableCell>
-                          {profile.created_at
-                            ? new Date(profile.created_at).toLocaleDateString()
-                            : 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={role === 'admin' ? 'default' : 'secondary'}
-                            className={
-                              role === 'admin'
-                                ? 'bg-primary'
-                                : ''
-                            }
-                          >
-                            {role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleToggleAdmin(profile.user_id, role)}
-                            className={role === 'admin' ? 'text-destructive' : ''}
-                          >
-                            {role === 'admin' ? (
-                              <>
-                                <ShieldOff className="w-4 h-4 mr-1" />
-                                Remove Admin
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="w-4 h-4 mr-1" />
-                                Make Admin
-                              </>
-                            )}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {users.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10"><AvatarImage src={u.avatar_url || undefined} /><AvatarFallback>{getInitials(u.name, u.email)}</AvatarFallback></Avatar>
+                          <span className="font-medium">{u.name || 'No name'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</TableCell>
+                      <TableCell><Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={u.role === 'admin' ? 'bg-primary' : ''}>{u.role}</Badge></TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => handleToggleAdmin(u.id)} className={u.role === 'admin' ? 'text-destructive' : ''}>
+                          {u.role === 'admin' ? <><ShieldOff className="w-4 h-4 mr-1" />Remove Admin</> : <><Shield className="w-4 h-4 mr-1" />Make Admin</>}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}
