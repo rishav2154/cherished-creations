@@ -112,7 +112,7 @@ const OfferBanner = () => (
           { img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80", label: "TRENDING", title: "Custom Tees", sub: "From ₹299", link: "/shop?category=tshirts", gradient: "from-black/70 via-black/50 to-transparent" },
           { img: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80", label: "BEST SELLER", title: "Phone Covers", sub: "From ₹199", link: "/shop?category=phone-covers", gradient: "from-black/70 via-black/50 to-transparent" },
         ].map((item, i) => (
-          <Link key={i} to={item.link} className="relative rounded-2xl overflow-hidden aspect-[3/2] group border border-border/30 shadow-sm hover:shadow-lg transition-shadow">
+          <Link key={i} to={item.link} className="relative rounded-2xl overflow-hidden aspect-[3/2] group border border-border shadow-sm hover:shadow-lg transition-shadow">
             <img
               src={item.img}
               alt={item.title}

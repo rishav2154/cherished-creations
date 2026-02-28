@@ -31,7 +31,7 @@ export const CategoriesSection = () => {
               to={`/shop?category=${category.id}`}
               className="flex flex-col items-center gap-2 min-w-[68px] sm:min-w-[90px] group"
             >
-              <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full overflow-hidden ring-2 ring-border/40 ring-offset-2 ring-offset-background group-hover:ring-accent/60 transition-all duration-300 group-hover:scale-110 shadow-lg">
+              <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full overflow-hidden ring-2 ring-border ring-offset-2 ring-offset-background group-hover:ring-accent/60 transition-all duration-300 group-hover:scale-110 shadow-lg">
                 <img
                   src={categoryImages[category.id]}
                   alt={category.name}
