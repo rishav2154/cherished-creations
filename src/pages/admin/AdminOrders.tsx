@@ -1,105 +1,91 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useInvoiceDownload } from '@/hooks/useInvoiceDownload';
-import { Loader2, Eye, Package, FileText, User } from 'lucide-react';
+import { Loader2, Eye, Package, Download, FileText } from 'lucide-react';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
-import { apiFetch } from '@/lib/api';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
-  processing: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
-  shipped: 'bg-purple-500/10 text-purple-600 border-purple-500/30',
-  delivered: 'bg-green-500/10 text-green-600 border-green-500/30',
-  cancelled: 'bg-red-500/10 text-red-600 border-red-500/30',
+  pending: 'bg-yellow-500/10 text-yellow-500',
+  processing: 'bg-blue-500/10 text-blue-500',
+  shipped: 'bg-purple-500/10 text-purple-500',
+  delivered: 'bg-green-500/10 text-green-500',
+  cancelled: 'bg-red-500/10 text-red-500',
 };
 
-interface Order {
-  id: string;
-  user_id: string;
-  status: string;
-  payment_method: string;
-  payment_status: string;
-  razorpay_payment_id?: string | null;
-  razorpay_order_id?: string | null;
-  razorpay_signature?: string | null;
-  created_at: string;
-  subtotal: number;
-  tax: number;
-  shipping_charge: number;
-  discount: number;
-  final_amount: number;
-  address: string;
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string;
-  items_count: number;
-  items_total: number;
-}
-
-interface OrderItem {
-  id: string;
-  product_name: string;
-  quantity: number;
-  price: number | string;
-  customization?: {
-    imageUrl?: string;
-    text?: string;
-  } | null;
-}
-
 const AdminOrders = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [itemsLoading, setItemsLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
   const { toast } = useToast();
   const { downloadInvoice, downloading } = useInvoiceDownload();
 
+  const downloadImage = async (imageUrl: string, orderNumber: string, itemName: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const extension = blob.type.split('/')[1] || 'png';
+      link.download = `${orderNumber}_${itemName.replace(/\s+/g, '-')}_customization.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({
+        title: 'Downloaded',
+        description: 'Customization image saved successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Download failed',
+        description: 'Could not download the image',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const fetchOrders = async () => {
     try {
-      const data = await apiFetch('/admin/orders');
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      const safeOrders: Order[] = (Array.isArray(data) ? data : []).map((order: any) => ({
-        id: order?.id || '',
-        user_id: order?.user_id || '',
-        status: order?.status || 'pending',
-        payment_method: order?.payment_method || 'cod',
-        payment_status: order?.payment_status || 'pending',
-        razorpay_payment_id: order?.razorpay_payment_id || null,
-        razorpay_order_id: order?.razorpay_order_id || null,
-        razorpay_signature: order?.razorpay_signature || null,
-        created_at: order?.created_at || new Date().toISOString(),
-        subtotal: Number(order?.subtotal) || 0,
-        tax: Number(order?.tax) || 0,
-        shipping_charge: Number(order?.shipping_charge) || 0,
-        discount: Number(order?.discount) || 0,
-        final_amount: Number(order?.final_amount) || 0,
-        address: order?.address || '{}',
-        customer_name: order?.customer_name || 'Customer',
-        customer_phone: order?.customer_phone || 'N/A',
-        customer_email: order?.customer_email || 'N/A',
-        items_count: Number(order?.items_count) || 0,
-        items_total: Number(order?.items_total) || 0,
-      }));
-
-      setOrders(safeOrders);
-    } catch (e: any) {
-      console.error('Fetch orders error:', e);
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
-      setOrders([]);
+      if (error) throw error;
+      setOrders(data || []);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -109,350 +95,355 @@ const AdminOrders = () => {
     fetchOrders();
   }, []);
 
-  const formatCurrency = (value: any): string => {
-    const num = Number(value);
-    return `₹${isNaN(num) ? 0 : num.toLocaleString('en-IN')}`;
-  };
-
-  const getCustomerName = (order: Order | null): string => {
-    return order?.customer_name || 'Customer';
-  };
-
-  const getOrderNumber = (order: Order | null): string => {
-    return `ORD-${order?.id.slice(-8).toUpperCase()}`;
-  };
-
-  const handleStatusChange = async (orderId: string, status: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      await apiFetch(`/admin/orders/${orderId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Add tracking entry
+      await supabase.from('order_tracking').insert({
+        order_id: orderId,
+        status: newStatus,
+        description: `Order status updated to ${newStatus}`,
       });
-      toast({ title: '✅ Status Updated!' });
-      await fetchOrders();
-    } catch (e: any) {
-      toast({ title: '❌ Update Failed', description: e.message, variant: 'destructive' });
+
+      toast({
+        title: 'Status Updated',
+        description: `Order status changed to ${newStatus}`,
+      });
+
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 
-  const viewOrderDetails = async (order: Order) => {
+  const viewOrderDetails = async (order: any) => {
     setSelectedOrder(order);
-    setItemsLoading(true);
-    try {
-      const items = await apiFetch(`/admin/orders/${order.id}/items`);
-      setOrderItems(Array.isArray(items) ? items : []);
-    } catch (e: any) {
-      toast({ title: 'Error', description: 'Failed to load order details', variant: 'destructive' });
-      setOrderItems([]);
-    } finally {
-      setItemsLoading(false);
-    }
-  };
-
-  const parseAddress = (order: Order | null) => {
-    if (!order?.address) return {};
-    try {
-      return typeof order.address === 'string' ? JSON.parse(order.address) : order.address;
-    } catch {
-      return {};
-    }
+    const { data } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', order.id);
+    setOrderItems(data || []);
   };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Orders Management</h1>
-            <p className="text-muted-foreground mt-2">Manage customer orders and update delivery status</p>
-          </div>
-          <div className="text-sm text-muted-foreground font-medium">
-            {orders.length} Total Orders
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold">Orders</h1>
+          <p className="text-muted-foreground">Manage customer orders</p>
         </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-6">
-            <CardTitle className="flex gap-3 items-center text-xl">
-              <Package className="w-6 h-6" />
-              Recent Orders
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              All Orders
             </CardTitle>
           </CardHeader>
-
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 animate-spin mr-3 text-primary" />
-                <span className="text-muted-foreground">Loading orders...</span>
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
               </div>
             ) : orders.length === 0 ? (
-              <div className="text-center py-16">
-                <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No orders found</h3>
-                <p className="text-sm text-muted-foreground">Orders will appear here when customers place them.</p>
-              </div>
+              <p className="text-center py-8 text-muted-foreground">No orders found</p>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b">
-                      <TableHead className="w-24 font-semibold">Order #</TableHead>
-                      <TableHead className="font-semibold">Customer</TableHead>
-                      <TableHead className="w-32 font-semibold">Date</TableHead>
-                      <TableHead className="w-32 font-semibold text-right">Total</TableHead>
-                      <TableHead className="w-36 font-semibold">Payment</TableHead>
-                      <TableHead className="w-36 font-semibold">Status</TableHead>
-                      <TableHead className="w-32 text-right font-semibold">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id} className="hover:bg-muted/30 border-b last:border-b-0">
-                        <TableCell className="font-mono font-semibold text-primary/90">
-                          {getOrderNumber(order)}
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground/90">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            {getCustomerName(order)}
-                          </div>
-                          {order.customer_phone !== 'N/A' && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {order.customer_phone}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(order.created_at).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </TableCell>
-                        <TableCell className="font-mono font-semibold text-lg text-right">
-                          {formatCurrency(order.final_amount)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={order.payment_method === 'cod' ? 'secondary' : 'default'}
-                            className={`${
-                              order.payment_method === 'cod' 
-                                ? 'bg-amber-100 text-amber-800 border-amber-200' 
-                                : 'bg-green-100 text-green-800 border-green-200'
-                            }`}
-                          >
-                            {order.payment_method.toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={order.status}
-                            onValueChange={(value) => handleStatusChange(order.id, value)}
-                          >
-                            <SelectTrigger className="w-36 h-10">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.keys(statusColors).map((status) => (
-                                <SelectItem key={status} value={status}>
-                                  <Badge className={`${statusColors[status]} px-2 py-0.5 mr-2`}>
-                                    {status.toUpperCase()}
-                                  </Badge>
-                                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order #</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.order_number}</TableCell>
+                      <TableCell>
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>₹{Number(order.total).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{order.payment_status}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) => handleStatusChange(order.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="processing">Processing</SelectItem>
+                            <SelectItem value="shipped">Shipped</SelectItem>
+                            <SelectItem value="delivered">Delivered</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
                           <Button
+                            variant="ghost"
                             size="sm"
-                            variant="outline"
                             onClick={() => viewOrderDetails(order)}
-                            className="h-9 px-3"
+                            title="View Details"
                           >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
+                            <Eye className="w-4 h-4" />
                           </Button>
                           <Button
+                            variant="ghost"
                             size="sm"
-                            variant="outline"
                             onClick={() => downloadInvoice(order.id)}
                             disabled={downloading === order.id}
-                            className="h-9 px-3"
+                            title="Download Invoice"
                           >
                             {downloading === order.id ? (
-                              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <FileText className="w-4 h-4 mr-1" />
+                              <FileText className="w-4 h-4" />
                             )}
-                            Invoice
                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
 
-        {/* Order Details Modal */}
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] p-1">
-            <DialogHeader className="p-6 border-b bg-muted/30">
-              <div className="flex items-start justify-between">
-                <div>
-                  <DialogTitle className="text-2xl font-bold">
-                    Order #{getOrderNumber(selectedOrder)}
-                  </DialogTitle>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                    <span>Customer: {getCustomerName(selectedOrder)}</span>
-                    <span>Items: {selectedOrder?.items_count || 0}</span>
-                    <Badge className={statusColors[selectedOrder?.status || 'pending']}>
-                      {selectedOrder?.status?.toUpperCase()}
-                    </Badge>
-                    <span className="font-bold text-lg text-primary">
-                      {formatCurrency(selectedOrder?.final_amount)}
-                    </span>
-                  </div>
-                </div>
-                {selectedOrder?.id && (
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle>Order Details - {selectedOrder?.order_number}</DialogTitle>
+                {selectedOrder && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => downloadInvoice(selectedOrder.id)}
-                    disabled={downloading === selectedOrder.id}
+                    disabled={downloading === selectedOrder?.id}
+                    className="gap-2"
                   >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Download Invoice
+                    {downloading === selectedOrder?.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileText className="w-4 h-4" />
+                    )}
+                    Invoice
                   </Button>
                 )}
               </div>
             </DialogHeader>
-
-            <div className="p-6 overflow-y-auto max-h-[70vh] space-y-6">
-              {/* Breakdown */}
-              <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border rounded-2xl p-6">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  💰 Order Breakdown
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            {selectedOrder && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-muted-foreground mb-1">Subtotal</div>
-                    <div className="font-bold text-lg">{formatCurrency(selectedOrder?.subtotal)}</div>
-                  </div>
-                  {(selectedOrder?.discount ?? 0) > 0 && (
-                    <div className="text-red-600">
-                      <div className="text-muted-foreground mb-1">Discount</div>
-                      <div className="font-bold text-lg">- {formatCurrency(selectedOrder?.discount)}</div>
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-muted-foreground mb-1">Tax</div>
-                    <div className="font-bold text-lg">{formatCurrency(selectedOrder?.tax)}</div>
+                    <p className="text-sm text-muted-foreground">Order Date</p>
+                    <p className="font-medium">
+                      {new Date(selectedOrder.created_at).toLocaleString()}
+                    </p>
                   </div>
                   <div>
-                    <div className="text-muted-foreground mb-1">Shipping</div>
-                    <div className="font-bold text-lg">
-                      {formatCurrency(selectedOrder?.shipping_charge)}
-                    </div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge className={statusColors[selectedOrder.status]}>
+                      {selectedOrder.status}
+                    </Badge>
                   </div>
                 </div>
-                <div className="border-t pt-3 mt-4">
-                  <div className="flex justify-between text-2xl font-bold text-primary">
-                    <span>Total</span>
-                    <span>{formatCurrency(selectedOrder?.final_amount)}</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Address & Payment */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-lg flex items-center gap-2">
-                    📍 Shipping Address
-                  </h4>
-                  <div className="bg-muted/50 p-4 rounded-xl text-sm">
-                    <div className="font-medium">{getCustomerName(selectedOrder)}</div>
-                    <div>{parseAddress(selectedOrder)?.address_line1}</div>
-                    {parseAddress(selectedOrder)?.address_line2 && (
-                      <div>{parseAddress(selectedOrder)?.address_line2}</div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Shipping Address</p>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="font-medium">{selectedOrder.shipping_address?.full_name}</p>
+                    <p className="text-sm">{selectedOrder.shipping_address?.address_line1}</p>
+                    {selectedOrder.shipping_address?.address_line2 && (
+                      <p className="text-sm">{selectedOrder.shipping_address.address_line2}</p>
                     )}
-                    <div>{parseAddress(selectedOrder)?.city}, {parseAddress(selectedOrder)?.state}</div>
-                    <div>Pin: {parseAddress(selectedOrder)?.pincode}</div>
-                    <div className="text-muted-foreground mt-2">{selectedOrder?.customer_phone}</div>
+                    <p className="text-sm">
+                      {selectedOrder.shipping_address?.city}, {selectedOrder.shipping_address?.state} - {selectedOrder.shipping_address?.pincode}
+                    </p>
+                    <p className="text-sm">Phone: {selectedOrder.shipping_address?.phone}</p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-lg flex items-center gap-2">
-                    💳 Payment Info
-                  </h4>
-                  <div className="bg-muted/50 p-4 rounded-xl text-sm space-y-2">
-                    <div>Method: <Badge>{selectedOrder?.payment_method.toUpperCase()}</Badge></div>
-                    <div>Status: <Badge variant={selectedOrder?.payment_status === 'paid' ? 'default' : 'secondary'}>{selectedOrder?.payment_status}</Badge></div>
-                    {selectedOrder?.razorpay_payment_id && (
-                      <div>ID: {selectedOrder.razorpay_payment_id}</div>
-                    )}
+                {/* Delivery Instructions from notes */}
+                {selectedOrder.notes && selectedOrder.notes.includes('Delivery:') && (
+                  <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                    <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1">
+                      📦 Delivery Instructions
+                    </p>
+                    <p className="text-sm text-foreground">
+                      {selectedOrder.notes.split('Delivery:')[1]?.split('|')[0]?.trim()}
+                    </p>
                   </div>
-                </div>
-              </div>
+                )}
 
-              {/* Order Items */}
-              {itemsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin mr-3" />
-                  Loading order items...
-                </div>
-              ) : orderItems.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No items in this order
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    📦 Order Items ({orderItems.length})
-                  </h3>
-                  {orderItems.map((item) => (
-                    <div key={item.id} className="border rounded-xl p-6 hover:shadow-md transition-all">
-                      <div className="flex items-start gap-6">
-                        <div className="flex-1">
-                          <h4 className="font-bold text-xl mb-2">{item.product_name}</h4>
-                          <div className="flex items-center gap-4 text-sm mb-4">
-                            <span className="text-muted-foreground">Qty: {item.quantity}</span>
-                            <span className="font-semibold">
-                              ₹{Number(item.price || 0).toLocaleString('en-IN')}
-                            </span>
-                            <span className="font-bold text-lg text-primary">
-                              Item Total: ₹{(item.quantity * Number(item.price || 0)).toLocaleString('en-IN')}
-                            </span>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Order Items</p>
+                  <div className="space-y-4">
+                    {orderItems.map((item) => {
+                      const customization = item.customization as { 
+                        imageUrl?: string; 
+                        text?: string; 
+                        color?: string;
+                        designUrl?: string;
+                        brand?: string;
+                        model?: string;
+                        coverType?: string;
+                        specialInstructions?: string;
+                      } | null;
+                      const imageToDownload = customization?.imageUrl || customization?.designUrl;
+                      return (
+                        <div
+                          key={item.id}
+                          className="p-4 rounded-lg bg-muted/50 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {item.product_image && (
+                                <img
+                                  src={item.product_image}
+                                  alt={item.product_name}
+                                  className="w-12 h-12 rounded object-cover"
+                                />
+                              )}
+                              <div>
+                                <p className="font-medium">{item.product_name}</p>
+                                <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                              </div>
+                            </div>
+                            <p className="font-medium">₹{Number(item.price).toFixed(2)}</p>
                           </div>
-                          {item.customization?.text && (
-                            <div className="bg-green-50 border border-green-100 p-3 rounded-lg mb-3">
-                              <span className="font-medium">✏️ Custom Text: </span>
-                              <span className="font-mono bg-background px-3 py-1 rounded border text-sm">
-                                "{item.customization.text}"
-                              </span>
+                          
+                          {/* Customization Details */}
+                          {customization && (
+                            <div className="border-t border-border pt-3">
+                              <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Customer Customization</p>
+                              <div className="flex flex-wrap gap-4">
+                                {/* Phone Cover Details */}
+                                {(customization.brand || customization.model) && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Device</p>
+                                    <p className="text-sm font-medium bg-background px-3 py-2 rounded-md border border-border">
+                                      {customization.brand} {customization.model}
+                                      {customization.coverType && ` (${customization.coverType})`}
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {imageToDownload && (
+                                  <div className="space-y-2">
+                                    <p className="text-xs text-muted-foreground">Uploaded Design</p>
+                                    <div className="relative group">
+                                      <a 
+                                        href={imageToDownload} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="block"
+                                      >
+                                        <img
+                                          src={imageToDownload}
+                                          alt="Customer uploaded"
+                                          className="w-24 h-24 rounded-lg object-cover border border-border hover:border-accent transition-colors cursor-pointer"
+                                        />
+                                      </a>
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-7 text-xs gap-1 shadow-md"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          downloadImage(imageToDownload, selectedOrder.order_number, item.product_name);
+                                        }}
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        Save
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                                {customization.text && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Custom Text</p>
+                                    <p className="text-sm font-medium bg-background px-3 py-2 rounded-md border border-border">
+                                      "{customization.text}"
+                                    </p>
+                                  </div>
+                                )}
+                                {customization.color && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">Selected Color</p>
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="w-6 h-6 rounded-full border border-border"
+                                        style={{ backgroundColor: customization.color }}
+                                      />
+                                      <span className="text-xs font-mono">{customization.color}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Special Instructions */}
+                              {customization.specialInstructions && (
+                                <div className="mt-3 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                                  <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1">
+                                    📝 Special Instructions
+                                  </p>
+                                  <p className="text-sm text-foreground">
+                                    {customization.specialInstructions}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                        {item.customization?.imageUrl && (
-                          <div className="flex flex-col items-end gap-3 ml-auto">
-                            <img
-                              src={item.customization.imageUrl}
-                              alt="Custom design"
-                              className="w-32 h-32 rounded-2xl object-cover border-2 border-border shadow-lg"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>₹{Number(selectedOrder.subtotal).toFixed(2)}</span>
+                  </div>
+                  {selectedOrder.discount > 0 && (
+                    <div className="flex justify-between text-green-500">
+                      <span>Discount</span>
+                      <span>-₹{Number(selectedOrder.discount).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Shipping</span>
+                    <span>₹{Number(selectedOrder.shipping).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span>₹{Number(selectedOrder.total).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

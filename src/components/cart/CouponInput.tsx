@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tag, X, Loader2, Check } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
-import { apiPost } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const CouponInput = () => {
@@ -23,12 +23,66 @@ export const CouponInput = () => {
 
     setLoading(true);
     try {
-      const subtotal = getTotalPrice();
-      const coupon = await apiPost<any>('/api/coupons/apply', {
-        code: code.toUpperCase().trim(),
-        subtotal,
-      });
+      const { data: coupon, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', code.toUpperCase().trim())
+        .eq('is_active', true)
+        .maybeSingle();
 
+      if (error) throw error;
+
+      if (!coupon) {
+        toast({
+          title: 'Invalid Coupon',
+          description: 'This coupon code is not valid.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check validity dates
+      const now = new Date();
+      if (coupon.valid_from && new Date(coupon.valid_from) > now) {
+        toast({
+          title: 'Coupon Not Active',
+          description: 'This coupon is not yet active.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (coupon.valid_until && new Date(coupon.valid_until) < now) {
+        toast({
+          title: 'Coupon Expired',
+          description: 'This coupon has expired.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check usage limit
+      if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
+        toast({
+          title: 'Coupon Exhausted',
+          description: 'This coupon has reached its usage limit.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check minimum order amount
+      const subtotal = getTotalPrice();
+      if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
+        toast({
+          title: 'Minimum Order Not Met',
+          description: `Minimum order of ₹${coupon.min_order_amount} required for this coupon.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Apply coupon
       applyCoupon({
         code: coupon.code,
         discountType: coupon.discount_type as 'percentage' | 'fixed' | 'free_shipping',
@@ -43,9 +97,10 @@ export const CouponInput = () => {
         description: coupon.description || `${coupon.code} has been applied to your order.`,
       });
     } catch (error: any) {
+      console.error('Coupon error:', error);
       toast({
-        title: 'Invalid Coupon',
-        description: error.message || 'This coupon code is not valid.',
+        title: 'Error',
+        description: 'Failed to apply coupon. Please try again.',
         variant: 'destructive',
       });
     } finally {

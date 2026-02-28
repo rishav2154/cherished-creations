@@ -14,10 +14,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading admin panel...</p>
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -27,12 +24,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 flex">
+    <div className="min-h-screen bg-background flex">
       <AdminSidebar />
-      <main className="flex-1 p-6 lg:p-8 overflow-auto">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
+      <main className="flex-1 p-8 overflow-auto">
+        {children}
       </main>
     </div>
   );

@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Eye, EyeOff, Loader2, Shield, CheckCircle } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
 
 const AdminResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -16,21 +16,25 @@ const AdminResetPassword = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [params] = useSearchParams();
 
-  const token = params.get('token');
+  useEffect(() => {
+    // Check if we have a valid session from the reset link
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: 'Invalid or Expired Link',
+          description: 'Please request a new password reset link.',
+          variant: 'destructive',
+        });
+        navigate('/admin/login');
+      }
+    };
+    checkSession();
+  }, [navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!token) {
-      toast({
-        title: 'Invalid Link',
-        description: 'Reset token missing.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     if (password !== confirmPassword) {
       toast({
@@ -50,13 +54,14 @@ const AdminResetPassword = () => {
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      await apiFetch('/admin/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({ token, password }),
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password,
       });
+
+      if (error) throw error;
 
       setSuccess(true);
       toast({
@@ -64,11 +69,14 @@ const AdminResetPassword = () => {
         description: 'Your password has been successfully reset.',
       });
 
-      setTimeout(() => navigate('/admin/login'), 2000);
-    } catch (err: any) {
+      // Redirect to admin login after 2 seconds
+      setTimeout(() => {
+        navigate('/admin/login');
+      }, 2000);
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: err.message,
+        description: error.message,
         variant: 'destructive',
       });
     } finally {
@@ -96,7 +104,9 @@ const AdminResetPassword = () => {
               {success ? 'Password Reset!' : 'Set New Password'}
             </h1>
             <p className="text-muted-foreground mt-2">
-              {success ? 'Redirecting you to login...' : 'Enter your new password below'}
+              {success
+                ? 'Redirecting you to login...'
+                : 'Enter your new password below'}
             </p>
           </div>
 
@@ -123,9 +133,9 @@ const AdminResetPassword = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? <EyeOff /> : <Eye />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
@@ -148,13 +158,17 @@ const AdminResetPassword = () => {
               </div>
 
               <Button type="submit" className="w-full h-12 btn-luxury" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : 'Update Password'}
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Update Password'
+                )}
               </Button>
 
               <button
                 type="button"
                 onClick={() => navigate('/admin/login')}
-                className="w-full text-center text-sm text-muted-foreground"
+                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 ← Back to Login
               </button>

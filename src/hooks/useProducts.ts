@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiGet } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Product {
   id: string;
@@ -18,28 +18,26 @@ export interface Product {
   customizationOptions?: {
     allowText?: boolean;
     allowImage?: boolean;
-    canAddText?: boolean;
-    canAddImage?: boolean;
     maxTextLength?: number;
   };
 }
 
-const mapApiProduct = (p: any): Product => {
-  const co = p.customization_options || p.customizationOptions || {};
+const mapDbProductToProduct = (dbProduct: any): Product => {
+  const customizationOptions = dbProduct.customization_options || {};
   return {
-    id: p.id,
-    name: p.name,
-    description: p.description || '',
-    price: Number(p.price),
-    originalPrice: p.original_price ? Number(p.original_price) : undefined,
-    category: p.category,
-    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [p.image_url || '/placeholder.svg'],
-    rating: 4.5,
-    reviewCount: 0,
-    isCustomizable: co.allowText || co.allowImage || co.canAddText || co.canAddImage || false,
-    tags: Array.isArray(p.tags) ? p.tags : [],
-    stock: p.stock || 0,
-    customizationOptions: co,
+    id: dbProduct.id,
+    name: dbProduct.name,
+    description: dbProduct.description || '',
+    price: dbProduct.price,
+    originalPrice: dbProduct.original_price || undefined,
+    category: dbProduct.category,
+    images: dbProduct.images?.length > 0 ? dbProduct.images : [dbProduct.image_url || '/placeholder.svg'],
+    rating: 4.5, // Default rating, can be calculated from reviews later
+    reviewCount: 0, // Default, can be fetched from reviews table
+    isCustomizable: customizationOptions.allowText || customizationOptions.allowImage || false,
+    tags: dbProduct.tags || [],
+    stock: dbProduct.stock || 0,
+    customizationOptions,
   };
 };
 
@@ -47,12 +45,21 @@ export const useProducts = (category?: string) => {
   return useQuery({
     queryKey: ['products', category],
     queryFn: async () => {
-      const data = await apiGet<any[]>('/api/products');
-      let products = (data || []).map(mapApiProduct);
+      let query = supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
       if (category) {
-        products = products.filter(p => p.category.toLowerCase() === category.toLowerCase());
+        query = query.eq('category', category);
       }
-      return products;
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      return (data || []).map(mapDbProductToProduct);
     },
   });
 };
@@ -61,10 +68,28 @@ export const useFeaturedProducts = () => {
   return useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
-      const data = await apiGet<any[]>('/api/products');
-      const products = (data || []).map(mapApiProduct);
-      const bestsellers = products.filter(p => p.tags.includes('bestseller')).slice(0, 4);
-      return bestsellers.length > 0 ? bestsellers : products.slice(0, 4);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .contains('tags', ['bestseller'])
+        .limit(4);
+
+      if (error) throw error;
+
+      // If no bestsellers, get any 4 products
+      if (!data || data.length === 0) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true)
+          .limit(4);
+
+        if (fallbackError) throw fallbackError;
+        return (fallbackData || []).map(mapDbProductToProduct);
+      }
+
+      return data.map(mapDbProductToProduct);
     },
   });
 };
@@ -73,20 +98,29 @@ export const useProduct = (id: string) => {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const data = await apiGet<any>(`/api/products/${id}`);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) throw error;
       if (!data) return null;
-      return mapApiProduct(data);
+
+      return mapDbProductToProduct(data);
     },
     enabled: !!id,
   });
 };
 
-// Categories for filtering – ids must match DB category values (case-insensitive compare)
+// Categories for filtering
 export const categories = [
-  { id: 'Mugs', name: 'Mugs', icon: '☕', description: 'Custom printed mugs' },
-  { id: 'magic-cup', name: 'Magic Mugs', icon: '✨', description: 'Heat-sensitive magic mugs' },
-  { id: 'Frames', name: 'Photo Frames', icon: '🖼️', description: 'Personalized frames' },
-  { id: 'Keychains', name: 'Keychains', icon: '🔑', description: 'Custom keychains' },
-  { id: 'Phone Cases', name: 'Phone Covers', icon: '📱', description: 'Customized phone cases' },
-  { id: 'Lamps', name: 'Lamps', icon: '💡', description: 'LED night lamps' },
+  { id: 'mugs', name: 'Mugs', icon: '☕', description: 'Custom printed mugs' },
+  { id: 'frames', name: 'Photo Frames', icon: '🖼️', description: 'Personalized frames' },
+  { id: 'keychains', name: 'Keychains', icon: '🔑', description: 'Custom keychains' },
+  { id: 'phone-covers', name: 'Phone Covers', icon: '📱', description: 'Customized phone cases' },
+  { id: 'lamps', name: 'Lamps', icon: '💡', description: 'LED night lamps' },
+  { id: 'tshirts', name: 'T-Shirts', icon: '👕', description: 'Custom printed tees' },
+  { id: 'posters', name: 'Posters', icon: '🎨', description: 'Wall art & posters' },
+  { id: 'combos', name: 'Gift Combos', icon: '🎁', description: 'Gift bundles' },
 ];

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart, DollarSign, Users, Tag, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface DashboardStats {
   totalOrders: number;
@@ -23,41 +22,56 @@ const AdminDashboard = () => {
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    if (!token) {
-      navigate('/auth');
-      return;
-    }
-
-    const fetchDashboard = async () => {
+    const fetchStats = async () => {
       try {
-        const data = await apiFetch<any>('/api/admin/dashboard');
+        // Fetch orders
+        const { data: orders, error: ordersError } = await supabase
+          .from('orders')
+          .select('*');
+
+        if (ordersError) throw ordersError;
+
+        // Fetch profiles count
+        const { count: usersCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+        // Fetch active coupons
+        const { count: couponsCount } = await supabase
+          .from('coupons')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+
+        const totalRevenue = orders?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
+        const pendingOrders = orders?.filter(order => order.status === 'pending').length || 0;
 
         setStats({
-          totalOrders: data.totalOrders,
-          totalRevenue: data.totalRevenue,
-          totalUsers: data.totalUsers,
-          activeCoupons: data.activeCoupons,
-          pendingOrders: data.pendingOrders,
+          totalOrders: orders?.length || 0,
+          totalRevenue,
+          totalUsers: usersCount || 0,
+          activeCoupons: couponsCount || 0,
+          pendingOrders,
         });
 
-        setRecentOrders(data.recentOrders || []);
-      } catch (err: any) {
-        console.error(err);
-        if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
-          navigate('/auth');
-        }
+        // Get recent orders
+        const { data: recent } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        setRecentOrders(recent || []);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboard();
-  }, [navigate, token]);
+    fetchStats();
+  }, []);
 
   const statCards = [
     {
@@ -69,7 +83,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Total Revenue',
-      value: `₹${Number(stats.totalRevenue).toFixed(2)}`,
+      value: `₹${stats.totalRevenue.toFixed(2)}`,
       icon: DollarSign,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
@@ -95,12 +109,9 @@ const AdminDashboard = () => {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome to your admin dashboard
-          </p>
+          <p className="text-muted-foreground">Welcome to your admin dashboard</p>
         </div>
 
-        {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((stat) => (
             <Card key={stat.title}>
@@ -119,7 +130,6 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* LOWER SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -129,12 +139,8 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-orange-500">
-                {stats.pendingOrders}
-              </div>
-              <p className="text-muted-foreground text-sm mt-1">
-                Orders awaiting processing
-              </p>
+              <div className="text-4xl font-bold text-orange-500">{stats.pendingOrders}</div>
+              <p className="text-muted-foreground text-sm mt-1">Orders awaiting processing</p>
             </CardContent>
           </Card>
 
@@ -155,16 +161,22 @@ const AdminDashboard = () => {
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                     >
                       <div>
-                        <p className="font-medium">{order.id}</p>
+                        <p className="font-medium">{order.order_number}</p>
                         <p className="text-sm text-muted-foreground">
                           {new Date(order.created_at).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">
-                          ₹{Number(order.final_amount).toFixed(2)}
-                        </p>
-                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-500">
+                        <p className="font-medium">₹{Number(order.total).toFixed(2)}</p>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            order.status === 'pending'
+                              ? 'bg-yellow-500/10 text-yellow-500'
+                              : order.status === 'completed'
+                              ? 'bg-green-500/10 text-green-500'
+                              : 'bg-blue-500/10 text-blue-500'
+                          }`}
+                        >
                           {order.status}
                         </span>
                       </div>
