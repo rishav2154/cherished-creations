@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,7 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const data = await apiGet<Product[]>('/api/admin/products', true);
+      const data = await apiFetch<Product[]>('/admin/products');
       setProducts(data || []);
     } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     finally { setLoading(false); }
@@ -73,8 +73,8 @@ const AdminProducts = () => {
         category, images: imageUrl ? [imageUrl] : [], stock: parseInt(stock), is_active: isActive,
         customization_options: { canAddText, canAddImage }, tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       };
-      if (editingProduct) { await apiPut(`/api/admin/products/${editingProduct.id}`, body, true); toast({ title: 'Product updated' }); }
-      else { await apiPost('/api/admin/products', body, true); toast({ title: 'Product created' }); }
+      if (editingProduct) { await apiFetch(`/admin/products/${editingProduct.id}`, { method: 'PUT', body: JSON.stringify(body) }); toast({ title: 'Product updated' }); }
+      else { await apiFetch('/admin/products', { method: 'POST', body: JSON.stringify(body) }); toast({ title: 'Product created' }); }
       setDialogOpen(false); resetForm(); fetchProducts();
     } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     finally { setSaving(false); }
@@ -82,13 +82,13 @@ const AdminProducts = () => {
 
   const handleDelete = async () => {
     if (!productToDelete) return;
-    try { await apiDelete(`/api/admin/products/${productToDelete.id}`, true); toast({ title: 'Product deleted' }); fetchProducts(); }
+    try { await apiFetch(`/admin/products/${productToDelete.id}`, { method: 'DELETE' }); toast({ title: 'Product deleted' }); fetchProducts(); }
     catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     finally { setDeleteDialogOpen(false); setProductToDelete(null); }
   };
 
   const toggleStatus = async (p: Product) => {
-    try { await apiPatch(`/api/admin/products/${p.id}/status`, { is_active: !p.is_active }, true); toast({ title: p.is_active ? 'Deactivated' : 'Activated' }); fetchProducts(); }
+    try { await apiFetch(`/admin/products/${p.id}/status`, { method: 'PATCH', body: JSON.stringify({ is_active: !p.is_active }) }); toast({ title: p.is_active ? 'Deactivated' : 'Activated' }); fetchProducts(); }
     catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
   };
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet, apiPatch } from '@/lib/api';
+import { apiAdmin } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const data = await apiGet<any[]>('/api/admin/users', true);
+      const data = await apiAdmin.getUsers() as any[];
       setUsers(data || []);
     } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     finally { setLoading(false); }
@@ -28,7 +28,7 @@ const AdminUsers = () => {
 
   const handleToggleAdmin = async (userId: string) => {
     try {
-      await apiPatch(`/api/admin/users/${userId}/toggle-admin`, {}, true);
+      await apiAdmin.toggleAdmin(userId);
       toast({ title: 'Role updated' });
       fetchUsers();
     } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
