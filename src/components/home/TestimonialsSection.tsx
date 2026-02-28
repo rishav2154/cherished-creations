@@ -67,7 +67,7 @@ export const TestimonialsSection = () => {
           {testimonials.map((t) => (
             <div
               key={t.id}
-              className="p-4 sm:p-5 rounded-2xl bg-card border border-border/50 hover:border-accent/20 transition-all hover:shadow-lg shadow-sm group"
+              className="p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-accent/20 transition-all hover:shadow-lg shadow-sm group"
             >
               <div className="flex items-center gap-3 mb-3">
                 <img

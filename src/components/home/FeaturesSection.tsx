@@ -15,7 +15,7 @@ export const FeaturesSection = () => {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="flex items-center gap-3 p-3.5 sm:p-5 rounded-2xl bg-card border border-border/50 hover:border-accent/20 transition-all hover:shadow-lg shadow-sm group"
+              className="flex items-center gap-3 p-3.5 sm:p-5 rounded-2xl bg-card border border-border hover:border-accent/20 transition-all hover:shadow-lg shadow-sm group"
             >
               <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 border border-accent/15 group-hover:bg-accent/15 transition-colors">
                 <feature.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${feature.color}`} />
