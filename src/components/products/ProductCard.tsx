@@ -56,7 +56,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
         transition={{ delay: index * 0.04, duration: 0.3 }}
       >
         <Link to={`/product/${product.id}`}>
-          <div className="group cursor-pointer bg-card rounded-2xl border border-border/40 overflow-hidden hover:border-accent/30 hover:shadow-xl hover:shadow-accent/10 transition-all duration-300 hover:-translate-y-1.5 spotlight shimmer-border">
+          <div className="group cursor-pointer bg-card rounded-2xl border border-border/40 overflow-hidden hover:border-accent/30 hover:shadow-xl hover:shadow-accent/5 transition-all duration-300 hover:-translate-y-1">
             {/* Image */}
             <div className="relative aspect-square overflow-hidden bg-muted/20">
               <img
@@ -69,7 +69,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
                 <div className="flex flex-col gap-1">
                   {discount > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] sm:text-xs font-bold bg-destructive text-destructive-foreground rounded-lg shadow-sm animate-bounce-in">
+                    <span className="px-2 py-0.5 text-[10px] sm:text-xs font-bold bg-destructive text-destructive-foreground rounded-lg shadow-sm">
                       {discount}% OFF
                     </span>
                   )}

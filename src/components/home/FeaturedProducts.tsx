@@ -50,10 +50,7 @@ interface ProductRowProps {
 }
 
 const ProductRow = ({ title, icon, badge, badgeColor = "bg-accent", products, isLoading, bgClass = "bg-card", showTimer }: ProductRowProps) => (
-  <section className={`py-4 sm:py-7 ${bgClass} relative overflow-hidden`}>
-    {/* Decorative gradient orb */}
-    <div className="absolute -top-20 -right-20 w-60 h-60 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
-    <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent-foreground/3 rounded-full blur-3xl pointer-events-none" />
+  <section className={`py-4 sm:py-7 ${bgClass}`}>
     <div className="container mx-auto px-2 sm:px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -115,7 +112,7 @@ const OfferBanner = () => (
           { img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80", label: "TRENDING", title: "Custom Tees", sub: "From ₹299", link: "/shop?category=tshirts", gradient: "from-background/95 via-background/70 to-background/30" },
           { img: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80", label: "BEST SELLER", title: "Phone Covers", sub: "From ₹199", link: "/shop?category=phone-covers", gradient: "from-background/95 via-background/70 to-background/30" },
         ].map((item, i) => (
-          <Link key={i} to={item.link} className="relative rounded-2xl overflow-hidden aspect-[3/2] group border border-border/30 shadow-sm hover:shadow-xl hover:shadow-accent/10 transition-all duration-500 hover:-translate-y-1 shimmer-border">
+          <Link key={i} to={item.link} className="relative rounded-2xl overflow-hidden aspect-[3/2] group border border-border/30 shadow-sm hover:shadow-lg transition-shadow">
             <img
               src={item.img}
               alt={item.title}

@@ -11,7 +11,7 @@ const features = [
 
 export const MarqueeBanner = () => {
   return (
-    <div className="bg-gradient-animated border-y border-border/30 py-3 sm:py-4">
+    <div className="bg-card/60 border-y border-border/30 py-3 sm:py-4">
       <div className="container mx-auto px-2">
         <div className="flex items-center justify-between gap-2 sm:gap-4 overflow-x-auto scrollbar-hide">
           {features.map((item, index) => (
