@@ -1,49 +1,30 @@
-import { motion } from "framer-motion";
-import { Truck, Gift, Shield, Sparkles, Heart, Clock } from "lucide-react";
+import { Truck, Gift, Shield, Clock, RotateCcw, CreditCard } from "lucide-react";
 
-const messages = [
-  { icon: Truck, text: "Free Shipping on Orders ₹999+" },
-  { icon: Gift, text: "Handcrafted with Love" },
-  { icon: Shield, text: "100% Quality Guaranteed" },
-  { icon: Sparkles, text: "Premium Personalization" },
-  { icon: Heart, text: "Made Just for You" },
-  { icon: Clock, text: "Fast 3-5 Day Delivery" },
+const features = [
+  { icon: Truck, text: "Free Delivery" },
+  { icon: RotateCcw, text: "Easy Returns" },
+  { icon: Shield, text: "Secure Payment" },
+  { icon: Gift, text: "Gift Wrapping" },
+  { icon: CreditCard, text: "COD Available" },
+  { icon: Clock, text: "Fast Shipping" },
 ];
 
 export const MarqueeBanner = () => {
-  // Double the messages for seamless loop
-  const duplicatedMessages = [...messages, ...messages];
-
   return (
-    <div className="relative overflow-hidden bg-accent/10 border-y border-accent/20 py-3 backdrop-blur-sm">
-      {/* Gradient overlays for smooth fade effect */}
-      <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-
-      <motion.div
-        className="flex gap-12 whitespace-nowrap"
-        animate={{
-          x: ["-50%", "0%"],
-        }}
-        transition={{
-          x: {
-            duration: 30,
-            repeat: Infinity,
-            ease: "linear",
-          },
-        }}
-      >
-        {duplicatedMessages.map((item, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-2 text-sm font-medium text-foreground/80"
-          >
-            <item.icon className="w-4 h-4 text-accent shrink-0" />
-            <span>{item.text}</span>
-            <span className="text-accent/50 mx-4">✦</span>
-          </div>
-        ))}
-      </motion.div>
+    <div className="bg-muted/50 border-b border-border/50 py-2.5 overflow-hidden">
+      <div className="container mx-auto px-2">
+        <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-hide">
+          {features.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap min-w-fit px-2"
+            >
+              <item.icon className="w-3.5 h-3.5 text-accent shrink-0" />
+              <span>{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
