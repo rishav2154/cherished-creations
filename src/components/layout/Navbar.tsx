@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Menu, X, User, LogOut, Package, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Heart, Menu, X, Search, User, LogOut, Package, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
+import { SearchDialog } from '@/components/search/SearchDialog';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 const navLinks = [
@@ -22,7 +22,7 @@ export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -110,18 +110,17 @@ export const Navbar = () => {
                 <ThemeToggle />
               </div>
 
-              {/* Auth Button - Mobile + Desktop */}
-              {!user && (
-                <Link to="/auth">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-                  >
-                    <User className="w-5 h-5 text-foreground/70" />
-                  </motion.button>
-                </Link>
-              )}
+              {/* Search - Mobile + Desktop */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSearchOpen(true)}
+                className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              >
+                <Search className="w-5 h-5 text-foreground/70" />
+              </motion.button>
+
+              <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
               {/* Wishlist */}
               <Link to="/wishlist" className="hidden md:block">
@@ -240,16 +239,16 @@ export const Navbar = () => {
                 </Link>
               ))}
 
-              {!user && (
-                <Link
-                  to="/auth"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors text-foreground/80"
-                >
-                  <User className="w-5 h-5" />
-                  Sign In / Sign Up
-                </Link>
-              )}
+              <button
+                onClick={() => {
+                  setSearchOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors text-foreground/80"
+              >
+                <Search className="w-5 h-5" />
+                Search Products
+              </button>
             </div>
           </motion.div>
         )}
