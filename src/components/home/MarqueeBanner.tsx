@@ -1,26 +1,31 @@
-import { Truck, Gift, Shield, Clock, RotateCcw, CreditCard } from "lucide-react";
+import { Truck, RotateCcw, Shield, Gift, CreditCard, Clock } from "lucide-react";
 
 const features = [
-  { icon: Truck, text: "Free Delivery" },
-  { icon: RotateCcw, text: "Easy Returns" },
-  { icon: Shield, text: "Secure Payment" },
-  { icon: Gift, text: "Gift Wrapping" },
-  { icon: CreditCard, text: "COD Available" },
-  { icon: Clock, text: "Fast Shipping" },
+  { icon: Truck, text: "Free Delivery", sub: "On ₹999+" },
+  { icon: RotateCcw, text: "Easy Returns", sub: "7 days" },
+  { icon: Shield, text: "Secure Pay", sub: "100% safe" },
+  { icon: Gift, text: "Gift Wrap", sub: "Available" },
+  { icon: CreditCard, text: "COD", sub: "Available" },
+  { icon: Clock, text: "Fast Ship", sub: "3-5 days" },
 ];
 
 export const MarqueeBanner = () => {
   return (
-    <div className="bg-muted/50 border-b border-border/50 py-2.5 overflow-hidden">
+    <div className="bg-card border-y border-border/40 py-3">
       <div className="container mx-auto px-2">
-        <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center justify-between gap-3 overflow-x-auto scrollbar-hide">
           {features.map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap min-w-fit px-2"
+              className="flex items-center gap-2 min-w-fit px-2"
             >
-              <item.icon className="w-3.5 h-3.5 text-accent shrink-0" />
-              <span>{item.text}</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent" />
+              </div>
+              <div>
+                <p className="text-[11px] sm:text-xs font-semibold text-foreground leading-tight">{item.text}</p>
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground leading-tight">{item.sub}</p>
+              </div>
             </div>
           ))}
         </div>

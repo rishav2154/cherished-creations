@@ -1,24 +1,24 @@
 import { Truck, ShieldCheck, Heart, Gem } from 'lucide-react';
 
 const features = [
-  { icon: Truck, title: 'Free Shipping', desc: 'On orders ₹999+' },
+  { icon: Truck, title: 'Free Shipping', desc: 'Orders above ₹999' },
   { icon: ShieldCheck, title: 'Secure Payment', desc: '100% protected' },
-  { icon: Gem, title: 'Premium Quality', desc: 'Best materials' },
-  { icon: Heart, title: 'Made with Love', desc: 'Handcrafted care' },
+  { icon: Gem, title: 'Premium Quality', desc: 'Best materials used' },
+  { icon: Heart, title: 'Made with Love', desc: 'Handcrafted with care' },
 ];
 
 export const FeaturesSection = () => {
   return (
-    <section className="py-4 sm:py-6 bg-card border-y border-border/50">
+    <section className="py-4 sm:py-6 bg-background">
       <div className="container mx-auto px-2 sm:px-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="flex items-center gap-2.5 p-3 rounded-lg bg-muted/40"
+              className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-card border border-border/50 hover:border-accent/20 transition-colors"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                <feature.icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                <feature.icon className="w-5 h-5 text-accent" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-semibold text-foreground truncate">{feature.title}</p>
