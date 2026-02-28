@@ -110,15 +110,57 @@ export const Navbar = () => {
                 <ThemeToggle />
               </div>
 
-              {/* Search - Mobile + Desktop */}
+              {/* Search - Desktop only */}
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSearchOpen(true)}
-                className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                className="hidden md:flex w-10 h-10 rounded-full bg-muted/50 items-center justify-center hover:bg-muted transition-colors"
               >
                 <Search className="w-5 h-5 text-foreground/70" />
               </motion.button>
+
+              {/* Auth - Mobile only */}
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/30 transition-colors"
+                    >
+                      {user.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <User className="w-5 h-5 text-accent" />
+                      )}
+                    </motion.button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem className="text-sm text-muted-foreground">
+                      {user.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/orders')}>
+                      <Package className="w-4 h-4 mr-2" />
+                      My Orders
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth" className="md:hidden">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <User className="w-5 h-5 text-foreground/70" />
+                  </motion.button>
+                </Link>
+              )}
 
               <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
