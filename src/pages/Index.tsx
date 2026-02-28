@@ -16,8 +16,8 @@ const Index = () => {
       <CartDrawer />
       <main>
         <HeroSection />
-        <MarqueeBanner />
         <CategoriesSection />
+        <MarqueeBanner />
         <FeaturedProducts />
         <FeaturesSection />
         <TestimonialsSection />
