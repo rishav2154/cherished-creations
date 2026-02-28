@@ -50,7 +50,7 @@ export const useProducts = (category?: string) => {
       const data = await apiGet<any[]>('/api/products');
       let products = (data || []).map(mapApiProduct);
       if (category) {
-        products = products.filter(p => p.category === category);
+        products = products.filter(p => p.category.toLowerCase() === category.toLowerCase());
       }
       return products;
     },
@@ -81,14 +81,12 @@ export const useProduct = (id: string) => {
   });
 };
 
-// Categories for filtering
+// Categories for filtering – ids must match DB category values (case-insensitive compare)
 export const categories = [
-  { id: 'mugs', name: 'Mugs', icon: '☕', description: 'Custom printed mugs' },
-  { id: 'frames', name: 'Photo Frames', icon: '🖼️', description: 'Personalized frames' },
-  { id: 'keychains', name: 'Keychains', icon: '🔑', description: 'Custom keychains' },
-  { id: 'phone-covers', name: 'Phone Covers', icon: '📱', description: 'Customized phone cases' },
-  { id: 'lamps', name: 'Lamps', icon: '💡', description: 'LED night lamps' },
-  { id: 'tshirts', name: 'T-Shirts', icon: '👕', description: 'Custom printed tees' },
-  { id: 'posters', name: 'Posters', icon: '🎨', description: 'Wall art & posters' },
-  { id: 'combos', name: 'Gift Combos', icon: '🎁', description: 'Gift bundles' },
+  { id: 'Mugs', name: 'Mugs', icon: '☕', description: 'Custom printed mugs' },
+  { id: 'magic-cup', name: 'Magic Mugs', icon: '✨', description: 'Heat-sensitive magic mugs' },
+  { id: 'Frames', name: 'Photo Frames', icon: '🖼️', description: 'Personalized frames' },
+  { id: 'Keychains', name: 'Keychains', icon: '🔑', description: 'Custom keychains' },
+  { id: 'Phone Cases', name: 'Phone Covers', icon: '📱', description: 'Customized phone cases' },
+  { id: 'Lamps', name: 'Lamps', icon: '💡', description: 'LED night lamps' },
 ];
