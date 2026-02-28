@@ -89,7 +89,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState('');
   const [customText, setCustomText] = useState('');
-  const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  
   const viewers = useLiveViewers();
 
   const estimatedDelivery = useMemo(() => {
@@ -133,10 +133,9 @@ const ProductDetail = () => {
       price: product.price,
       quantity,
       image: productImage,
-      customization: customText || deliveryInstructions ? { 
+      customization: customText ? { 
         text: customText, 
         color: selectedColor,
-        ...(deliveryInstructions && { deliveryInstructions })
       } : undefined,
     });
     openCart();
@@ -361,18 +360,6 @@ const ProductDetail = () => {
                       <p className="text-[10px] text-muted-foreground">Orders ₹500+</p>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <label className="text-[10px] md:text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5" /> Instructions (Optional)
-                  </label>
-                  <Textarea
-                    value={deliveryInstructions}
-                    onChange={(e) => setDeliveryInstructions(e.target.value)}
-                    placeholder="e.g., Leave at door, Gift wrap..."
-                    className="mt-1 min-h-[60px] resize-none text-xs"
-                    maxLength={150}
-                  />
                 </div>
               </div>
 
