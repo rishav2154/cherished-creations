@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Heart, Menu, X, Search, User, LogOut, Package } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
-import { supabase } from '@/integrations/supabase/client';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SearchDialog } from '@/components/search/SearchDialog';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+
 const navLinks = [{
   name: 'Home',
   path: '/'
@@ -25,16 +25,18 @@ const navLinks = [{
   name: 'Return Policy',
   path: '/returns'
 }];
+
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = useCartStore(state => state.getTotalItems());
   const wishlistItems = useWishlistStore(state => state.items);
   const openCart = useCartStore(state => state.openCart);
+  const { user, logout } = useAuth();
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -42,30 +44,16 @@ export const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
-  useEffect(() => {
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+
+  const handleLogout = () => {
+    logout();
     navigate('/');
   };
+
   return <motion.header initial={{
     y: -100
   }} animate={{
@@ -144,7 +132,7 @@ export const Navbar = () => {
               }} whileTap={{
                 scale: 0.95
               }} className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 hover:bg-accent/30 transition-colors">
-                    {user.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="Profile" className="w-10 h-10 rounded-full object-cover" /> : <User className="w-5 h-5 text-accent" />}
+                    {user.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-10 h-10 rounded-full object-cover" /> : <User className="w-5 h-5 text-accent" />}
                   </motion.button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
