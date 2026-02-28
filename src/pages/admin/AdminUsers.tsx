@@ -1,112 +1,316 @@
 import { useEffect, useState } from 'react';
-import { apiAdmin } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Users, Shield, ShieldOff, Search } from 'lucide-react';
+import { 
+  Loader2, Users, Shield, ShieldOff, MoreHorizontal, 
+  Mail, Calendar, Zap 
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { apiFetch } from '@/lib/api';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 
-const AdminUsers = () => {
-  const [users, setUsers] = useState<any[]>([]);
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar_url: string | null;
+  created_at: string;
+}
+
+export default function AdminUsers() {
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [statsLoading, setStatsLoading] = useState(true);
   const { toast } = useToast();
+
+  const [stats, setStats] = useState({
+    total: 0,
+    admins: 0,
+    users: 0,
+    recent: 0
+  });
 
   const fetchUsers = async () => {
     try {
-      const data = await apiAdmin.getUsers() as any[];
-      setUsers(data || []);
-    } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
-    finally { setLoading(false); }
+      const data = await apiFetch('/api/admin/users');
+      setUsers(data);
+      
+      const admins = data.filter((u: User) => u.role === 'admin').length;
+      setStats({
+        total: data.length,
+        admins,
+        users: data.length - admins,
+        recent: data.filter((u: User) => 
+          new Date(u.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        ).length
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+      setStatsLoading(false);
+    }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const handleToggleAdmin = async (userId: string) => {
+  const toggleAdmin = async (userId: string) => {
     try {
-      await apiAdmin.toggleAdmin(userId);
-      toast({ title: 'Role updated' });
+      await apiFetch(`/api/admin/users/${userId}/toggle-admin`, {
+        method: 'PATCH',
+      });
+      toast({ 
+        title: '✅ Role updated successfully!',
+        duration: 2000 
+      });
       fetchUsers();
-    } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
+    } catch (err: any) {
+      toast({
+        title: '❌ Error',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const getInitials = (name: string | null, email: string | null) => {
-    if (name) return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-    return email?.charAt(0).toUpperCase() || 'U';
+  const getInitials = (name: string, email: string) => {
+    if (name && name !== 'No name') {
+      return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return email.charAt(0).toUpperCase();
   };
 
-  const filteredUsers = users.filter(u =>
-    !searchQuery.trim() ||
-    (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getRoleColor = (role: string) => {
+    return role === 'admin' 
+      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25' 
+      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/25';
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <div className="text-lg text-muted-foreground animate-pulse">Loading users...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Users</h1>
-            <p className="text-muted-foreground text-sm mt-1">Manage user accounts and roles ({users.length} total)</p>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-xl">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                User Management
+              </h1>
+              <p className="text-muted-foreground">Advanced user analytics and role management</p>
+            </div>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search users..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
+          
+          {/* Stats */}
+          <div className="flex gap-3 flex-wrap">
+            <HoverCard>
+              <HoverCardTrigger>
+                <div className="px-6 py-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer">
+                  <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+                  <div className="text-xs font-medium text-blue-500 uppercase tracking-wider">Total Users</div>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64 p-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Active Admins</span>
+                    <Badge className={getRoleColor('admin')}> {stats.admins} </Badge>
+                  </div>
+                  <Progress value={(stats.admins / stats.total) * 100} className="h-2" />
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+
+            <div className="px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300">
+              <div className="text-2xl font-bold text-emerald-600">{stats.users}</div>
+              <div className="text-xs font-medium text-emerald-500 uppercase tracking-wider">Regular Users</div>
+            </div>
+
+            <div className="px-6 py-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300">
+              <div className="text-2xl font-bold text-purple-600">{stats.recent}</div>
+              <div className="text-xs font-medium text-purple-500 uppercase tracking-wider">New This Month</div>
+            </div>
           </div>
         </div>
 
-        <Card className="shadow-sm">
+        <Separator className="my-6" />
+
+        {/* Table */}
+        <Card className="border-0 shadow-2xl overflow-hidden">
+          <CardHeader className="pb-8 bg-muted/30">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-bold">
+                All Users ({users.length})
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="border-dashed hover:bg-primary/5">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Bulk Actions
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+
           <CardContent className="p-0">
-            {loading ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-16">
-                <Users className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
-                <p className="text-sm text-muted-foreground">{searchQuery ? 'No users match your search' : 'No users'}</p>
+            {users.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Users className="w-16 h-16 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-muted-foreground">No users yet</h3>
+                <p className="text-sm text-muted-foreground/70 mb-6">Users will appear here as they sign up.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      <TableHead className="font-semibold">User</TableHead>
-                      <TableHead className="font-semibold">Email</TableHead>
-                      <TableHead className="font-semibold">Joined</TableHead>
-                      <TableHead className="font-semibold">Role</TableHead>
-                      <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableHeader className="border-b border-border/50">
+                    <TableRow className="hover:bg-transparent border-b-2 border-primary/20">
+                      <TableHead className="font-bold text-primary tracking-tight pl-8">User Details</TableHead>
+                      <TableHead className="font-bold text-muted-foreground/80 hidden md:table-cell">Email</TableHead>
+                      <TableHead className="font-bold text-muted-foreground/80 hidden lg:table-cell pr-8 text-right">Joined</TableHead>
+                      <TableHead className="font-bold text-muted-foreground/80">Role</TableHead>
+                      <TableHead className="font-bold text-muted-foreground/80 text-right pr-8">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((u) => (
-                      <TableRow key={u.id} className="hover:bg-muted/20">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-9 h-9">
-                              <AvatarImage src={u.avatar_url || undefined} />
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">{getInitials(u.name, u.email)}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium text-sm">{u.name || 'No name'}</span>
+                    {users.map((user, index) => (
+                      <TableRow 
+                        key={user.id} 
+                        className="group hover:bg-muted/50 transition-all duration-300 border-l-4 border-l-primary/20"
+                      >
+                        <TableCell className="pl-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <Avatar className="w-14 h-14 ring-4 ring-background/50 shadow-2xl group-hover:ring-primary/30 transition-all duration-300">
+                                <AvatarImage src={user.avatar_url || undefined} />
+                                <AvatarFallback className="bg-gradient-to-br from-primary/90 via-purple-500/90 to-pink-500/90 text-primary-foreground border-2 border-white/20 font-bold text-lg shadow-2xl">
+                                  {getInitials(user.name, user.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-3 border-background rounded-full flex items-center justify-center shadow-lg">
+                                <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-lg mb-1 truncate">
+                                {user.name}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                                <Mail className="w-4 h-4" />
+                                <span className="truncate">{user.email}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground/70">
+                                <Calendar className="w-3 h-3" />
+                                <span>{new Date(user.created_at).toLocaleDateString('en-IN')}</span>
+                              </div>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}
+
+                        <TableCell className="hidden md:table-cell py-6">
+                          <div className="font-mono text-sm bg-muted/50 px-3 py-1 rounded-full truncate max-w-[200px]">
+                            {user.email}
+                          </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={`text-[10px] ${u.role === 'admin' ? 'bg-primary' : ''}`}>
-                            {u.role}
+
+                        <TableCell className="hidden lg:table-cell py-6 pr-8 text-right">
+                          <div className="text-sm font-mono text-muted-foreground">
+                            {new Date(user.created_at).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-6">
+                          <Badge 
+                            className={`${getRoleColor(user.role)} text-sm px-4 py-2 shadow-lg font-semibold tracking-wide`}
+                          >
+                            {user.role === 'admin' ? 'ADMIN' : 'USER'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end">
-                            <Button variant="ghost" size="sm" onClick={() => handleToggleAdmin(u.id)} className={`text-xs h-8 ${u.role === 'admin' ? 'text-destructive hover:text-destructive' : ''}`}>
-                              {u.role === 'admin' ? <><ShieldOff className="w-3.5 h-3.5 mr-1.5" />Remove Admin</> : <><Shield className="w-3.5 h-3.5 mr-1.5" />Make Admin</>}
-                            </Button>
-                          </div>
+
+                        <TableCell className="pr-8 py-6 text-right">
+                          <HoverCard>
+                            <HoverCardTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`group/btn border-2 h-12 px-6 font-semibold transition-all duration-300 hover:shadow-xl ${
+                                  user.role === 'admin' 
+                                    ? 'border-destructive/50 text-destructive bg-destructive/5 hover:bg-destructive/10' 
+                                    : 'border-emerald-500/50 text-emerald-700 bg-emerald-500/5 hover:bg-emerald-500/10'
+                                }`}
+                                onClick={() => toggleAdmin(user.id)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {user.role === 'admin' ? (
+                                    <>
+                                      <ShieldOff className="w-5 h-5" />
+                                      <span>Remove Admin</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Shield className="w-5 h-5" />
+                                      <span>Make Admin</span>
+                                    </>
+                                  )}
+                                </div>
+                              </Button>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-72 p-4">
+                              <div className="space-y-2">
+                                <h4 className="font-bold">{user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {user.role === 'admin' 
+                                    ? 'Remove admin privileges and full access'
+                                    : 'Grant full admin access and privileges'
+                                  }
+                                </p>
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-2 h-12 px-4 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -116,9 +320,23 @@ const AdminUsers = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Footer Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 border-t border-border/50">
+          <div className="text-center p-6 rounded-2xl bg-primary/5 border border-primary/20">
+            <div className="text-3xl font-black text-primary mb-2">{stats.total}</div>
+            <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Users</div>
+          </div>
+          <div className="text-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+            <div className="text-3xl font-black text-emerald-600 mb-2">{stats.admins}</div>
+            <div className="text-sm font-medium text-emerald-600 uppercase tracking-wider">Admin Users</div>
+          </div>
+          <div className="text-center p-6 rounded-2xl bg-purple-500/10 border border-purple-500/20">
+            <div className="text-3xl font-black text-purple-600 mb-2">{stats.recent}</div>
+            <div className="text-sm font-medium text-purple-600 uppercase tracking-wider">New This Month</div>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );
-};
-
-export default AdminUsers;
+}
