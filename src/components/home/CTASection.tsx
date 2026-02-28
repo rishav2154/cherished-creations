@@ -1,38 +1,42 @@
-import { ArrowRight, Gift } from 'lucide-react';
+import { ArrowRight, Gift, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const CTASection = () => {
   return (
-    <section className="py-4 sm:py-6 bg-background">
+    <section className="py-5 sm:py-8 pb-20 sm:pb-8 bg-background">
       <div className="container mx-auto px-2 sm:px-4">
-        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-accent via-accent/90 to-accent/70 p-6 sm:p-10 md:p-14">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-accent via-accent/85 to-accent/70 p-6 sm:p-10 md:p-16">
           {/* Decorative */}
-          <div className="absolute top-0 right-0 w-40 h-40 bg-background/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-background/5 rounded-full translate-y-1/2 -translate-x-1/3" />
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-background/5 rounded-full hidden md:block" />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-accent-foreground/5 rounded-full -translate-y-1/3 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-36 h-36 bg-accent-foreground/5 rounded-full translate-y-1/3 -translate-x-1/3" />
+          <div className="absolute top-1/3 right-1/3 w-24 h-24 bg-accent-foreground/5 rounded-full hidden md:block" />
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-12">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent-foreground/10 flex items-center justify-center shrink-0">
-              <Gift className="w-7 h-7 sm:w-8 sm:h-8 text-accent-foreground" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-14">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-accent-foreground/10 backdrop-blur-sm flex items-center justify-center shrink-0 border border-accent-foreground/10">
+              <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-accent-foreground" />
             </div>
             <div className="text-center md:text-left flex-1">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-accent-foreground mb-1 sm:mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-3 text-[10px] sm:text-xs font-semibold bg-accent-foreground/10 text-accent-foreground/80 rounded-full">
+                <Sparkles className="w-3 h-3" />
+                Personalized Gifts
+              </div>
+              <h2 className="text-xl sm:text-3xl md:text-4xl font-bold text-accent-foreground mb-2 sm:mb-3 leading-tight">
                 Create Your Custom Gift Today!
               </h2>
-              <p className="text-accent-foreground/75 text-xs sm:text-sm max-w-xl">
-                Upload photos, add your personal touch, and surprise loved ones with unique personalized gifts.
+              <p className="text-accent-foreground/70 text-xs sm:text-sm max-w-xl leading-relaxed">
+                Upload photos, add your personal touch, and surprise loved ones with unique personalized gifts they'll cherish forever.
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 to="/customize"
-                className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-7 sm:py-3 bg-background text-foreground font-semibold text-xs sm:text-sm rounded-xl hover:opacity-90 transition-opacity shadow-lg"
+                className="inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-3.5 bg-background text-foreground font-semibold text-xs sm:text-sm rounded-xl hover:opacity-90 transition-all shadow-xl hover:-translate-y-0.5"
               >
                 Start Now <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-7 sm:py-3 border-2 border-accent-foreground/25 text-accent-foreground font-semibold text-xs sm:text-sm rounded-xl hover:bg-accent-foreground/10 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-3.5 border-2 border-accent-foreground/20 text-accent-foreground font-semibold text-xs sm:text-sm rounded-xl hover:bg-accent-foreground/10 transition-colors"
               >
                 Browse
               </Link>

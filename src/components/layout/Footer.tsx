@@ -37,7 +37,7 @@ const socialLinks = [
 
 export const Footer = () => {
   return (
-    <footer className="relative overflow-hidden">
+    <footer className="relative overflow-hidden pb-16 md:pb-0">
       {/* Gradient Top Border */}
       <div className="h-1 bg-accent-gradient" />
 
