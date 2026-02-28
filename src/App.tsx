@@ -7,10 +7,8 @@ import { AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import { SocialProofToast } from "@/components/conversion/SocialProofToast";
 import { FloatingOffer } from "@/components/conversion/FloatingOffer";
-import { TopOfferBar } from "@/components/conversion/TopOfferBar";
-import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
+import { SpinToWin } from "@/components/conversion/SpinToWin";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -41,10 +39,8 @@ const AnimatedRoutes = () => {
   
   return (
     <>
-      <TopOfferBar />
-      <SocialProofToast />
       <FloatingOffer />
-      <ExitIntentPopup />
+      <SpinToWin />
       <AnimatePresence mode="sync" initial={false}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
