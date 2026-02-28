@@ -83,7 +83,7 @@ export const HeroSection = () => {
   const slide = heroSlides[currentSlide];
 
   return (
-    <section className="relative w-full pt-14 sm:pt-16 md:pt-20">
+    <section className="relative w-full pt-20 sm:pt-22 md:pt-24">
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Main Banner */}
