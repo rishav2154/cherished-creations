@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,22 +16,19 @@ const AdminResetPassword = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check if we have a valid session from the reset link
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: 'Invalid or Expired Link',
-          description: 'Please request a new password reset link.',
-          variant: 'destructive',
-        });
-        navigate('/admin/login');
-      }
-    };
-    checkSession();
-  }, [navigate, toast]);
+    const token = searchParams.get('token');
+    if (!token) {
+      toast({
+        title: 'Invalid or Expired Link',
+        description: 'Please request a new password reset link.',
+        variant: 'destructive',
+      });
+      navigate('/admin/login');
+    }
+  }, [navigate, toast, searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +54,11 @@ const AdminResetPassword = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
+      const token = searchParams.get('token');
+      await api('/api/admin/reset-password', {
+        method: 'POST',
+        body: { token, password },
       });
-
-      if (error) throw error;
 
       setSuccess(true);
       toast({
@@ -69,7 +66,6 @@ const AdminResetPassword = () => {
         description: 'Your password has been successfully reset.',
       });
 
-      // Redirect to admin login after 2 seconds
       setTimeout(() => {
         navigate('/admin/login');
       }, 2000);
