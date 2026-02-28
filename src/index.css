@@ -301,4 +301,117 @@
       linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
     background-size: 60px 60px;
   }
+
+  /* Shimmer border animation */
+  @keyframes shimmer-border {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .shimmer-border {
+    position: relative;
+  }
+  .shimmer-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--accent) / 0.1),
+      hsl(var(--accent) / 0.6),
+      hsl(var(--accent-warm) / 0.6),
+      hsl(var(--accent) / 0.1)
+    );
+    background-size: 300% 100%;
+    animation: shimmer-border 3s ease-in-out infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Rainbow text shimmer */
+  @keyframes text-shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .text-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--foreground)),
+      hsl(var(--accent)),
+      hsl(var(--accent-warm)),
+      hsl(var(--foreground))
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-shimmer 3s linear infinite;
+  }
+
+  /* Spotlight hover effect */
+  .spotlight {
+    position: relative;
+    overflow: hidden;
+  }
+  .spotlight::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--accent) / 0.08), transparent 60%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .spotlight:hover::after {
+    opacity: 1;
+  }
+
+  /* Animated gradient background */
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .bg-gradient-animated {
+    background: linear-gradient(
+      -45deg,
+      hsl(var(--accent) / 0.15),
+      hsl(var(--accent-warm) / 0.15),
+      hsl(var(--primary) / 0.15),
+      hsl(var(--accent) / 0.15)
+    );
+    background-size: 400% 400%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  /* Bounce-in for badges */
+  @keyframes bounce-in {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  /* Glow ring pulse */
+  @keyframes ring-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.4); }
+    50% { box-shadow: 0 0 0 6px hsl(var(--accent) / 0); }
+  }
+
+  .animate-ring-pulse {
+    animation: ring-pulse 2s ease-in-out infinite;
+  }
 }
