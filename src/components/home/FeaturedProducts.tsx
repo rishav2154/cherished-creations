@@ -147,7 +147,7 @@ export const FeaturedProducts = () => {
         badgeColor="bg-destructive"
         products={featuredProducts}
         isLoading={featuredLoading}
-        bgClass="bg-card"
+        bgClass="bg-muted/30"
         showTimer
       />
 
@@ -160,7 +160,7 @@ export const FeaturedProducts = () => {
         badgeColor="bg-accent"
         products={allProducts}
         isLoading={allLoading}
-        bgClass="bg-card"
+        bgClass="bg-background"
       />
 
       <ProductRow
@@ -168,7 +168,7 @@ export const FeaturedProducts = () => {
         icon={<Star className="w-4 h-4 sm:w-5 sm:h-5 text-accent fill-accent" />}
         products={allProducts.slice().reverse()}
         isLoading={allLoading}
-        bgClass="bg-card"
+        bgClass="bg-muted/30"
       />
     </>
   );

@@ -41,7 +41,7 @@ const testimonials = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-5 sm:py-8 bg-card">
+    <section className="py-5 sm:py-8 bg-muted/50">
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -67,7 +67,7 @@ export const TestimonialsSection = () => {
           {testimonials.map((t) => (
             <div
               key={t.id}
-              className="p-4 sm:p-5 rounded-2xl bg-background border border-border/40 hover:border-accent/20 transition-all hover:shadow-md group"
+              className="p-4 sm:p-5 rounded-2xl bg-card border border-border/50 hover:border-accent/20 transition-all hover:shadow-lg shadow-sm group"
             >
               <div className="flex items-center gap-3 mb-3">
                 <img
