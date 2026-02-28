@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { api, getToken, setToken, removeToken } from '@/lib/api';
+import { apiFetch, apiAuth } from '@/lib/api';
 
 export interface AppUser {
   id: string;
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
-    const token = getToken();
+    const token = localStorage.getItem('token');
     if (!token) {
       setUser(null);
       setLoading(false);
@@ -42,10 +42,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const userData = await api<AppUser>('/api/auth/me', { auth: true });
+      const userData = await apiAuth.getMe() as AppUser;
       setUser(userData);
     } catch {
-      removeToken();
+      localStorage.removeItem('token');
       setUser(null);
     } finally {
       setLoading(false);
@@ -57,32 +57,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchUser]);
 
   const login = async (email: string, password: string) => {
-    const data = await api<{ token: string; user: AppUser }>('/api/auth/login', {
-      method: 'POST',
-      body: { email, password },
-    });
-    setToken(data.token);
+    const data = await apiAuth.login(email, password) as { token: string; user: AppUser };
+    localStorage.setItem('token', data.token);
     setUser(data.user);
   };
 
   const adminLogin = async (email: string, password: string) => {
-    const data = await api<{ token: string; user: AppUser }>('/api/admin/login', {
+    const data = await apiFetch<{ token: string; user: AppUser }>('/admin/login', {
       method: 'POST',
-      body: { email, password },
+      body: JSON.stringify({ email, password }),
     });
-    setToken(data.token);
+    localStorage.setItem('token', data.token);
     setUser(data.user);
   };
 
   const register = async (name: string, email: string, password: string) => {
-    await api('/api/auth/register', {
-      method: 'POST',
-      body: { name, email, password },
-    });
+    await apiAuth.register({ name, email, password });
   };
 
   const logout = () => {
-    removeToken();
+    apiAuth.logout();
     setUser(null);
   };
 
