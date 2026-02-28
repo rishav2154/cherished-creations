@@ -107,10 +107,10 @@ const OfferBanner = () => (
     <div className="container mx-auto px-2 sm:px-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {[
-          { img: "https://images.unsplash.com/photo-1549465220-1a8b9238f37e?w=400&q=80", label: "COMBO DEALS", title: "Up to 40% Off", sub: "Gift Combos", link: "/shop?category=combos", gradient: "from-background/95 via-background/70 to-background/30" },
-          { img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400&q=80", label: "NEW ARRIVALS", title: "Photo Frames", sub: "Starting ₹449", link: "/shop?category=frames", gradient: "from-background/95 via-background/70 to-background/30" },
-          { img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80", label: "TRENDING", title: "Custom Tees", sub: "From ₹299", link: "/shop?category=tshirts", gradient: "from-background/95 via-background/70 to-background/30" },
-          { img: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80", label: "BEST SELLER", title: "Phone Covers", sub: "From ₹199", link: "/shop?category=phone-covers", gradient: "from-background/95 via-background/70 to-background/30" },
+          { img: "https://images.unsplash.com/photo-1549465220-1a8b9238f37e?w=400&q=80", label: "COMBO DEALS", title: "Up to 40% Off", sub: "Gift Combos", link: "/shop?category=combos", gradient: "from-black/70 via-black/50 to-transparent" },
+          { img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400&q=80", label: "NEW ARRIVALS", title: "Photo Frames", sub: "Starting ₹449", link: "/shop?category=frames", gradient: "from-black/70 via-black/50 to-transparent" },
+          { img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80", label: "TRENDING", title: "Custom Tees", sub: "From ₹299", link: "/shop?category=tshirts", gradient: "from-black/70 via-black/50 to-transparent" },
+          { img: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&q=80", label: "BEST SELLER", title: "Phone Covers", sub: "From ₹199", link: "/shop?category=phone-covers", gradient: "from-black/70 via-black/50 to-transparent" },
         ].map((item, i) => (
           <Link key={i} to={item.link} className="relative rounded-2xl overflow-hidden aspect-[3/2] group border border-border/30 shadow-sm hover:shadow-lg transition-shadow">
             <img
@@ -120,10 +120,10 @@ const OfferBanner = () => (
             />
             <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient}`} />
             <div className="absolute inset-0 flex flex-col justify-center p-3 sm:p-5">
-              <span className="text-[9px] sm:text-[10px] font-bold text-accent tracking-widest uppercase mb-1">{item.label}</span>
-              <p className="text-base sm:text-xl font-bold text-foreground leading-tight">{item.title}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{item.sub}</p>
-              <span className="mt-2 text-[10px] sm:text-xs font-semibold text-accent flex items-center gap-1">
+              <span className="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-widest uppercase mb-1">{item.label}</span>
+              <p className="text-base sm:text-xl font-bold text-white leading-tight">{item.title}</p>
+              <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">{item.sub}</p>
+              <span className="mt-2 text-[10px] sm:text-xs font-semibold text-amber-400 flex items-center gap-1">
                 Shop Now <ChevronRight className="w-3 h-3" />
               </span>
             </div>

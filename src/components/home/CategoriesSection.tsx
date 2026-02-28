@@ -19,7 +19,7 @@ const categoryImages: Record<string, string> = {
 
 export const CategoriesSection = () => {
   return (
-    <section className="py-5 sm:py-8 mt-5 sm:mt-3 bg-card/30">
+    <section className="py-5 sm:py-8 mt-5 sm:mt-3 bg-muted/50">
       <div className="container mx-auto px-2 sm:px-4">
         <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-1">
           Shop by Category

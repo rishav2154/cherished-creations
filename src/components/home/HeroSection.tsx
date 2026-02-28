@@ -108,8 +108,8 @@ export const HeroSection = () => {
               alt={slide.subtitle}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-background/30" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             <div className="absolute inset-0 flex items-center">
               <div className="container mx-auto px-4 sm:px-8 lg:px-16">
@@ -123,7 +123,7 @@ export const HeroSection = () => {
                     <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                     {slide.subtitle}
                   </span>
-                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-3 sm:mb-5 leading-[1.1] tracking-tight">
+                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-3 sm:mb-5 leading-[1.1] tracking-tight">
                     {slide.title}
                   </h2>
                   <Link
