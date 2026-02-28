@@ -44,7 +44,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   
   const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  
 
   // OTP states
   const [otpSent, setOtpSent] = useState(false);
@@ -384,19 +384,6 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* Delivery Instructions */}
-              <div className="glass-card p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-accent" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">Delivery Instructions</h2>
-                    <p className="text-sm text-muted-foreground">Optional special instructions for delivery</p>
-                  </div>
-                </div>
-                <Textarea value={deliveryInstructions} onChange={(e) => setDeliveryInstructions(e.target.value)} placeholder="e.g., Leave at the door, Ring the bell twice..." className="min-h-[80px] resize-none" maxLength={200} />
-              </div>
 
               {/* Payment Method */}
               <div className="glass-card p-6">
