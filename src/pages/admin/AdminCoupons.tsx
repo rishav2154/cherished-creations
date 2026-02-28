@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '@/lib/api';
+import { apiFetch, apiAdmin } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ const AdminCoupons = () => {
 
   const fetchCoupons = async () => {
     try {
-      const data = await apiGet<Coupon[]>('/api/admin/coupons', true);
+      const data = await apiAdmin.getCoupons() as Coupon[];
       setCoupons(data || []);
     } catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     finally { setLoading(false); }
@@ -47,10 +47,10 @@ const AdminCoupons = () => {
     e.preventDefault();
     try {
       if (editingCoupon) {
-        await apiPut(`/api/admin/coupons/${editingCoupon.id}`, formData, true);
+        await apiAdmin.updateCoupon(editingCoupon.id, formData);
         toast({ title: 'Coupon updated' });
       } else {
-        await apiPost('/api/admin/coupons', formData, true);
+        await apiAdmin.createCoupon(formData);
         toast({ title: 'Coupon created' });
       }
       setDialogOpen(false); setEditingCoupon(null); resetForm(); fetchCoupons();
@@ -64,13 +64,13 @@ const AdminCoupons = () => {
   };
 
   const handleToggle = async (coupon: Coupon) => {
-    try { await apiPatch(`/api/admin/coupons/${coupon.id}/toggle`, {}, true); toast({ title: coupon.is_active ? 'Deactivated' : 'Activated' }); fetchCoupons(); }
+    try { await apiFetch(`/admin/coupons/${coupon.id}/toggle`, { method: 'PATCH' }); toast({ title: coupon.is_active ? 'Deactivated' : 'Activated' }); fetchCoupons(); }
     catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
   };
 
   const handleDelete = async () => {
     if (!couponToDelete) return;
-    try { await apiDelete(`/api/admin/coupons/${couponToDelete.id}`, true); toast({ title: 'Deleted' }); fetchCoupons(); }
+    try { await apiAdmin.deleteCoupon(couponToDelete.id); toast({ title: 'Deleted' }); fetchCoupons(); }
     catch (error: any) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); }
     finally { setDeleteDialogOpen(false); setCouponToDelete(null); }
   };

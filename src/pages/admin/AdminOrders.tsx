@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet, apiPut } from '@/lib/api';
+import { apiFetch, apiAdmin } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ const AdminOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const data = await apiGet<any[]>('/admin/orders', true);
+      const data = await apiAdmin.getOrders() as any[];
       setOrders(data || []);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -44,7 +44,7 @@ const AdminOrders = () => {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      await apiPut(`/admin/orders/${orderId}/status`, { status: newStatus }, true);
+      await apiAdmin.updateOrderStatus(orderId, newStatus);
       toast({ title: 'Status Updated', description: `Order status changed to ${newStatus}` });
       fetchOrders();
     } catch (error: any) {
@@ -55,7 +55,7 @@ const AdminOrders = () => {
   const viewOrderDetails = async (order: any) => {
     setSelectedOrder(order);
     try {
-      const items = await apiGet<any[]>(`/admin/orders/${order.id}/items`, true);
+      const items = await apiFetch<any[]>(`/admin/orders/${order.id}/items`);
       setOrderItems(items || []);
     } catch { setOrderItems([]); }
   };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiGet } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await apiGet<any>('/api/admin/dashboard', true);
+        const data = await apiFetch<any>('/admin/dashboard');
         setStats({
           totalOrders: data.totalOrders || 0,
           totalRevenue: data.totalRevenue || 0,
