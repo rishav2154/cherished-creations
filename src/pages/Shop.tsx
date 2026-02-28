@@ -23,7 +23,7 @@ const Shop = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const matchesCategory = !selectedCategory || product.category.toLowerCase() === selectedCategory.toLowerCase();
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
       const matchesSearch = !searchQuery.trim() || 
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
