@@ -1,9 +1,8 @@
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Mic } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { SearchDialog } from "@/components/search/SearchDialog";
-import { Search } from "lucide-react";
 
 const heroSlides = [
   {
@@ -89,7 +88,7 @@ export const HeroSection = () => {
 
       {/* Main Banner */}
       <motion.div
-        className="relative w-full h-[200px] sm:h-[300px] md:h-[380px] lg:h-[440px] overflow-hidden bg-card"
+        className="relative w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[460px] overflow-hidden bg-card"
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
@@ -109,10 +108,9 @@ export const HeroSection = () => {
               alt={slide.subtitle}
               className="w-full h-full object-cover"
             />
-            {/* Multi-layer gradient for readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/20" />
-            
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-background/30" />
+
             <div className="absolute inset-0 flex items-center">
               <div className="container mx-auto px-4 sm:px-8 lg:px-16">
                 <motion.div
@@ -121,15 +119,16 @@ export const HeroSection = () => {
                   transition={{ delay: 0.15, duration: 0.4 }}
                   className="max-w-lg"
                 >
-                  <span className="inline-block px-3 py-1 mb-2 sm:mb-3 text-[10px] sm:text-xs font-semibold bg-accent/20 text-accent rounded-full border border-accent/30">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 sm:mb-3 text-[10px] sm:text-xs font-semibold bg-accent/15 text-accent rounded-full border border-accent/25 backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                     {slide.subtitle}
                   </span>
-                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-3 sm:mb-5 leading-tight">
+                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-3 sm:mb-5 leading-[1.1] tracking-tight">
                     {slide.title}
                   </h2>
                   <Link
                     to={slide.link}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3 bg-accent text-accent-foreground font-semibold text-xs sm:text-sm rounded-lg hover:brightness-110 transition-all shadow-lg shadow-accent/30"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3.5 bg-accent text-accent-foreground font-semibold text-xs sm:text-sm rounded-xl hover:brightness-110 transition-all shadow-lg shadow-accent/25 hover:shadow-accent/40 hover:translate-y-[-1px]"
                   >
                     {slide.cta}
                     <ChevronRight className="w-4 h-4" />
@@ -143,19 +142,19 @@ export const HeroSection = () => {
         {/* Arrows */}
         <button
           onClick={goToPrev}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-card/80 hover:bg-card border border-border/50 transition-all shadow-md"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-card/70 hover:bg-card/90 backdrop-blur-sm border border-border/40 transition-all shadow-lg hover:scale-105"
         >
           <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         <button
           onClick={goToNext}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-card/80 hover:bg-card border border-border/50 transition-all shadow-md"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-card/70 hover:bg-card/90 backdrop-blur-sm border border-border/40 transition-all shadow-lg hover:scale-105"
         >
           <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Dots */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
           {heroSlides.map((_, i) => (
             <button
               key={i}
@@ -166,23 +165,23 @@ export const HeroSection = () => {
               }}
               className={`h-2 rounded-full transition-all duration-300 ${
                 i === currentSlide
-                  ? "w-8 bg-accent shadow-sm shadow-accent/50"
-                  : "w-2 bg-foreground/30 hover:bg-foreground/50"
+                  ? "w-8 bg-accent shadow-md shadow-accent/40"
+                  : "w-2 bg-foreground/25 hover:bg-foreground/40"
               }`}
             />
           ))}
         </div>
       </motion.div>
 
-      {/* Search Bar - Amazon style */}
-      <div className="container mx-auto px-2 sm:px-4 -mt-5 sm:-mt-6 relative z-10">
+      {/* Floating Search Bar */}
+      <div className="container mx-auto px-3 sm:px-4 -mt-6 sm:-mt-7 relative z-10">
         <div
           onClick={() => setSearchOpen(true)}
-          className="flex items-center bg-card border border-border rounded-xl shadow-lg px-4 py-3 sm:py-3.5 cursor-pointer hover:border-accent/50 transition-colors group max-w-2xl mx-auto"
+          className="flex items-center bg-card/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-xl shadow-background/30 px-4 py-3 sm:py-4 cursor-pointer hover:border-accent/40 transition-all group max-w-2xl mx-auto hover:shadow-accent/5"
         >
-          <Search className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
-          <span className="ml-3 text-sm text-muted-foreground">Search for products, gifts, and more...</span>
-          <span className="ml-auto px-3 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-md hidden sm:block">
+          <Search className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
+          <span className="ml-3 text-sm text-muted-foreground flex-1">Search for products, gifts, and more...</span>
+          <span className="ml-auto px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hidden sm:block">
             Search
           </span>
         </div>
