@@ -1,7 +1,9 @@
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { SearchDialog } from "@/components/search/SearchDialog";
+import { Search } from "lucide-react";
 
 const heroSlides = [
   {
@@ -11,7 +13,6 @@ const heroSlides = [
     subtitle: "Premium Custom T-Shirts",
     cta: "Shop Now",
     link: "/shop?category=tshirts",
-    bg: "from-blue-900/80 to-blue-700/60",
   },
   {
     id: "slide2",
@@ -20,7 +21,6 @@ const heroSlides = [
     subtitle: "Designer Photo Mugs",
     cta: "Order Now",
     link: "/shop?category=mugs",
-    bg: "from-amber-900/80 to-amber-700/60",
   },
   {
     id: "slide3",
@@ -29,7 +29,6 @@ const heroSlides = [
     subtitle: "Custom Phone Covers",
     cta: "Explore",
     link: "/shop?category=phone-covers",
-    bg: "from-purple-900/80 to-purple-700/60",
   },
   {
     id: "slide4",
@@ -38,7 +37,6 @@ const heroSlides = [
     subtitle: "Elegant Photo Frames",
     cta: "Buy Now",
     link: "/shop?category=frames",
-    bg: "from-emerald-900/80 to-emerald-700/60",
   },
   {
     id: "slide5",
@@ -47,13 +45,13 @@ const heroSlides = [
     subtitle: "Gift Combos from ₹799",
     cta: "Shop Combos",
     link: "/shop?category=combos",
-    bg: "from-rose-900/80 to-rose-700/60",
   },
 ];
 
 export const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (isPaused) return;
@@ -87,9 +85,11 @@ export const HeroSection = () => {
 
   return (
     <section className="relative w-full pt-14 sm:pt-16 md:pt-20">
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
       {/* Main Banner */}
       <motion.div
-        className="relative w-full h-[180px] sm:h-[280px] md:h-[360px] lg:h-[420px] overflow-hidden"
+        className="relative w-full h-[200px] sm:h-[300px] md:h-[380px] lg:h-[440px] overflow-hidden bg-card"
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
@@ -98,10 +98,10 @@ export const HeroSection = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.5 }}
             className="absolute inset-0"
           >
             <img
@@ -109,23 +109,30 @@ export const HeroSection = () => {
               alt={slide.subtitle}
               className="w-full h-full object-cover"
             />
-            <div className={`absolute inset-0 bg-gradient-to-r ${slide.bg}`} />
+            {/* Multi-layer gradient for readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/20" />
+            
             <div className="absolute inset-0 flex items-center">
               <div className="container mx-auto px-4 sm:px-8 lg:px-16">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15, duration: 0.4 }}
+                  className="max-w-lg"
                 >
-                  <p className="text-white/80 text-xs sm:text-sm font-medium mb-1">{slide.subtitle}</p>
-                  <h2 className="text-white text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4">
+                  <span className="inline-block px-3 py-1 mb-2 sm:mb-3 text-[10px] sm:text-xs font-semibold bg-accent/20 text-accent rounded-full border border-accent/30">
+                    {slide.subtitle}
+                  </span>
+                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-3 sm:mb-5 leading-tight">
                     {slide.title}
                   </h2>
                   <Link
                     to={slide.link}
-                    className="inline-block px-5 py-2 sm:px-8 sm:py-3 bg-accent text-accent-foreground font-semibold text-xs sm:text-sm rounded-lg hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3 bg-accent text-accent-foreground font-semibold text-xs sm:text-sm rounded-lg hover:brightness-110 transition-all shadow-lg shadow-accent/30"
                   >
                     {slide.cta}
+                    <ChevronRight className="w-4 h-4" />
                   </Link>
                 </motion.div>
               </div>
@@ -136,19 +143,19 @@ export const HeroSection = () => {
         {/* Arrows */}
         <button
           onClick={goToPrev}
-          className="absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-card/70 hover:bg-card/90 border border-border/50 transition-colors"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-card/80 hover:bg-card border border-border/50 transition-all shadow-md"
         >
           <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         <button
           onClick={goToNext}
-          className="absolute right-1 sm:right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-card/70 hover:bg-card/90 border border-border/50 transition-colors"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-card/80 hover:bg-card border border-border/50 transition-all shadow-md"
         >
           <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Dots */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
           {heroSlides.map((_, i) => (
             <button
               key={i}
@@ -157,13 +164,29 @@ export const HeroSection = () => {
                 setIsPaused(true);
                 setTimeout(() => setIsPaused(false), 8000);
               }}
-              className={`h-1.5 rounded-full transition-all ${
-                i === currentSlide ? "w-6 bg-accent" : "w-1.5 bg-white/50"
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === currentSlide
+                  ? "w-8 bg-accent shadow-sm shadow-accent/50"
+                  : "w-2 bg-foreground/30 hover:bg-foreground/50"
               }`}
             />
           ))}
         </div>
       </motion.div>
+
+      {/* Search Bar - Amazon style */}
+      <div className="container mx-auto px-2 sm:px-4 -mt-5 sm:-mt-6 relative z-10">
+        <div
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center bg-card border border-border rounded-xl shadow-lg px-4 py-3 sm:py-3.5 cursor-pointer hover:border-accent/50 transition-colors group max-w-2xl mx-auto"
+        >
+          <Search className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
+          <span className="ml-3 text-sm text-muted-foreground">Search for products, gifts, and more...</span>
+          <span className="ml-auto px-3 py-1 bg-accent text-accent-foreground text-xs font-medium rounded-md hidden sm:block">
+            Search
+          </span>
+        </div>
+      </div>
     </section>
   );
 };
