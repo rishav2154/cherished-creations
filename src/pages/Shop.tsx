@@ -53,7 +53,7 @@ const Shop = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-6 sm:mb-12"
+            className="text-center mb-6 sm:mb-8"
           >
             <span className="text-accent font-medium text-xs sm:text-sm tracking-wider uppercase">
               Shop Our Collection
@@ -63,9 +63,33 @@ const Shop = () => {
                 ? categories.find((c) => c.id === selectedCategory)?.name || 'All Products'
                 : 'All Products'}
             </h1>
-            <p className="text-muted-foreground mt-2 sm:mt-4 max-w-xl mx-auto text-sm sm:text-base">
-              Explore our curated selection of premium personalized gifts
-            </p>
+          </motion.div>
+
+          {/* Search Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="max-w-xl mx-auto mb-6 sm:mb-10"
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-11 pr-10 h-12 rounded-full text-base bg-muted/50 border-border focus:bg-background"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
           </motion.div>
 
           <div className="flex gap-8">
