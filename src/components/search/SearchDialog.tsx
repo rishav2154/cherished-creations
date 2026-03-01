@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, X, ArrowRight, Sparkles } from 'lucide-react';
-import { products } from '@/data/products';
+import { Search, X, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ interface SearchDialogProps {
 export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+  const { data: allProducts = [], isLoading } = useProducts();
 
   useEffect(() => {
     if (!open) {
@@ -29,13 +30,13 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
 
     const lowerQuery = query.toLowerCase();
 
-    return products.filter(
+    return allProducts.filter(
       (product) =>
         product.name.toLowerCase().includes(lowerQuery) ||
         product.description.toLowerCase().includes(lowerQuery) ||
         product.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
     ).slice(0, 8);
-  }, [query]);
+  }, [query, allProducts]);
 
   const handleProductClick = (productId: string) => {
     onOpenChange(false);
@@ -80,7 +81,7 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
               <Search className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">Start typing to search...</p>
               <div className="flex flex-wrap justify-center gap-2 mt-6">
-                {['T-Shirts', 'Mugs', 'Frames', 'Gift Combos'].map((suggestion) => (
+                {['Magic Cup', 'Phone Cover', 'Night Lamp', 'Photo Frame'].map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setQuery(suggestion)}
@@ -91,6 +92,11 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
                 ))}
               </div>
             </motion.div>
+          ) : isLoading ? (
+            <div className="text-center py-12">
+              <Loader2 className="w-8 h-8 mx-auto text-muted-foreground animate-spin mb-4" />
+              <p className="text-muted-foreground">Searching...</p>
+            </div>
           ) : !hasResults ? (
             <motion.div
               key="no-results"
