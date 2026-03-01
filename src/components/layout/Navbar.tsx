@@ -15,6 +15,7 @@ const navLinks = [
   { name: 'Shop', path: '/shop' },
   { name: 'Customize', path: '/customize' },
   { name: 'About', path: '/about' },
+  { name: 'Account', path: '/account' },
   { name: 'Return Policy', path: '/returns' }
 ];
 

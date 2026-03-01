@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Camera, X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileEditorProps {
@@ -16,54 +16,26 @@ interface ProfileEditorProps {
 export const ProfileEditor = ({ userId, onClose, onUpdated }: ProfileEditorProps) => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchProfile = async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, phone, avatar_url')
+        .select('full_name, phone')
         .eq('user_id', userId)
         .single();
 
       if (data) {
         setFullName(data.full_name || '');
         setPhone(data.phone || '');
-        setAvatarUrl(data.avatar_url || '');
       }
       setLoading(false);
     };
     fetchProfile();
   }, [userId]);
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Max 2MB allowed.', variant: 'destructive' });
-      return;
-    }
-
-    setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `avatars/${userId}.${ext}`;
-
-    const { error } = await supabase.storage
-      .from('product-images')
-      .upload(path, file, { upsert: true });
-
-    if (error) {
-      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
-    } else {
-      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
-      setAvatarUrl(publicUrl + '?t=' + Date.now());
-    }
-    setUploading(false);
-  };
 
   const handleSave = async () => {
     if (!fullName.trim()) {
@@ -74,7 +46,7 @@ export const ProfileEditor = ({ userId, onClose, onUpdated }: ProfileEditorProps
 
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName.trim(), phone: phone.trim(), avatar_url: avatarUrl || null })
+      .update({ full_name: fullName.trim(), phone: phone.trim() })
       .eq('user_id', userId);
 
     if (error) {
@@ -82,7 +54,7 @@ export const ProfileEditor = ({ userId, onClose, onUpdated }: ProfileEditorProps
     } else {
       // Also update auth metadata so Navbar reflects it
       await supabase.auth.updateUser({
-        data: { full_name: fullName.trim(), avatar_url: avatarUrl || undefined },
+        data: { full_name: fullName.trim() },
       });
       toast({ title: 'Profile updated!' });
       onUpdated();
@@ -91,7 +63,7 @@ export const ProfileEditor = ({ userId, onClose, onUpdated }: ProfileEditorProps
     setSaving(false);
   };
 
-  const initials = fullName ? fullName.slice(0, 2).toUpperCase() : '?';
+  
 
   return (
     <AnimatePresence>
@@ -114,28 +86,6 @@ export const ProfileEditor = ({ userId, onClose, onUpdated }: ProfileEditorProps
           </div>
         ) : (
           <div className="space-y-5">
-            {/* Avatar */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="relative">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover ring-2 ring-accent/30" />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center ring-2 ring-accent/30">
-                    <span className="text-2xl font-bold text-accent">{initials}</span>
-                  </div>
-                )}
-                <label className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center cursor-pointer hover:bg-accent/80 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-foreground" />
-                  ) : (
-                    <Camera className="w-3.5 h-3.5 text-accent-foreground" />
-                  )}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
-                </label>
-              </div>
-              <p className="text-xs text-muted-foreground">Tap camera to change photo</p>
-            </div>
-
             <div>
               <Label htmlFor="edit-name">Full Name</Label>
               <Input id="edit-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" className="mt-1.5" />

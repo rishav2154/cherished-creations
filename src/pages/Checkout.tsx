@@ -20,7 +20,9 @@ import {
   Loader2,
   ArrowLeft,
   Package,
-  MessageSquare
+  MessageSquare,
+  BookMarked,
+  Check
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 
@@ -50,6 +52,8 @@ const Checkout = () => {
   
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedSavedAddress, setSelectedSavedAddress] = useState<string | null>(null);
   const [address, setAddress] = useState({
     fullName: '',
     phone: '',
@@ -88,6 +92,40 @@ const Checkout = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch saved addresses
+  useEffect(() => {
+    if (!user) return;
+    const fetchAddresses = async () => {
+      const { data } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false });
+      if (data) {
+        setSavedAddresses(data);
+        // Auto-select default address
+        const defaultAddr = data.find((a: any) => a.is_default);
+        if (defaultAddr) {
+          selectSavedAddress(defaultAddr);
+        }
+      }
+    };
+    fetchAddresses();
+  }, [user]);
+
+  const selectSavedAddress = (addr: any) => {
+    setSelectedSavedAddress(addr.id);
+    setAddress({
+      fullName: addr.full_name,
+      phone: '', // phone stays manual
+      addressLine1: addr.address_line1,
+      addressLine2: addr.address_line2 || '',
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+    });
+  };
 
   useEffect(() => {
     if (!checkingAuth && !user) {
@@ -314,6 +352,64 @@ const Checkout = () => {
               animate={{ opacity: 1, x: 0 }}
               className="lg:col-span-2 space-y-6"
             >
+              {/* Saved Addresses */}
+              {savedAddresses.length > 0 && (
+                <div className="glass-card p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                      <BookMarked className="w-5 h-5 text-accent" />
+                    </div>
+                    <h2 className="text-xl font-semibold">Saved Addresses</h2>
+                  </div>
+                  <div className="space-y-2">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        key={addr.id}
+                        onClick={() => selectSavedAddress(addr)}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          selectedSavedAddress === addr.id
+                            ? 'border-accent bg-accent/10'
+                            : 'border-border hover:border-accent/50'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{addr.full_name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ''}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {addr.city}, {addr.state} - {addr.pincode}
+                            </p>
+                          </div>
+                          {selectedSavedAddress === addr.id && (
+                            <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center shrink-0">
+                              <Check className="w-3.5 h-3.5 text-accent-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        {addr.is_default && (
+                          <span className="inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/20 text-accent">Default</span>
+                        )}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setSelectedSavedAddress(null);
+                        setAddress({ fullName: '', phone: address.phone, addressLine1: '', addressLine2: '', city: '', state: '', pincode: '' });
+                      }}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                        selectedSavedAddress === null
+                          ? 'border-accent bg-accent/10'
+                          : 'border-border hover:border-accent/50'
+                      }`}
+                    >
+                      <p className="font-medium text-sm">+ Enter a new address</p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Shipping Address */}
               <div className="glass-card p-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -322,7 +418,6 @@ const Checkout = () => {
                   </div>
                   <h2 className="text-xl font-semibold">Shipping Address</h2>
                 </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="fullName">Full Name *</Label>
