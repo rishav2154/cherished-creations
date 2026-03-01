@@ -31,6 +31,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminResetPassword from "./pages/admin/AdminResetPassword";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const AnimatedRoutes = () => {
           <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
           <Route path="/order-success/:orderId" element={<PageTransition><OrderSuccess /></PageTransition>} />
           <Route path="/orders" element={<PageTransition><OrdersHistory /></PageTransition>} />
+          <Route path="/account" element={<PageTransition><Account /></PageTransition>} />
           <Route path="/about" element={<PageTransition><About /></PageTransition>} />
           <Route path="/wishlist" element={<PageTransition><Wishlist /></PageTransition>} />
           <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
