@@ -177,7 +177,7 @@ export const HeroSection = () => {
       <div className="container mx-auto px-3 sm:px-4 -mt-6 sm:-mt-7 relative z-10">
         <div
           onClick={() => setSearchOpen(true)}
-          className="flex items-center bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-xl shadow-background/30 px-4 py-3 sm:py-4 cursor-pointer hover:border-accent/40 transition-all group max-w-2xl mx-auto hover:shadow-accent/5"
+          className="flex items-center bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-xl shadow-background/30 px-4 py-3 sm:py-4 cursor-pointer hover:border-accent/40 transition-all group max-w-2xl mx-auto hover:shadow-accent/5 light:bg-card light:border-border"
         >
           <Search className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
           <span className="ml-3 text-sm text-muted-foreground flex-1">Search for products, gifts, and more...</span>
