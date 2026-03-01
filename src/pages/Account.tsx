@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,24 +8,31 @@ import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { ProfileEditor } from '@/components/account/ProfileEditor';
+import { AddressManager } from '@/components/account/AddressManager';
 import {
-  User, Package, Heart, MapPin, LogOut, ChevronRight,
-  Mail, Phone, Shield, Loader2, ShoppingBag
+  User, Package, Heart, LogOut, ChevronRight,
+  Mail, Phone, Shield, Loader2, ShoppingBag, Pencil
 } from 'lucide-react';
 
 const menuItems = [
   { icon: Package, label: 'My Orders', description: 'View & track your orders', path: '/orders' },
   { icon: Heart, label: 'Wishlist', description: 'Items you love', path: '/wishlist' },
   { icon: ShoppingBag, label: 'Shopping Cart', description: 'Review your cart', path: '/cart' },
-  { icon: MapPin, label: 'Contact Us', description: 'Get in touch', path: '/contact' },
   { icon: Shield, label: 'Return Policy', description: 'Returns & refunds', path: '/returns' },
 ];
 
 const Account = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingProfile, setEditingProfile] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const refreshUser = useCallback(async () => {
+    const { data: { user: u } } = await supabase.auth.getUser();
+    setUser(u);
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
@@ -53,7 +60,6 @@ const Account = () => {
     );
   }
 
-  // Not logged in — redirect to auth
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -61,23 +67,15 @@ const Account = () => {
         <CartDrawer />
         <main className="pt-24 pb-32">
           <div className="container mx-auto px-4 max-w-md">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center mb-6">
                 <User className="w-10 h-10 text-muted-foreground" />
               </div>
               <h1 className="text-2xl font-bold mb-2">Welcome to The Design Hive</h1>
               <p className="text-muted-foreground mb-8">Sign in to access your account, orders, and wishlist.</p>
               <div className="space-y-3">
-                <Button onClick={() => navigate('/auth')} className="w-full h-12 btn-luxury">
-                  Sign In
-                </Button>
-                <Button variant="outline" onClick={() => navigate('/auth')} className="w-full h-12">
-                  Create Account
-                </Button>
+                <Button onClick={() => navigate('/auth')} className="w-full h-12 btn-luxury">Sign In</Button>
+                <Button variant="outline" onClick={() => navigate('/auth')} className="w-full h-12">Create Account</Button>
               </div>
             </motion.div>
           </div>
@@ -98,45 +96,59 @@ const Account = () => {
 
       <main className="pt-24 pb-32">
         <div className="container mx-auto px-4 max-w-lg">
-          {/* Profile Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card rounded-2xl p-6 mb-6"
-          >
-            <div className="flex items-center gap-4">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={displayName}
-                  className="w-16 h-16 rounded-full object-cover ring-2 ring-accent/30"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center ring-2 ring-accent/30">
-                  <span className="text-xl font-bold text-accent">{initials}</span>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold truncate">{displayName}</h1>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                  <Mail className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{user.email}</span>
-                </div>
-                {user.phone && (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                    <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span>{user.phone}</span>
+          {/* Profile Editor (expanded) */}
+          {editingProfile ? (
+            <ProfileEditor
+              userId={user.id}
+              onClose={() => setEditingProfile(false)}
+              onUpdated={refreshUser}
+            />
+          ) : (
+            /* Profile Header */
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card rounded-2xl p-6 mb-6"
+            >
+              <div className="flex items-center gap-4">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="w-16 h-16 rounded-full object-cover ring-2 ring-accent/30" />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center ring-2 ring-accent/30">
+                    <span className="text-xl font-bold text-accent">{initials}</span>
                   </div>
                 )}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl font-bold truncate">{displayName}</h1>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                    <Mail className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{user.email}</span>
+                  </div>
+                  {user.user_metadata?.phone && (
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                      <Phone className="w-3.5 h-3.5 shrink-0" />
+                      <span>{user.user_metadata.phone}</span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setEditingProfile(true)}
+                  className="p-2 rounded-xl bg-muted/50 hover:bg-muted transition-colors shrink-0"
+                >
+                  <Pencil className="w-4 h-4 text-muted-foreground" />
+                </button>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
+
+          {/* Address Management */}
+          <AddressManager userId={user.id} />
 
           {/* Menu Items */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
             className="glass-card rounded-2xl overflow-hidden mb-6"
           >
             {menuItems.map((item, index) => (
@@ -160,11 +172,7 @@ const Account = () => {
           </motion.div>
 
           {/* Sign Out */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <Button
               variant="outline"
               onClick={handleLogout}
