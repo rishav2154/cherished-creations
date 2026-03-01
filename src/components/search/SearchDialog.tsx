@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, X, ArrowRight, Sparkles } from 'lucide-react';
-import { products, categories } from '@/data/products';
+import { products } from '@/data/products';
 import {
   Dialog,
   DialogContent,
@@ -25,24 +25,16 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
   }, [open]);
 
   const searchResults = useMemo(() => {
-    if (!query.trim()) return { products: [], categories: [] };
+    if (!query.trim()) return [];
 
     const lowerQuery = query.toLowerCase();
 
-    const matchedProducts = products.filter(
+    return products.filter(
       (product) =>
         product.name.toLowerCase().includes(lowerQuery) ||
         product.description.toLowerCase().includes(lowerQuery) ||
         product.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
-    ).slice(0, 5);
-
-    const matchedCategories = categories.filter(
-      (category) =>
-        category.name.toLowerCase().includes(lowerQuery) ||
-        category.description.toLowerCase().includes(lowerQuery)
-    );
-
-    return { products: matchedProducts, categories: matchedCategories };
+    ).slice(0, 8);
   }, [query]);
 
   const handleProductClick = (productId: string) => {
@@ -50,26 +42,20 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
     navigate(`/product/${productId}`);
   };
 
-  const handleCategoryClick = (categoryId: string) => {
-    onOpenChange(false);
-    navigate(`/shop?category=${categoryId}`);
-  };
-
-  const hasResults = searchResults.products.length > 0 || searchResults.categories.length > 0;
+  const hasResults = searchResults.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Search Products</DialogTitle>
         
-        {/* Search Input */}
         <div className="flex items-center gap-3 p-4 border-b border-border">
           <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products, categories..."
+            placeholder="Search products by name..."
             className="flex-1 bg-transparent border-none outline-none text-lg placeholder:text-muted-foreground"
             autoFocus
           />
@@ -83,7 +69,6 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
           )}
         </div>
 
-        {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto p-4">
           {!query.trim() ? (
             <motion.div
@@ -134,77 +119,46 @@ export const SearchDialog = ({ open, onOpenChange }: SearchDialogProps) => {
               animate={{ opacity: 1 }}
               className="space-y-6"
             >
-              {/* Categories */}
-              {searchResults.categories.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                    Categories
-                  </h3>
-                  <div className="space-y-1">
-                    {searchResults.categories.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() => handleCategoryClick(category.id)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                      >
-                        <span className="text-2xl">{category.icon}</span>
-                        <div className="flex-1">
-                          <p className="font-medium">{category.name}</p>
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {category.description}
-                          </p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Products */}
-              {searchResults.products.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                    Products
-                  </h3>
-                  <div className="space-y-1">
-                    {searchResults.products.map((product) => (
-                      <button
-                        key={product.id}
-                        onClick={() => handleProductClick(product.id)}
-                        className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors text-left"
-                      >
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium line-clamp-1">{product.name}</p>
-                            {product.isCustomizable && (
-                              <Sparkles className="w-3 h-3 text-accent flex-shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {product.description}
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-bold">₹{product.price.toFixed(2)}</p>
-                          {product.originalPrice && (
-                            <p className="text-xs text-muted-foreground line-through">
-                              ₹{product.originalPrice.toFixed(2)}
-                            </p>
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                  Products
+                </h3>
+                <div className="space-y-1">
+                  {searchResults.map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => handleProductClick(product.id)}
+                      className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium line-clamp-1">{product.name}</p>
+                          {product.isCustomizable && (
+                            <Sparkles className="w-3 h-3 text-accent flex-shrink-0" />
                           )}
                         </div>
-                      </button>
-                    ))}
-                  </div>
+                        <p className="text-sm text-muted-foreground line-clamp-1">
+                          {product.description}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold">₹{product.price.toFixed(2)}</p>
+                        {product.originalPrice && (
+                          <p className="text-xs text-muted-foreground line-through">
+                            ₹{product.originalPrice.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* View All */}
               <button
                 onClick={() => {
                   onOpenChange(false);
