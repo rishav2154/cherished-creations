@@ -15,7 +15,6 @@ const navLinks = [
   { name: 'Shop', path: '/shop' },
   { name: 'Customize', path: '/customize' },
   { name: 'About', path: '/about' },
-  { name: 'Account', path: '/account' },
   { name: 'Return Policy', path: '/returns' }
 ];
 
@@ -141,6 +140,10 @@ export const Navbar = () => {
                     <DropdownMenuItem className="text-sm text-muted-foreground">
                       {user.email}
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/account')}>
+                      <User className="w-4 h-4 mr-2" />
+                      My Account
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <Package className="w-4 h-4 mr-2" />
                       My Orders
@@ -220,6 +223,10 @@ export const Navbar = () => {
                     <DropdownMenuItem className="text-sm text-muted-foreground">
                       {user.email}
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/account')}>
+                      <User className="w-4 h-4 mr-2" />
+                      My Account
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <Package className="w-4 h-4 mr-2" />
                       My Orders
@@ -231,7 +238,7 @@ export const Navbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link to="/auth">
+                <Link to="/account">
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
