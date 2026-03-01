@@ -126,8 +126,96 @@
 
   /* Light mode enhanced borders */
   .light {
-    --border: 220 13% 86%;
+    --border: 220 13% 82%;
   }
+}
+
+/* ===== LIGHT MODE ENHANCEMENTS ===== */
+
+/* Navbar in light mode */
+.light header {
+  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+}
+
+/* Cards get a subtle lift in light mode */
+.light .bg-card,
+.light [class*="bg-card"] {
+  box-shadow: 0 1px 3px hsl(220 15% 15% / 0.05), 0 1px 2px hsl(220 15% 15% / 0.03);
+}
+
+/* Section alternating backgrounds are more visible */
+.light .bg-muted\/30 {
+  background-color: hsl(220 14% 95% / 0.6);
+  border-top: 1px solid hsl(220 13% 90%);
+  border-bottom: 1px solid hsl(220 13% 90%);
+}
+
+.light .bg-muted\/50 {
+  background-color: hsl(220 14% 94% / 0.7);
+  border-top: 1px solid hsl(220 13% 90%);
+  border-bottom: 1px solid hsl(220 13% 90%);
+}
+
+.light .bg-muted\/40 {
+  background-color: hsl(220 14% 95% / 0.65);
+  border-top: 1px solid hsl(220 13% 90%);
+}
+
+/* Stronger product card borders and hover in light */
+.light .group:hover {
+  box-shadow: 0 4px 16px hsl(220 15% 15% / 0.08), 0 2px 6px hsl(220 15% 15% / 0.04);
+}
+
+/* Better input fields in light mode */
+.light input,
+.light textarea {
+  border-color: hsl(220 13% 84%);
+}
+
+.light input:focus,
+.light textarea:focus {
+  border-color: hsl(339 78% 50%);
+  box-shadow: 0 0 0 3px hsl(339 78% 50% / 0.08);
+}
+
+/* Rounded buttons get subtle borders in light */
+.light .rounded-full.bg-muted\/50 {
+  border: 1px solid hsl(220 13% 88%);
+}
+
+/* Rating/badge backgrounds pop more */
+.light .bg-accent\/10,
+.light .bg-accent\/15 {
+  border: 1px solid hsl(339 78% 50% / 0.12);
+}
+
+/* Search bar enhancement */
+.light .shadow-xl {
+  box-shadow: 0 4px 20px hsl(220 15% 15% / 0.08), 0 1px 4px hsl(220 15% 15% / 0.04);
+}
+
+/* Footer light mode */
+.light footer {
+  border-top: 1px solid hsl(220 13% 88%);
+}
+
+/* Dropdown menus */
+.light [role="menu"] {
+  border: 1px solid hsl(220 13% 86%);
+  box-shadow: 0 4px 16px hsl(220 15% 15% / 0.08);
+}
+
+/* Scrollbar in light mode */
+.light ::-webkit-scrollbar-track {
+  background: hsl(0 0% 97%);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: hsl(220 13% 86%);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 13% 70%);
 }
 
 @layer base {
