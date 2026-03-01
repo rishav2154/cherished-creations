@@ -47,10 +47,46 @@ const heroSlides = [
   },
 ];
 
+const searchKeywords = [
+  "Custom T-Shirts",
+  "Photo Mugs",
+  "Phone Covers",
+  "Photo Frames",
+  "Gift Combos",
+  "Wall Posters",
+  "Keychains",
+  "LED Lamps",
+];
+
 export const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [typedText, setTypedText] = useState("");
+  const [keywordIndex, setKeywordIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentWord = searchKeywords[keywordIndex];
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        setTypedText(currentWord.slice(0, charIndex + 1));
+        setCharIndex((prev) => prev + 1);
+        if (charIndex + 1 === currentWord.length) {
+          setTimeout(() => setIsDeleting(true), 1500);
+        }
+      } else {
+        setTypedText(currentWord.slice(0, charIndex - 1));
+        setCharIndex((prev) => prev - 1);
+        if (charIndex - 1 === 0) {
+          setIsDeleting(false);
+          setKeywordIndex((prev) => (prev + 1) % searchKeywords.length);
+        }
+      }
+    }, isDeleting ? 40 : 80);
+    return () => clearTimeout(timeout);
+  }, [charIndex, isDeleting, keywordIndex]);
 
   useEffect(() => {
     if (isPaused) return;
@@ -180,7 +216,10 @@ export const HeroSection = () => {
           className="flex items-center bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-xl shadow-background/30 px-4 py-3 sm:py-4 cursor-pointer hover:border-accent/40 transition-all group max-w-2xl mx-auto hover:shadow-accent/5 light:bg-card light:border-border"
         >
           <Search className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
-          <span className="ml-3 text-sm text-muted-foreground flex-1">Search for products, gifts, and more...</span>
+          <span className="ml-3 text-sm text-muted-foreground flex-1">
+            Search for "<span className="text-foreground font-medium">{typedText}</span>
+            <span className="animate-pulse">|</span>"
+          </span>
           <span className="ml-auto px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-lg hidden sm:block">
             Search
           </span>
