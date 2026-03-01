@@ -1,30 +1,17 @@
 
 
-## Fix Shop.tsx UI
+## Add Theme Toggle to Mobile Navbar Menu
 
-The code you pasted had all JSX/HTML tags stripped out (angle brackets were removed), leaving broken template markup. I'll reconstruct the full working Shop.tsx with proper JSX, preserving all the logic and content you intended.
+### What changes
+Add the dark/light mode toggle button inside the mobile dropdown menu, so mobile users can switch themes without needing the desktop navbar.
 
-### What's being fixed
-- All JSX elements (`div`, `motion.div`, `button`, `Input`, `Slider`, `Link`, etc.) need their tags restored
-- The entire component template needs to be rebuilt as valid JSX
+### Technical Details
 
-### What's being preserved (no content changes)
-- All imports, hooks, state, and logic (debounced URL params, `finalProducts`, `handleCategoryChange`, etc.)
-- All text content, class names, and styling exactly as you specified
-- The layout structure: page header, prominent search bar, desktop sidebar, mobile filter panel, grid controls (2/3/4 cols), product grid with custom product handling, empty state
+**File: `src/components/layout/Navbar.tsx`**
 
-### Key UI features in the reconstructed code
-- Prominent full-width search bar below the header
-- Desktop sidebar with category cards, price slider, and clear filters
-- Mobile: inline collapsible filter panel (not a drawer) with category grid
-- Grid toggle for 2, 3, or 4 columns on desktop
-- Custom product (phone cover) gets a special "Customize Now" wrapper with Link
-- Empty state with search icon and clear filters button
+- Import is already present (`ThemeToggle` from `@/components/theme/ThemeToggle`)
+- Add `<ThemeToggle />` as a new row inside the mobile menu dropdown (the `AnimatePresence` block that renders when `isMobileMenuOpen` is true)
+- Place it after the "Search Products" button, styled consistently with other menu items (flex row with label text "Theme" or "Dark/Light Mode")
 
-### Technical details
-- **File changed**: `src/pages/Shop.tsx` (full rewrite to fix broken JSX)
-- No other files are modified
-- The `Button` component from `@/components/ui/button` is used (already exists)
-- `Link` from `react-router-dom` is used for the custom product wrapper
-- TypeScript generics like `Record<string, string | null>` and `useRef<NodeJS.Timeout>` will be properly typed
+The change is approximately 5 lines added to the mobile menu section, wrapping `<ThemeToggle />` in a div with matching padding and layout.
 
