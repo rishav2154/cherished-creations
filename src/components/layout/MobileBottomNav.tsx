@@ -8,7 +8,7 @@ const navItems = [
   { icon: Store, label: 'Shop', path: '/shop' },
   { icon: Heart, label: 'Wishlist', path: '/wishlist' },
   { icon: ShoppingBag, label: 'Cart', path: '/cart' },
-  { icon: User, label: 'Account', path: '/auth' },
+  { icon: User, label: 'Account', path: '/account' },
 ];
 
 export const MobileBottomNav = () => {
