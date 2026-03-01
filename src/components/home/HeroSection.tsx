@@ -48,14 +48,13 @@ const heroSlides = [
 ];
 
 const searchKeywords = [
-  "Custom T-Shirts",
-  "Photo Mugs",
-  "Phone Covers",
-  "Photo Frames",
-  "Gift Combos",
-  "Wall Posters",
-  "Keychains",
-  "LED Lamps",
+  "Magic Cup",
+  "Photo Frame",
+  "Keychain Heart Shape",
+  "Phone Cover",
+  "Night Lamp",
+  "iPhone 16 Pro Max Cover",
+  "Keychain Cubes",
 ];
 
 export const HeroSection = () => {
